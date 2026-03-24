@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Phone,
   Globe,
@@ -15,8 +15,9 @@ import {
   Flame,
   BarChart3,
   Target,
+  Loader2,
 } from 'lucide-react'
-import { demoLeads } from '@/lib/demo-data'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Lead, LeadSource, LeadStatus } from '@/lib/types'
 
 /* ------------------------------------------------------------------ */
@@ -336,6 +337,21 @@ function SummaryBar({ leads }: { leads: Lead[] }) {
 
 export default function LeadsPipelinePage() {
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      const { data } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (data) setLeads(data as unknown as Lead[])
+      setLoading(false)
+    }
+    fetchLeads()
+  }, [])
 
   // Group leads by status
   const leadsByStatus = useMemo(() => {
@@ -343,13 +359,13 @@ export default function LeadsPipelinePage() {
     for (const col of COLUMNS) {
       map[col.status] = []
     }
-    for (const lead of demoLeads) {
+    for (const lead of leads) {
       if (map[lead.status]) {
         map[lead.status].push(lead)
       }
     }
     return map
-  }, [])
+  }, [leads])
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -358,7 +374,7 @@ export default function LeadsPipelinePage() {
         <div>
           <h1 className="text-2xl font-bold text-[#F8FAFC]">Lead Pipeline</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {demoLeads.length} total leads
+            {leads.length} total leads
           </p>
         </div>
 
@@ -391,8 +407,15 @@ export default function LeadsPipelinePage() {
         </div>
       </div>
 
+      {/* ---- Loading ---- */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-[#2DD4BF]" />
+        </div>
+      )}
+
       {/* ---- Board View ---- */}
-      {viewMode === 'board' && (
+      {!loading && viewMode === 'board' && (
         <div className="flex-1 overflow-x-auto pb-2">
           <div className="flex gap-4" style={{ minWidth: COLUMNS.length * 296 }}>
             {COLUMNS.map((col) => (
@@ -407,7 +430,7 @@ export default function LeadsPipelinePage() {
       )}
 
       {/* ---- List View ---- */}
-      {viewMode === 'list' && (
+      {!loading && viewMode === 'list' && (
         <div className="flex-1 overflow-x-auto">
           <table className="w-full min-w-[800px] text-left">
             <thead>
@@ -439,7 +462,7 @@ export default function LeadsPipelinePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[rgba(148,163,184,0.05)]">
-              {demoLeads.map((lead) => {
+              {leads.map((lead) => {
                 const SourceIcon = getSourceIcon(lead.source)
                 const assignedName = lead.assigned_to
                   ? ASSIGNED_NAMES[lead.assigned_to] ?? lead.assigned_to
@@ -521,7 +544,7 @@ export default function LeadsPipelinePage() {
       )}
 
       {/* ---- Summary Bar ---- */}
-      <SummaryBar leads={demoLeads} />
+      <SummaryBar leads={leads} />
     </div>
   )
 }

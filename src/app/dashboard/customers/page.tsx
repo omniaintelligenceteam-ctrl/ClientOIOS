@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Users,
   Search,
@@ -12,8 +12,9 @@ import {
   Mail,
   Briefcase,
   Clock,
+  Loader2,
 } from 'lucide-react'
-import { demoCustomers } from '@/lib/demo-data'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Customer } from '@/lib/types'
 
 /* ------------------------------------------------------------------ */
@@ -392,14 +393,29 @@ function CustomerCard({ customer }: { customer: Customer }) {
 /* ------------------------------------------------------------------ */
 
 export default function CustomersPage() {
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>('name')
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      const { data } = await supabase
+        .from('customers')
+        .select('*')
+        .order('last_contact_at', { ascending: false })
+      if (data) setCustomers(data as unknown as Customer[])
+      setLoading(false)
+    }
+    fetchCustomers()
+  }, [])
 
   // Filter customers by search
   const filteredCustomers = useMemo(() => {
-    if (!searchQuery.trim()) return demoCustomers
+    if (!searchQuery.trim()) return customers
     const q = searchQuery.toLowerCase()
-    return demoCustomers.filter((c) => {
+    return customers.filter((c) => {
       const fullName = `${c.first_name} ${c.last_name}`.toLowerCase()
       const phone = c.phone.toLowerCase()
       const email = (c.email ?? '').toLowerCase()
@@ -411,7 +427,7 @@ export default function CustomersPage() {
         tags.includes(q)
       )
     })
-  }, [searchQuery])
+  }, [searchQuery, customers])
 
   // Sort customers
   const sortedCustomers = useMemo(() => {
@@ -449,7 +465,7 @@ export default function CustomersPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#F8FAFC]">Customers</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {demoCustomers.length} total
+            {customers.length} total
           </p>
         </div>
 
@@ -470,7 +486,7 @@ export default function CustomersPage() {
       </div>
 
       {/* ---- Stats Row ---- */}
-      <StatsRow customers={demoCustomers} />
+      <StatsRow customers={customers} />
 
       {/* ---- Desktop Table ---- */}
       <div className="hidden overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] md:block">

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { AuthProvider, useAuth } from '@/lib/auth-context'
 import {
   LayoutDashboard,
   Phone,
@@ -70,8 +71,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
-/** Hardcoded for demo – replace with org context / auth */
-const CURRENT_TIER: OrgTier = 'office_manager'
+// Tier is loaded from auth context in DashboardShell
 const NOTIFICATION_COUNT = 3
 
 /* ------------------------------------------------------------------ */
@@ -177,10 +177,24 @@ function SidebarNavItem({
 /* ------------------------------------------------------------------ */
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </AuthProvider>
+  )
+}
+
+function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { profile, organization, signOut } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
+
+  const CURRENT_TIER: OrgTier = (organization?.tier as OrgTier) || 'office_manager'
+  const userName = profile?.full_name || 'User'
+  const userInitials = userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const userRole = profile?.role || 'viewer'
 
   /* Close mobile menu on route change */
   useEffect(() => {
@@ -263,21 +277,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             {/* Avatar placeholder */}
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2DD4BF]/20 text-sm font-bold text-[#2DD4BF]">
-              MR
+              {userInitials}
             </div>
 
             {!sidebarCollapsed && (
               <div className="flex flex-1 flex-col overflow-hidden">
                 <span className="truncate text-sm font-semibold text-[#F8FAFC]">
-                  Mike Rodriguez
+                  {userName}
                 </span>
-                <span className="truncate text-xs text-[#64748B]">Owner</span>
+                <span className="truncate text-xs text-[#64748B] capitalize">{userRole}</span>
               </div>
             )}
 
             {!sidebarCollapsed && (
               <button
                 type="button"
+                onClick={signOut}
                 className="flex-shrink-0 rounded-md p-1.5 text-[#64748B] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
                 title="Log out"
               >
@@ -341,13 +356,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="border-t border-[rgba(148,163,184,0.1)] p-3">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2DD4BF]/20 text-sm font-bold text-[#2DD4BF]">
-              MR
+              {userInitials}
             </div>
             <div className="flex flex-1 flex-col overflow-hidden">
               <span className="truncate text-sm font-semibold text-[#F8FAFC]">
                 Mike Rodriguez
               </span>
-              <span className="truncate text-xs text-[#64748B]">Owner</span>
+              <span className="truncate text-xs text-[#64748B] capitalize">{userRole}</span>
             </div>
             <button
               type="button"

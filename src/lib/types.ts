@@ -53,6 +53,7 @@ export interface User {
   role: UserRole
   avatar_url: string | null
   notification_preferences: Record<string, boolean> | null
+  is_super_admin?: boolean
   created_at: string
 }
 
@@ -239,6 +240,26 @@ export interface TeamMember {
   created_at: string
 }
 
+// Chat types
+export interface ChatConversation {
+  id: string
+  organization_id: string
+  user_id: string
+  title: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMessage {
+  id: string
+  conversation_id: string
+  role: 'user' | 'assistant'
+  content: string
+  model_used: string | null
+  context_tokens: number | null
+  created_at: string
+}
+
 // Supabase Database type (simplified for direct use)
 export interface Database {
   public: {
@@ -254,6 +275,8 @@ export interface Database {
       activity_feed: { Row: ActivityFeedItem; Insert: Partial<ActivityFeedItem>; Update: Partial<ActivityFeedItem> }
       daily_reports: { Row: DailyReport; Insert: Partial<DailyReport>; Update: Partial<DailyReport> }
       team_members: { Row: TeamMember; Insert: Partial<TeamMember>; Update: Partial<TeamMember> }
+      chat_conversations: { Row: ChatConversation; Insert: Partial<ChatConversation>; Update: Partial<ChatConversation> }
+      chat_messages: { Row: ChatMessage; Insert: Partial<ChatMessage>; Update: Partial<ChatMessage> }
     }
   }
 }
