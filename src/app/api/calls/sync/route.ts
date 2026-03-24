@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const RETELL_API_KEY = process.env.RETELL_API_KEY || 'key_57a1e44d75cffc9b5e9f8188f048'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 function mapCallStatus(retellStatus: string, disconnectReason?: string): string {
   if (retellStatus === 'ended') {
@@ -26,6 +26,7 @@ function mapSentiment(analysis?: { user_sentiment?: string }): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase()
     const body = await request.json().catch(() => ({}))
     const agentId = body.agent_id || 'agent_b8f7dab7124e978dacac4a3b60'
     const limit = body.limit || 50
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     const retellResp = await fetch('https://api.retellai.com/v2/list-calls', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RETELL_API_KEY}`,
+        'Authorization': `Bearer ${process.env.RETELL_API_KEY!}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

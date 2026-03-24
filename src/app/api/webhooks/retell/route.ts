@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
 
 // Map Retell call_status to our CallStatus type
 function mapCallStatus(retellStatus: string, disconnectReason?: string): string {
@@ -30,6 +32,7 @@ function mapSentiment(analysis?: { user_sentiment?: string }): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabase()
     const payload = await request.json()
 
     // Retell webhook sends the full call object on call_ended

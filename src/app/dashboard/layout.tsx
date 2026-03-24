@@ -16,6 +16,7 @@ import {
   HardHat,
   BarChart3,
   Settings,
+  Shield,
   Search,
   Bell,
   Plus,
@@ -38,6 +39,8 @@ interface NavItem {
   icon: React.ElementType
   /** Minimum tier required. undefined = available at all tiers. */
   minTier?: OrgTier
+  /** If true, only visible to super admins. */
+  superAdminOnly?: boolean
 }
 
 /* ------------------------------------------------------------------ */
@@ -69,6 +72,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Team', href: '/dashboard/team', icon: HardHat, minTier: 'growth_engine' },
   { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Admin', href: '/dashboard/admin/onboard', icon: Shield, superAdminOnly: true },
 ]
 
 // Tier is loaded from auth context in DashboardShell
@@ -186,7 +190,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { profile, organization, signOut } = useAuth()
+  const { profile, organization, isSuperAdmin, signOut } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
@@ -230,7 +234,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   /* ---- Shared nav list renderer ---- */
   const renderNavItems = (collapsed: boolean) =>
-    NAV_ITEMS.map((item) => {
+    NAV_ITEMS.filter((item) => !item.superAdminOnly || isSuperAdmin).map((item) => {
       const unlocked = isTierUnlocked(item.minTier, CURRENT_TIER)
       const active = isActiveLink(pathname, item.href)
 
