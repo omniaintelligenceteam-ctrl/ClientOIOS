@@ -1,0 +1,259 @@
+// ============================================================
+// OIOS Client Dashboard — Type Definitions
+// ============================================================
+
+export type Tier = 'answering_service' | 'receptionist' | 'office_manager' | 'coo'
+export type OnboardingStatus = 'pending' | 'configuring' | 'testing' | 'live' | 'paused'
+export type UserRole = 'owner' | 'admin' | 'manager' | 'technician' | 'viewer'
+export type CallStatus = 'answered' | 'missed' | 'voicemail' | 'abandoned' | 'transferred'
+export type CallDirection = 'inbound' | 'outbound'
+export type Sentiment = 'positive' | 'neutral' | 'negative' | 'urgent'
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'dormant'
+export type LeadPriority = 'hot' | 'warm' | 'cold'
+export type LeadSource = 'phone_call' | 'web_form' | 'referral' | 'social_media' | 'walk_in' | 'marketing_campaign' | 'manual'
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled'
+export type InvoiceStatus = 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled' | 'partially_paid'
+export type ReviewPlatform = 'google' | 'yelp' | 'facebook' | 'homeadvisor' | 'angi' | 'bbb' | 'other'
+export type ReviewResponseStatus = 'pending' | 'drafted' | 'approved' | 'posted' | 'skipped'
+export type FollowUpType = 'sms' | 'email' | 'call' | 'review_request' | 'payment_reminder' | 'satisfaction_check' | 'seasonal_reminder' | 'referral_request'
+export type Importance = 'low' | 'medium' | 'high' | 'critical'
+
+export interface Organization {
+  id: string
+  name: string
+  slug: string
+  trade: string
+  tier: Tier
+  phone_number: string | null
+  forwarding_number: string | null
+  timezone: string
+  business_hours: Record<string, { open: string; close: string }> | null
+  service_area: string[] | null
+  services_offered: string[] | null
+  emergency_keywords: string[] | null
+  emergency_phone: string | null
+  ai_agent_name: string
+  ai_agent_voice_id: string | null
+  ai_agent_personality: string | null
+  onboarding_status: OnboardingStatus
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  monthly_minutes_included: number
+  monthly_minutes_used: number
+  created_at: string
+  updated_at: string
+}
+
+export interface User {
+  id: string
+  organization_id: string
+  full_name: string
+  email: string
+  phone: string | null
+  role: UserRole
+  avatar_url: string | null
+  notification_preferences: Record<string, boolean> | null
+  created_at: string
+}
+
+export interface Call {
+  id: string
+  organization_id: string
+  external_call_id: string | null
+  caller_phone: string
+  caller_name: string | null
+  direction: CallDirection
+  status: CallStatus
+  duration_seconds: number
+  started_at: string
+  ended_at: string | null
+  recording_url: string | null
+  transcript: string | null
+  transcript_summary: string | null
+  sentiment: Sentiment
+  intent: string | null
+  extracted_data: Record<string, unknown> | null
+  ai_agent_handled: boolean
+  escalated_to_human: boolean
+  escalation_reason: string | null
+  lead_id: string | null
+  appointment_id: string | null
+  tags: string[] | null
+  created_at: string
+}
+
+export interface Lead {
+  id: string
+  organization_id: string
+  customer_id: string | null
+  source: LeadSource
+  status: LeadStatus
+  priority: LeadPriority
+  score: number
+  score_reasons: string[] | null
+  first_name: string
+  last_name: string
+  phone: string
+  email: string | null
+  address: string | null
+  service_needed: string
+  estimated_value: number
+  notes: string | null
+  follow_up_date: string | null
+  follow_up_count: number
+  last_contact_at: string | null
+  won_at: string | null
+  lost_at: string | null
+  lost_reason: string | null
+  assigned_to: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Customer {
+  id: string
+  organization_id: string
+  first_name: string
+  last_name: string
+  phone: string
+  email: string | null
+  address: string | null
+  notes: string | null
+  tags: string[] | null
+  total_jobs: number
+  total_revenue: number
+  lifetime_value: number
+  first_contact_at: string | null
+  last_contact_at: string | null
+  satisfaction_score: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Appointment {
+  id: string
+  organization_id: string
+  customer_id: string
+  lead_id: string | null
+  assigned_to: string | null
+  service_type: string
+  status: AppointmentStatus
+  scheduled_date: string
+  scheduled_time_start: string
+  scheduled_time_end: string
+  actual_start: string | null
+  actual_end: string | null
+  address: string
+  estimated_value: number | null
+  actual_value: number | null
+  notes: string | null
+  reminder_sent: boolean
+  confirmation_sent: boolean
+  customer_confirmed: boolean
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Invoice {
+  id: string
+  organization_id: string
+  customer_id: string
+  appointment_id: string | null
+  invoice_number: string
+  status: InvoiceStatus
+  amount: number
+  amount_paid: number
+  tax_amount: number
+  line_items: { description: string; quantity: number; unit_price: number; total: number }[]
+  due_date: string
+  sent_at: string | null
+  paid_at: string | null
+  payment_method: string | null
+  reminder_count: number
+  last_reminder_at: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Review {
+  id: string
+  organization_id: string
+  customer_id: string | null
+  platform: ReviewPlatform
+  rating: number
+  review_text: string | null
+  reviewer_name: string
+  review_url: string | null
+  response_text: string | null
+  response_status: ReviewResponseStatus
+  responded_at: string | null
+  sentiment: Sentiment
+  review_date: string
+  request_sent: boolean
+  created_at: string
+}
+
+export interface ActivityFeedItem {
+  id: string
+  organization_id: string
+  actor: string
+  action: string
+  entity_type: string
+  entity_id: string | null
+  metadata: Record<string, unknown> | null
+  importance: Importance
+  read: boolean
+  created_at: string
+}
+
+export interface DailyReport {
+  id: string
+  organization_id: string
+  report_date: string
+  report_type: string
+  content: Record<string, unknown>
+  narrative: string
+  metrics: Record<string, number>
+  delivered_via: string[]
+  delivered_at: string | null
+  created_at: string
+}
+
+export interface TeamMember {
+  id: string
+  organization_id: string
+  user_id: string | null
+  name: string
+  phone: string
+  email: string | null
+  role: string
+  skills: string[] | null
+  service_area: string[] | null
+  availability: Record<string, unknown> | null
+  is_on_call: boolean
+  performance_score: number | null
+  total_jobs_completed: number
+  average_review_score: number | null
+  created_at: string
+}
+
+// Supabase Database type (simplified for direct use)
+export interface Database {
+  public: {
+    Tables: {
+      organizations: { Row: Organization; Insert: Partial<Organization>; Update: Partial<Organization> }
+      users: { Row: User; Insert: Partial<User>; Update: Partial<User> }
+      calls: { Row: Call; Insert: Partial<Call>; Update: Partial<Call> }
+      leads: { Row: Lead; Insert: Partial<Lead>; Update: Partial<Lead> }
+      customers: { Row: Customer; Insert: Partial<Customer>; Update: Partial<Customer> }
+      appointments: { Row: Appointment; Insert: Partial<Appointment>; Update: Partial<Appointment> }
+      invoices: { Row: Invoice; Insert: Partial<Invoice>; Update: Partial<Invoice> }
+      reviews: { Row: Review; Insert: Partial<Review>; Update: Partial<Review> }
+      activity_feed: { Row: ActivityFeedItem; Insert: Partial<ActivityFeedItem>; Update: Partial<ActivityFeedItem> }
+      daily_reports: { Row: DailyReport; Insert: Partial<DailyReport>; Update: Partial<DailyReport> }
+      team_members: { Row: TeamMember; Insert: Partial<TeamMember>; Update: Partial<TeamMember> }
+    }
+  }
+}
