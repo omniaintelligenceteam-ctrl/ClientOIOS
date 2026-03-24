@@ -15,6 +15,7 @@ import {
   Megaphone,
   HardHat,
   BarChart3,
+  CreditCard,
   Settings,
   Shield,
   Search,
@@ -25,7 +26,10 @@ import {
   ChevronLeft,
   Menu,
   X,
+  MessageSquare,
 } from 'lucide-react'
+import { ChatProvider } from '@/components/dashboard/chat/chat-provider'
+import { ChatFAB } from '@/components/dashboard/chat/chat-fab'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -70,9 +74,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Reviews', href: '/dashboard/reviews', icon: Star, minTier: 'office_manager' },
   { label: 'Marketing', href: '/dashboard/marketing', icon: Megaphone, minTier: 'growth_engine' },
   { label: 'Team', href: '/dashboard/team', icon: HardHat, minTier: 'growth_engine' },
+  { label: 'Chat', href: '/dashboard/chat', icon: MessageSquare, minTier: 'office_manager' },
   { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+  { label: 'Billing', href: '/dashboard/billing', icon: CreditCard },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
-  { label: 'Admin', href: '/dashboard/admin/onboard', icon: Shield, superAdminOnly: true },
+  { label: 'Admin', href: '/dashboard/admin', icon: Shield, superAdminOnly: true },
 ]
 
 // Tier is loaded from auth context in DashboardShell
@@ -183,7 +189,9 @@ function SidebarNavItem({
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <DashboardShell>{children}</DashboardShell>
+      <ChatProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </ChatProvider>
     </AuthProvider>
   )
 }
@@ -437,6 +445,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+
+        {/* Chat FAB — floating on all pages */}
+        <ChatFAB />
       </div>
     </div>
   )
