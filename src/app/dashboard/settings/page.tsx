@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { demoOrg, demoUsers, demoTeam } from '@/lib/demo-data'
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/lib/auth-context'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import type { TeamMember, Organization } from '@/lib/types'
 import {
   Building2,
   Bot,
@@ -134,8 +136,10 @@ function Toggle({ checked, label }: { checked: boolean; label: string }) {
 /*  Tab: Business Profile                                              */
 /* ------------------------------------------------------------------ */
 
-function BusinessProfileTab() {
-  const bh = demoOrg.business_hours as Record<string, { open: string; close: string }>
+function BusinessProfileTab({ org }: { org: Organization | null }) {
+  if (!org) return <div className="text-sm text-slate-500">Loading organization data...</div>
+
+  const bh = (org.business_hours ?? {}) as Record<string, { open: string; close: string }>
 
   return (
     <div className="space-y-8">
@@ -145,23 +149,23 @@ function BusinessProfileTab() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <FieldLabel>Business Name</FieldLabel>
-            <ReadOnlyInput value={demoOrg.name} icon={Building2} />
+            <ReadOnlyInput value={org.name} icon={Building2} />
           </div>
           <div>
             <FieldLabel>Phone Number</FieldLabel>
-            <ReadOnlyInput value={demoOrg.phone_number ?? ''} icon={Phone} />
+            <ReadOnlyInput value={org.phone_number ?? ''} icon={Phone} />
           </div>
           <div>
             <FieldLabel>Address</FieldLabel>
-            <ReadOnlyInput value="Gilbert, AZ" icon={MapPin} />
+            <ReadOnlyInput value="" icon={MapPin} />
           </div>
           <div>
             <FieldLabel>Timezone</FieldLabel>
-            <ReadOnlyInput value={demoOrg.timezone} icon={Clock} />
+            <ReadOnlyInput value={org.timezone} icon={Clock} />
           </div>
           <div>
             <FieldLabel>Trade</FieldLabel>
-            <ReadOnlyInput value={demoOrg.trade.charAt(0).toUpperCase() + demoOrg.trade.slice(1)} icon={Wrench} />
+            <ReadOnlyInput value={org.trade.charAt(0).toUpperCase() + org.trade.slice(1)} icon={Wrench} />
           </div>
         </div>
       </div>
@@ -170,7 +174,7 @@ function BusinessProfileTab() {
       <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
         <SectionHeading>Service Area</SectionHeading>
         <div className="flex flex-wrap gap-2">
-          {(demoOrg.service_area ?? []).map((zip) => (
+          {(org.service_area ?? []).map((zip) => (
             <span
               key={zip}
               className="inline-flex items-center rounded-lg border border-slate-700 bg-[#0B1120] px-3 py-1.5 text-sm text-slate-300"
@@ -231,7 +235,7 @@ function BusinessProfileTab() {
       <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
         <SectionHeading>Services Offered</SectionHeading>
         <div className="flex flex-wrap gap-2">
-          {(demoOrg.services_offered ?? []).map((service) => (
+          {(org.services_offered ?? []).map((service) => (
             <Tag key={service}>{service}</Tag>
           ))}
         </div>
@@ -255,7 +259,9 @@ function BusinessProfileTab() {
 /*  Tab: AI Agent                                                      */
 /* ------------------------------------------------------------------ */
 
-function AIAgentTab() {
+function AIAgentTab({ org }: { org: Organization | null }) {
+  if (!org) return <div className="text-sm text-slate-500">Loading organization data...</div>
+
   return (
     <div className="space-y-8">
       {/* Agent identity */}
@@ -264,11 +270,11 @@ function AIAgentTab() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <FieldLabel>Agent Name</FieldLabel>
-            <ReadOnlyInput value={demoOrg.ai_agent_name} icon={Bot} />
+            <ReadOnlyInput value={org.ai_agent_name} icon={Bot} />
           </div>
           <div>
             <FieldLabel>Escalation Phone</FieldLabel>
-            <ReadOnlyInput value={demoOrg.emergency_phone ?? ''} icon={Phone} />
+            <ReadOnlyInput value={org.emergency_phone ?? ''} icon={Phone} />
           </div>
         </div>
       </div>
@@ -276,9 +282,9 @@ function AIAgentTab() {
       {/* Greeting */}
       <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
         <SectionHeading>Greeting Message</SectionHeading>
-        <FieldLabel>What Sarah says when answering calls</FieldLabel>
+        <FieldLabel>What {org.ai_agent_name} says when answering calls</FieldLabel>
         <TextAreaReadOnly
-          value={`Good morning, Mike's Plumbing! This is Sarah, how can I help you today?`}
+          value={`Good morning, ${org.name}! This is ${org.ai_agent_name}, how can I help you today?`}
           rows={2}
         />
       </div>
@@ -287,10 +293,10 @@ function AIAgentTab() {
       <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
         <SectionHeading>Emergency Keywords</SectionHeading>
         <p className="mb-3 text-sm text-slate-400">
-          When callers mention these words, Sarah flags the call as urgent and can escalate immediately.
+          When callers mention these words, {org.ai_agent_name} flags the call as urgent and can escalate immediately.
         </p>
         <div className="flex flex-wrap gap-2">
-          {(demoOrg.emergency_keywords ?? []).map((kw) => (
+          {(org.emergency_keywords ?? []).map((kw) => (
             <span
               key={kw}
               className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-medium text-orange-400"
@@ -305,9 +311,9 @@ function AIAgentTab() {
       {/* Personality */}
       <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
         <SectionHeading>Personality Notes</SectionHeading>
-        <FieldLabel>How Sarah should sound and behave on calls</FieldLabel>
+        <FieldLabel>How {org.ai_agent_name} should sound and behave on calls</FieldLabel>
         <TextAreaReadOnly
-          value={demoOrg.ai_agent_personality ?? ''}
+          value={org.ai_agent_personality ?? ''}
           rows={4}
         />
       </div>
@@ -384,10 +390,12 @@ function NotificationsTab() {
 /*  Tab: Billing                                                       */
 /* ------------------------------------------------------------------ */
 
-function BillingTab() {
-  const minutesUsed = demoOrg.monthly_minutes_used
-  const minutesIncluded = demoOrg.monthly_minutes_included
-  const usagePercent = Math.round((minutesUsed / minutesIncluded) * 100)
+function BillingTab({ org }: { org: Organization | null }) {
+  if (!org) return <div className="text-sm text-slate-500">Loading billing data...</div>
+
+  const minutesUsed = org.monthly_minutes_used
+  const minutesIncluded = org.monthly_minutes_included
+  const usagePercent = minutesIncluded > 0 ? Math.round((minutesUsed / minutesIncluded) * 100) : 0
 
   return (
     <div className="space-y-8">
@@ -454,7 +462,7 @@ function BillingTab() {
 /*  Tab: Team                                                          */
 /* ------------------------------------------------------------------ */
 
-function TeamTab() {
+function TeamTab({ teamMembers }: { teamMembers: TeamMember[] }) {
   const roleColors: Record<string, string> = {
     'Owner / Master Plumber': 'bg-amber-500/10 text-amber-400',
     'Lead Technician': 'bg-blue-500/10 text-blue-400',
@@ -467,7 +475,7 @@ function TeamTab() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-slate-200">
-            Team Members ({demoTeam.length})
+            Team Members ({teamMembers.length})
           </h3>
           <p className="text-sm text-slate-400">
             Manage your team and their access levels.
@@ -481,7 +489,7 @@ function TeamTab() {
 
       {/* Team member cards */}
       <div className="space-y-4">
-        {demoTeam.map((member) => {
+        {teamMembers.map((member) => {
           const initials = member.name
             .split(' ')
             .map((n) => n[0])
@@ -570,13 +578,28 @@ function TeamTab() {
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const { organization } = useAuth()
+
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      const { data } = await supabase
+        .from('team_members')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (data) setTeamMembers(data as unknown as TeamMember[])
+    }
+    fetchTeam()
+  }, [])
 
   const tabContent: Record<Tab, React.ReactNode> = {
-    profile: <BusinessProfileTab />,
-    agent: <AIAgentTab />,
+    profile: <BusinessProfileTab org={organization} />,
+    agent: <AIAgentTab org={organization} />,
     notifications: <NotificationsTab />,
-    billing: <BillingTab />,
-    team: <TeamTab />,
+    billing: <BillingTab org={organization} />,
+    team: <TeamTab teamMembers={teamMembers} />,
   }
 
   return (

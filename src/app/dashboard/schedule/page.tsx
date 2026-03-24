@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   Calendar,
   List,
@@ -11,8 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
-import { demoAppointments, demoCustomers, demoUsers } from '@/lib/demo-data'
-import type { Appointment, AppointmentStatus } from '@/lib/types'
+import type { Appointment, AppointmentStatus, Customer, User as UserType } from '@/lib/types'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -74,15 +74,15 @@ const STATUS_MAP: Record<AppointmentStatus, StatusConfig> = {
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-function getCustomerName(customerId: string): string {
-  const customer = demoCustomers.find((c) => c.id === customerId)
+function getCustomerName(customerId: string, customers: Customer[]): string {
+  const customer = customers.find((c) => c.id === customerId)
   if (!customer) return 'Unknown'
   return `${customer.first_name} ${customer.last_name}`
 }
 
-function getAssigneeName(userId: string | null): string {
+function getAssigneeName(userId: string | null, users: UserType[]): string {
   if (!userId) return 'Unassigned'
-  const user = demoUsers.find((u) => u.id === userId)
+  const user = users.find((u) => u.id === userId)
   if (!user) return userId
   const parts = user.full_name.split(' ')
   return `${parts[0]} ${parts[1]?.[0] ?? ''}.`
@@ -233,9 +233,9 @@ function TodaySummary({ appointments }: { appointments: Appointment[] }) {
 /*  Appointment Row                                                    */
 /* ------------------------------------------------------------------ */
 
-function AppointmentRow({ appointment }: { appointment: Appointment }) {
-  const customerName = getCustomerName(appointment.customer_id)
-  const assigneeName = getAssigneeName(appointment.assigned_to)
+function AppointmentRow({ appointment, customers, users }: { appointment: Appointment; customers: Customer[]; users: UserType[] }) {
+  const customerName = getCustomerName(appointment.customer_id, customers)
+  const assigneeName = getAssigneeName(appointment.assigned_to, users)
   const dateLabel = formatDate(appointment.scheduled_date)
   const timeLabel = formatTimeRange(
     appointment.scheduled_time_start,
@@ -322,9 +322,9 @@ function AppointmentRow({ appointment }: { appointment: Appointment }) {
 /*  Mobile Appointment Card                                            */
 /* ------------------------------------------------------------------ */
 
-function AppointmentCard({ appointment }: { appointment: Appointment }) {
-  const customerName = getCustomerName(appointment.customer_id)
-  const assigneeName = getAssigneeName(appointment.assigned_to)
+function AppointmentCard({ appointment, customers, users }: { appointment: Appointment; customers: Customer[]; users: UserType[] }) {
+  const customerName = getCustomerName(appointment.customer_id, customers)
+  const assigneeName = getAssigneeName(appointment.assigned_to, users)
   const dateLabel = formatDate(appointment.scheduled_date)
   const timeLabel = formatTimeRange(
     appointment.scheduled_time_start,
@@ -390,10 +390,29 @@ function AppointmentCard({ appointment }: { appointment: Appointment }) {
 
 export default function SchedulePage() {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [users, setUsers] = useState<UserType[]>([])
+
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [apptRes, custRes, usersRes] = await Promise.all([
+        supabase.from('appointments').select('*').order('scheduled_date', { ascending: true }),
+        supabase.from('customers').select('*'),
+        supabase.from('users').select('*'),
+      ])
+      if (apptRes.data) setAppointments(apptRes.data as unknown as Appointment[])
+      if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
+      if (usersRes.data) setUsers(usersRes.data as unknown as UserType[])
+    }
+    fetchData()
+  }, [])
 
   // Sort appointments: today first, then by date ascending
   const sortedAppointments = useMemo(() => {
-    return [...demoAppointments].sort((a, b) => {
+    return [...appointments].sort((a, b) => {
       const aToday = isToday(a.scheduled_date) ? 0 : 1
       const bToday = isToday(b.scheduled_date) ? 0 : 1
       if (aToday !== bToday) return aToday - bToday
@@ -401,7 +420,7 @@ export default function SchedulePage() {
         return a.scheduled_date.localeCompare(b.scheduled_date)
       return a.scheduled_time_start.localeCompare(b.scheduled_time_start)
     })
-  }, [])
+  }, [appointments])
 
   return (
     <div className="flex h-full flex-col gap-6">
@@ -410,7 +429,7 @@ export default function SchedulePage() {
         <div>
           <h1 className="text-2xl font-bold text-[#F8FAFC]">Schedule</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {demoAppointments.length} appointments
+            {appointments.length} appointments
           </p>
         </div>
 
@@ -444,7 +463,7 @@ export default function SchedulePage() {
       </div>
 
       {/* ---- Today's Summary ---- */}
-      <TodaySummary appointments={demoAppointments} />
+      <TodaySummary appointments={appointments} />
 
       {/* ---- List View ---- */}
       {viewMode === 'list' && (
@@ -482,7 +501,7 @@ export default function SchedulePage() {
               </thead>
               <tbody>
                 {sortedAppointments.map((apt) => (
-                  <AppointmentRow key={apt.id} appointment={apt} />
+                  <AppointmentRow key={apt.id} appointment={apt} customers={customers} users={users} />
                 ))}
               </tbody>
             </table>
@@ -491,7 +510,7 @@ export default function SchedulePage() {
           {/* Mobile cards */}
           <div className="flex flex-col gap-3 md:hidden">
             {sortedAppointments.map((apt) => (
-              <AppointmentCard key={apt.id} appointment={apt} />
+              <AppointmentCard key={apt.id} appointment={apt} customers={customers} users={users} />
             ))}
           </div>
         </>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   Receipt,
   DollarSign,
@@ -14,8 +15,7 @@ import {
   XCircle,
   Bell,
 } from 'lucide-react'
-import { demoInvoices, demoCustomers } from '@/lib/demo-data'
-import type { InvoiceStatus } from '@/lib/types'
+import type { Invoice, Customer, InvoiceStatus } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,8 +52,8 @@ function formatDate(dateStr: string | null): string {
   })
 }
 
-function customerName(customerId: string): string {
-  const c = demoCustomers.find((cust) => cust.id === customerId)
+function customerName(customerId: string, customers: Customer[]): string {
+  const c = customers.find((cust) => cust.id === customerId)
   if (!c) return 'Unknown'
   return `${c.first_name} ${c.last_name}`
 }
@@ -142,45 +142,72 @@ function SummaryIcon({
 }
 
 // ---------------------------------------------------------------------------
-// Computed summary data
-// ---------------------------------------------------------------------------
-
-const unpaidInvoices = demoInvoices.filter(
-  (inv) => inv.status !== 'paid' && inv.status !== 'cancelled'
-)
-const outstandingAR = unpaidInvoices.reduce((sum, inv) => sum + (inv.amount - inv.amount_paid), 0)
-
-const overdueInvoices = demoInvoices.filter((inv) => inv.status === 'overdue')
-const overdueTotal = overdueInvoices.reduce((sum, inv) => sum + (inv.amount - inv.amount_paid), 0)
-
-const paidInvoices = demoInvoices.filter((inv) => inv.status === 'paid')
-const collectedThisMonth = paidInvoices.reduce(
-  (sum, inv) => sum + inv.amount_paid,
-  0
-)
-
-// Average days to pay for paid invoices
-const avgDaysToPay =
-  paidInvoices.length > 0
-    ? paidInvoices.reduce((sum, inv) => {
-        if (!inv.sent_at || !inv.paid_at) return sum
-        const sent = new Date(inv.sent_at).getTime()
-        const paid = new Date(inv.paid_at).getTime()
-        return sum + (paid - sent) / 86400000
-      }, 0) / paidInvoices.length
-    : 0
-
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function InvoicingPage() {
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [filter, setFilter] = useState<'all' | InvoiceStatus>('all')
+
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [invRes, custRes] = await Promise.all([
+        supabase.from('invoices').select('*').order('created_at', { ascending: false }),
+        supabase.from('customers').select('*'),
+      ])
+      if (invRes.data) setInvoices(invRes.data as unknown as Invoice[])
+      if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
+    }
+    fetchData()
+  }, [])
+
+  const unpaidInvoices = useMemo(
+    () => invoices.filter((inv) => inv.status !== 'paid' && inv.status !== 'cancelled'),
+    [invoices],
+  )
+  const outstandingAR = useMemo(
+    () => unpaidInvoices.reduce((sum, inv) => sum + (inv.amount - inv.amount_paid), 0),
+    [unpaidInvoices],
+  )
+
+  const overdueInvoices = useMemo(
+    () => invoices.filter((inv) => inv.status === 'overdue'),
+    [invoices],
+  )
+  const overdueTotal = useMemo(
+    () => overdueInvoices.reduce((sum, inv) => sum + (inv.amount - inv.amount_paid), 0),
+    [overdueInvoices],
+  )
+
+  const paidInvoices = useMemo(
+    () => invoices.filter((inv) => inv.status === 'paid'),
+    [invoices],
+  )
+  const collectedThisMonth = useMemo(
+    () => paidInvoices.reduce((sum, inv) => sum + inv.amount_paid, 0),
+    [paidInvoices],
+  )
+
+  const avgDaysToPay = useMemo(
+    () =>
+      paidInvoices.length > 0
+        ? paidInvoices.reduce((sum, inv) => {
+            if (!inv.sent_at || !inv.paid_at) return sum
+            const sent = new Date(inv.sent_at).getTime()
+            const paid = new Date(inv.paid_at).getTime()
+            return sum + (paid - sent) / 86400000
+          }, 0) / paidInvoices.length
+        : 0,
+    [paidInvoices],
+  )
 
   const filteredInvoices =
     filter === 'all'
-      ? demoInvoices
-      : demoInvoices.filter((inv) => inv.status === filter)
+      ? invoices
+      : invoices.filter((inv) => inv.status === filter)
 
   return (
     <div className="space-y-8">
@@ -288,8 +315,8 @@ export default function InvoicingPage() {
           const label = s === 'all' ? 'All' : STATUS_CONFIG[s].label
           const count =
             s === 'all'
-              ? demoInvoices.length
-              : demoInvoices.filter((i) => i.status === s).length
+              ? invoices.length
+              : invoices.filter((i) => i.status === s).length
           return (
             <button
               key={s}
@@ -369,7 +396,7 @@ export default function InvoicingPage() {
 
                     {/* Customer */}
                     <td className="whitespace-nowrap px-6 py-4 text-slate-300">
-                      {customerName(inv.customer_id)}
+                      {customerName(inv.customer_id, customers)}
                     </td>
 
                     {/* Amount */}

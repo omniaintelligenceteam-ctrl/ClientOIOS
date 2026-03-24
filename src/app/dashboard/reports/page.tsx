@@ -1,5 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/lib/auth-context'
 import {
   BarChart3,
   Sun,
@@ -20,7 +23,6 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
-import { demoMetrics } from '@/lib/demo-data'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,46 +92,123 @@ interface MetricDef {
   color: string
 }
 
-const keyMetrics: MetricDef[] = [
-  {
-    label: 'Answer Rate',
-    value: `${demoMetrics.answerRate}%`,
-    subtext: 'Industry avg: 72%',
-    icon: Phone,
-    color: '#2DD4BF',
-  },
-  {
-    label: 'Minutes Used',
-    value: `${demoMetrics.minutesUsed}/${demoMetrics.minutesIncluded}`,
-    subtext: `${Math.round((demoMetrics.minutesUsed / demoMetrics.minutesIncluded) * 100)}% of plan`,
-    icon: Clock,
-    color: '#60a5fa',
-  },
-  {
-    label: 'Pipeline Value',
-    value: `$${demoMetrics.pipelineValue.toLocaleString()}`,
-    subtext: `${demoMetrics.conversionRate}% conversion rate`,
-    icon: DollarSign,
-    color: '#f97316',
-  },
-  {
-    label: 'Review Average',
-    value: String(demoMetrics.reviewAverage),
-    subtext: `${demoMetrics.totalReviews} total reviews`,
-    icon: Star,
-    color: '#fbbf24',
-  },
-]
+interface ReportMetrics {
+  answerRate: number
+  minutesUsed: number
+  minutesIncluded: number
+  pipelineValue: number
+  conversionRate: number
+  reviewAverage: number
+  totalReviews: number
+  revenueThisMonth: number
+  revenueLastMonth: number
+}
 
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function ReportsPage() {
-  const revenueChange =
-    ((demoMetrics.revenueThisMonth - demoMetrics.revenueLastMonth) /
-      demoMetrics.revenueLastMonth) *
-    100
+  const { organization } = useAuth()
+  const supabase = createSupabaseBrowserClient()
+
+  const [metrics, setMetrics] = useState<ReportMetrics>({
+    answerRate: 0,
+    minutesUsed: 0,
+    minutesIncluded: 0,
+    pipelineValue: 0,
+    conversionRate: 0,
+    reviewAverage: 0,
+    totalReviews: 0,
+    revenueThisMonth: 0,
+    revenueLastMonth: 0,
+  })
+
+  useEffect(() => {
+    const load = async () => {
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
+
+      const [callsRes, leadsRes, reviewsRes, invoicesThisRes, invoicesLastRes] = await Promise.all([
+        supabase.from('calls').select('id, status'),
+        supabase.from('leads').select('id, status, estimated_value'),
+        supabase.from('reviews').select('id, rating'),
+        supabase.from('invoices').select('id, amount_paid, status').gte('paid_at', monthStart),
+        supabase.from('invoices').select('id, amount_paid, status').gte('paid_at', lastMonthStart).lt('paid_at', monthStart),
+      ])
+
+      const calls = callsRes.data || []
+      const totalCalls = calls.length
+      const answeredCalls = calls.filter((c: any) => c.status === 'answered').length
+      const answerRate = totalCalls > 0 ? Math.round((answeredCalls / totalCalls) * 100) : 0
+
+      const leads = leadsRes.data || []
+      const wonLeads = leads.filter((l: any) => l.status === 'won').length
+      const totalLeads = leads.length
+      const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0
+      const pipelineValue = leads
+        .filter((l: any) => !['won', 'lost'].includes(l.status))
+        .reduce((s: number, l: any) => s + (l.estimated_value || 0), 0)
+
+      const reviews = reviewsRes.data || []
+      const totalReviews = reviews.length
+      const reviewAverage = totalReviews > 0
+        ? Math.round((reviews.reduce((s: number, r: any) => s + r.rating, 0) / totalReviews) * 10) / 10
+        : 0
+
+      const revenueThisMonth = (invoicesThisRes.data || []).reduce((s: number, i: any) => s + (i.amount_paid || 0), 0)
+      const revenueLastMonth = (invoicesLastRes.data || []).reduce((s: number, i: any) => s + (i.amount_paid || 0), 0)
+
+      setMetrics({
+        answerRate,
+        minutesUsed: organization?.monthly_minutes_used ?? 0,
+        minutesIncluded: organization?.monthly_minutes_included ?? 0,
+        pipelineValue,
+        conversionRate,
+        reviewAverage,
+        totalReviews,
+        revenueThisMonth,
+        revenueLastMonth,
+      })
+    }
+    load()
+  }, [organization])
+
+  const keyMetrics: MetricDef[] = [
+    {
+      label: 'Answer Rate',
+      value: `${metrics.answerRate}%`,
+      subtext: 'Industry avg: 72%',
+      icon: Phone,
+      color: '#2DD4BF',
+    },
+    {
+      label: 'Minutes Used',
+      value: `${metrics.minutesUsed}/${metrics.minutesIncluded}`,
+      subtext: metrics.minutesIncluded > 0 ? `${Math.round((metrics.minutesUsed / metrics.minutesIncluded) * 100)}% of plan` : '0% of plan',
+      icon: Clock,
+      color: '#60a5fa',
+    },
+    {
+      label: 'Pipeline Value',
+      value: `$${metrics.pipelineValue.toLocaleString()}`,
+      subtext: `${metrics.conversionRate}% conversion rate`,
+      icon: DollarSign,
+      color: '#f97316',
+    },
+    {
+      label: 'Review Average',
+      value: String(metrics.reviewAverage),
+      subtext: `${metrics.totalReviews} total reviews`,
+      icon: Star,
+      color: '#fbbf24',
+    },
+  ]
+
+  const revenueChange = metrics.revenueLastMonth > 0
+    ? ((metrics.revenueThisMonth - metrics.revenueLastMonth) / metrics.revenueLastMonth) * 100
+    : 0
 
   return (
     <div className="space-y-8">
@@ -209,7 +288,7 @@ export default function ReportsPage() {
               <p className="text-sm text-slate-400">Revenue This Month</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-slate-100">
-                  ${demoMetrics.revenueThisMonth.toLocaleString()}
+                  ${metrics.revenueThisMonth.toLocaleString()}
                 </span>
                 <span className="text-sm font-semibold text-green-400">
                   +{revenueChange.toFixed(1)}%

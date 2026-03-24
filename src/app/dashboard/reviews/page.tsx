@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect, useMemo } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   Star,
   StarHalf,
@@ -13,8 +15,7 @@ import {
   Globe,
   Facebook,
 } from 'lucide-react'
-import { demoReviews } from '@/lib/demo-data'
-import type { ReviewPlatform, ReviewResponseStatus, Sentiment } from '@/lib/types'
+import type { Review, ReviewPlatform, ReviewResponseStatus, Sentiment } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -242,12 +243,33 @@ const platformBreakdown = [
 // ---------------------------------------------------------------------------
 
 export default function ReviewsPage() {
-  const overallRating = 4.4
-  const totalReviews = 157
-  const respondedCount = demoReviews.filter(
-    (r) => r.response_status === 'posted' || r.response_status === 'approved'
-  ).length
-  const responseRate = Math.round((respondedCount / demoReviews.length) * 100)
+  const [reviews, setReviews] = useState<Review[]>([])
+
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await supabase
+        .from('reviews')
+        .select('*')
+        .order('review_date', { ascending: false })
+      if (data) setReviews(data as unknown as Review[])
+    }
+    fetchData()
+  }, [])
+
+  const overallRating = useMemo(() => {
+    if (reviews.length === 0) return 0
+    return Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
+  }, [reviews])
+
+  const totalReviews = reviews.length
+
+  const respondedCount = useMemo(
+    () => reviews.filter((r) => r.response_status === 'posted' || r.response_status === 'approved').length,
+    [reviews],
+  )
+  const responseRate = totalReviews > 0 ? Math.round((respondedCount / totalReviews) * 100) : 0
 
   return (
     <div className="space-y-8">
@@ -306,7 +328,7 @@ export default function ReviewsPage() {
             {responseRate}%
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {respondedCount} of {demoReviews.length} reviews responded
+            {respondedCount} of {reviews.length} reviews responded
           </p>
         </div>
       </div>
@@ -360,7 +382,7 @@ export default function ReviewsPage() {
           Recent Reviews
         </h2>
         <div className="space-y-4">
-          {demoReviews.map((review) => {
+          {reviews.map((review) => {
             const showActions =
               review.response_status === 'pending' ||
               review.response_status === 'drafted'

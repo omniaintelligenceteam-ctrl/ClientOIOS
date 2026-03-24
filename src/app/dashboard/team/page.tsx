@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   HardHat,
   Phone,
@@ -11,7 +13,7 @@ import {
   CheckCircle2,
   Truck,
 } from 'lucide-react'
-import { demoTeam } from '@/lib/demo-data'
+import type { TeamMember } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -109,6 +111,21 @@ function ScoreBadge({ score }: { score: number }) {
 // ---------------------------------------------------------------------------
 
 export default function TeamPage() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data } = await supabase
+        .from('team_members')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (data) setTeamMembers(data as unknown as TeamMember[])
+    }
+    fetchData()
+  }, [])
+
   return (
     <div className="space-y-8">
       {/* ── Header ──────────────────────────────────────────────────── */}
@@ -118,13 +135,13 @@ export default function TeamPage() {
           Team Management
         </h1>
         <p className="text-slate-400 mt-1">
-          {demoTeam.length} members
+          {teamMembers.length} members
         </p>
       </div>
 
       {/* ── Team Cards ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {demoTeam.map((member) => {
+        {teamMembers.map((member) => {
           const color = roleColor(member.role)
           const memberInitials = initials(member.name)
 
