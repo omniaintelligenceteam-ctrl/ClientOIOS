@@ -260,6 +260,35 @@ export interface ChatMessage {
   created_at: string
 }
 
+// Notification types
+export type NotificationType = 'call_answered' | 'lead_created' | 'briefing_ready' | 'invoice_paid' | 'review_received' | 'automation_completed' | 'system'
+
+export interface AppNotification {
+  id: string
+  organization_id: string
+  user_id: string | null
+  type: NotificationType
+  title: string
+  body: string
+  icon: string | null
+  href: string | null
+  metadata: Record<string, unknown>
+  read: boolean
+  pushed: boolean
+  created_at: string
+}
+
+export interface PushSubscription {
+  id: string
+  user_id: string
+  organization_id: string
+  endpoint: string
+  keys_p256dh: string
+  keys_auth: string
+  user_agent: string | null
+  created_at: string
+}
+
 // Supabase Database type (simplified for direct use)
 export interface Database {
   public: {

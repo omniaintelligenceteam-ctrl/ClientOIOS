@@ -13,17 +13,19 @@ export async function GET() {
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { organization_id: string } | null }
 
     if (!profile) {
       return Response.json({ error: 'Profile not found' }, { status: 401 })
     }
 
+    const orgId = profile.organization_id
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: notifications, error } = await (supabase as any)
       .from('notifications')
       .select('*')
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', orgId)
       .or(`user_id.eq.${user.id},user_id.is.null`)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -48,13 +50,13 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
+    const { data: profile2 } = await supabase
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { organization_id: string } | null }
 
-    if (!profile) {
+    if (!profile2) {
       return Response.json({ error: 'Profile not found' }, { status: 401 })
     }
 
@@ -70,7 +72,7 @@ export async function PATCH(request: Request) {
       .from('notifications')
       .update({ read: true })
       .in('id', ids)
-      .eq('organization_id', profile.organization_id)
+      .eq('organization_id', profile2.organization_id)
 
     if (error) {
       return Response.json({ error: 'Failed to mark notifications as read' }, { status: 500 })

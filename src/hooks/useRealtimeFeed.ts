@@ -33,7 +33,7 @@ export function useRealtimeFeed(
       .select('*')
       .order('created_at', { ascending: false })
       .limit(15)
-      .then(({ data }) => {
+      .then(({ data }: { data: unknown[] | null }) => {
         if (data) setActivities(data as unknown as ActivityFeedItem[])
       })
 
@@ -70,7 +70,7 @@ export function useRealtimeFeed(
           options.onAppointmentInsert?.()
         }
       )
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         setConnected(status === 'SUBSCRIBED')
       })
 

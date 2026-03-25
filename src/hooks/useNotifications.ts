@@ -64,8 +64,8 @@ export function useNotifications(organizationId: string, userId: string): UseNot
           table: 'notifications',
           filter: `organization_id=eq.${organizationId}`,
         },
-        (payload) => {
-          const newNotification = payload.new as AppNotification
+        (payload: { new: Record<string, unknown> }) => {
+          const newNotification = payload.new as unknown as AppNotification
           // Only include if targeted to this user or broadcast
           if (newNotification.user_id === null || newNotification.user_id === userId) {
             setNotifications((prev) => [newNotification, ...prev])

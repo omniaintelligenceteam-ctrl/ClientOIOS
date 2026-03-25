@@ -1,5 +1,11 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "crons": [
+    {
+      "path": "/api/cron/morning-briefing",
+      "schedule": "30 10,11,12,13 * * *"
+    }
+  ]
 }

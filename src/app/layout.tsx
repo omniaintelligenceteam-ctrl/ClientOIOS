@@ -12,11 +12,21 @@ export const metadata: Metadata = {
   title: { default: 'OIOS Dashboard', template: '%s | OIOS' },
   description: 'OIOS — Your AI-Powered Operations Dashboard',
   icons: { icon: '/favicon.ico' },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'OIOS',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0B1120',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

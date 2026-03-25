@@ -13,11 +13,13 @@ export async function POST(request: Request) {
       .from('users')
       .select('organization_id')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { organization_id: string } | null }
 
     if (!profile) {
       return Response.json({ error: 'Profile not found' }, { status: 401 })
     }
+
+    const orgId = profile.organization_id
 
     const body = await request.json()
     const { endpoint, keys, userAgent } = body as {
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
       .upsert(
         {
           user_id: user.id,
-          organization_id: profile.organization_id,
+          organization_id: orgId,
           endpoint,
           p256dh: keys.p256dh,
           auth: keys.auth,

@@ -19,7 +19,6 @@ import {
   Settings,
   Shield,
   Search,
-  Bell,
   Plus,
   Lock,
   LogOut,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react'
 import { ChatProvider } from '@/components/dashboard/chat/chat-provider'
 import { ChatFAB } from '@/components/dashboard/chat/chat-fab'
+import { NotificationCenter } from '@/components/dashboard/notification-center'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -82,7 +82,6 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 // Tier is loaded from auth context in DashboardShell
-const NOTIFICATION_COUNT = 3
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -419,19 +418,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Notification bell */}
-          <button
-            type="button"
-            className="relative rounded-md p-2 text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
-            aria-label={`${NOTIFICATION_COUNT} notifications`}
-          >
-            <Bell size={20} />
-            {NOTIFICATION_COUNT > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#f97316] px-1 text-[10px] font-bold leading-none text-white">
-                {NOTIFICATION_COUNT}
-              </span>
-            )}
-          </button>
+          {/* Notification center */}
+          <NotificationCenter
+            organizationId={organization?.id || ''}
+            userId={profile?.id || ''}
+          />
 
           {/* Quick action */}
           <button

@@ -5,24 +5,18 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/lib/auth-context'
 import {
   BarChart3,
-  Sun,
   Phone,
-  Target,
-  Calendar,
   DollarSign,
-  TrendingUp,
   ArrowRight,
   FileText,
   PieChart,
   Users,
   Filter,
   LineChart,
-  Award,
   Clock,
   Star,
-  CheckCircle2,
-  AlertCircle,
 } from 'lucide-react'
+import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -224,101 +218,7 @@ export default function ReportsPage() {
       </div>
 
       {/* ── Morning Briefing ────────────────────────────────────────── */}
-      <div
-        className="bg-[#111827] rounded-2xl p-6 border-2 border-[#2DD4BF]/30 relative overflow-hidden"
-      >
-        {/* Subtle glow */}
-        <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-[#2DD4BF]/5 blur-3xl" />
-
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2DD4BF]/15">
-              <Sun className="h-5 w-5 text-[#2DD4BF]" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-100">
-                Morning Briefing
-              </h2>
-              <p className="text-sm text-slate-400">
-                Good morning, Mike. Here&apos;s your daily briefing.
-              </p>
-            </div>
-          </div>
-
-          {/* Yesterday stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-[rgba(148,163,184,0.04)] border border-[rgba(148,163,184,0.08)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Phone className="h-4 w-4 text-[#2DD4BF]" />
-                <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">
-                  Yesterday
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-slate-100">6</p>
-              <p className="text-xs text-slate-400 mt-0.5">calls answered</p>
-            </div>
-            <div className="bg-[rgba(148,163,184,0.04)] border border-[rgba(148,163,184,0.08)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Target className="h-4 w-4 text-[#f97316]" />
-                <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">
-                  Leads
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-slate-100">2</p>
-              <p className="text-xs text-slate-400 mt-0.5">captured</p>
-            </div>
-            <div className="bg-[rgba(148,163,184,0.04)] border border-[rgba(148,163,184,0.08)] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="h-4 w-4 text-[#60a5fa]" />
-                <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">
-                  Booked
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-slate-100">1</p>
-              <p className="text-xs text-slate-400 mt-0.5">appointment</p>
-            </div>
-          </div>
-
-          {/* Revenue highlight */}
-          <div className="flex items-center gap-4 mb-6 bg-[rgba(148,163,184,0.04)] border border-[rgba(148,163,184,0.08)] rounded-xl p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-400/10 flex-shrink-0">
-              <TrendingUp className="h-6 w-6 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Revenue This Month</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-slate-100">
-                  ${metrics.revenueThisMonth.toLocaleString()}
-                </span>
-                <span className="text-sm font-semibold text-green-400">
-                  +{revenueChange.toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action items */}
-          <div>
-            <p className="text-xs uppercase tracking-wider text-slate-500 font-medium mb-3">
-              Action Items
-            </p>
-            <div className="space-y-2">
-              <div className="flex items-start gap-3 text-sm">
-                <AlertCircle className="h-4 w-4 text-[#f97316] flex-shrink-0 mt-0.5" />
-                <span className="text-slate-300">
-                  Follow up with <span className="font-medium text-[#f97316]">Brandon Stewart</span> (sewer line $3,500)
-                </span>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-[#2DD4BF] flex-shrink-0 mt-0.5" />
-                <span className="text-slate-300">
-                  Review <span className="font-medium text-[#2DD4BF]">Maria&apos;s</span> 5-star Google review
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MorningBriefingCard organizationId={organization?.id || ''} />
 
       {/* ── Key Metrics ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

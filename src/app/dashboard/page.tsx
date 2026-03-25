@@ -15,6 +15,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/lib/auth-context'
 import { useRealtimeFeed } from '@/hooks/useRealtimeFeed'
 import { LiveActivityFeed } from '@/components/dashboard/live-activity-feed'
+import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
 
 // ---------------------------------------------------------------------------
 // Subcomponents
@@ -131,6 +132,9 @@ export default function CommandCenterPage() {
         <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
         <p className="text-slate-400 mt-1">{greeting}, {firstName}. Here&apos;s what&apos;s happening.</p>
       </div>
+
+      {/* Morning Briefing */}
+      <MorningBriefingCard organizationId={orgId} />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
