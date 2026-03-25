@@ -8,6 +8,7 @@ import {
   Building2,
   Bot,
   Bell,
+  Zap,
   CreditCard,
   Users,
   Save,
@@ -27,7 +28,7 @@ import {
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type Tab = 'profile' | 'agent' | 'notifications' | 'billing' | 'team'
+type Tab = 'profile' | 'agent' | 'notifications' | 'automations' | 'billing' | 'team'
 
 interface TabDef {
   id: Tab
@@ -43,6 +44,7 @@ const TABS: TabDef[] = [
   { id: 'profile', label: 'Business Profile', icon: Building2 },
   { id: 'agent', label: 'AI Agent', icon: Bot },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'automations', label: 'Automations', icon: Zap },
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'team', label: 'Team', icon: Users },
 ]
@@ -598,6 +600,21 @@ export default function SettingsPage() {
     profile: <BusinessProfileTab org={organization} />,
     agent: <AIAgentTab org={organization} />,
     notifications: <NotificationsTab />,
+    automations: (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+          <h3 className="mb-2 text-base font-semibold text-slate-200">Automation Settings</h3>
+          <p className="mb-4 text-sm text-slate-400">Configure automated follow-ups, review requests, invoice reminders, and more.</p>
+          <a
+            href="/dashboard/settings/automations"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600/20 border border-teal-500/30 px-4 py-2 text-sm font-medium text-teal-400 hover:bg-teal-600/30 transition-colors"
+          >
+            <Zap size={16} />
+            Manage Automations
+          </a>
+        </div>
+      </div>
+    ),
     billing: <BillingTab org={organization} />,
     team: <TeamTab teamMembers={teamMembers} />,
   }

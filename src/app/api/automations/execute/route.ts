@@ -1,0 +1,347 @@
+// ============================================================
+// POST /api/automations/execute
+// Internal endpoint — secured by CRON_SECRET Bearer token.
+// Fetches a queue item, generates email via Claude Haiku,
+// sends via Resend, logs to automation_log, updates queue
+// status, and creates a notification.
+// ============================================================
+
+import { createClient } from '@supabase/supabase-js'
+import {
+  follow_up_email,
+  review_request,
+  invoice_reminder,
+  lead_nurture,
+  appointment_reminder,
+  type AutomationContext,
+} from '@/lib/automation-templates'
+
+// ---------------------------------------------------------------------------
+// Service-role Supabase client (bypasses RLS for internal execution)
+// ---------------------------------------------------------------------------
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Template dispatcher
+// ---------------------------------------------------------------------------
+
+function getTemplate(actionType: string, context: AutomationContext) {
+  switch (actionType) {
+    case 'follow_up_email':
+      return follow_up_email(context)
+    case 'review_request':
+      return review_request(context)
+    case 'invoice_reminder':
+      return invoice_reminder(context)
+    case 'lead_nurture':
+      return lead_nurture(context)
+    case 'appointment_reminder':
+      return appointment_reminder(context)
+    default:
+      return null
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Generate email HTML using Claude Haiku
+// ---------------------------------------------------------------------------
+
+async function generateEmailHtml(bodyPrompt: string): Promise<string> {
+  const Anthropic = (await import('@anthropic-ai/sdk')).default
+  const client = new Anthropic()
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 500,
+    messages: [
+      {
+        role: 'user',
+        content: bodyPrompt,
+      },
+    ],
+  })
+
+  const block = response.content[0]
+  if (block.type !== 'text') {
+    throw new Error('Claude returned a non-text response block')
+  }
+
+  return block.text
+}
+
+// ---------------------------------------------------------------------------
+// Send email via Resend
+// ---------------------------------------------------------------------------
+
+async function sendEmail(params: {
+  to: string
+  subject: string
+  html: string
+}): Promise<{ id?: string; error?: string }> {
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'noreply@getoios.com',
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    }),
+  })
+
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({}))
+    return { error: body?.message || `Resend error ${resp.status}` }
+  }
+
+  const body = await resp.json()
+  return { id: body?.id }
+}
+
+// ---------------------------------------------------------------------------
+// POST handler
+// ---------------------------------------------------------------------------
+
+export async function POST(request: Request) {
+  // ── Security: verify CRON_SECRET Bearer token ─────────────────────────
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret) {
+    const authHeader = request.headers.get('authorization')
+    const isDev = process.env.NODE_ENV === 'development'
+    if (!isDev && authHeader !== `Bearer ${cronSecret}`) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const svc = getSupabase() as any
+
+  let queueItemId: string | undefined
+
+  try {
+    const body = await request.json() as { queue_item_id: string }
+    queueItemId = body.queue_item_id
+
+    if (!queueItemId) {
+      return Response.json({ error: 'queue_item_id is required' }, { status: 400 })
+    }
+
+    // ── 1. Fetch the queue item ─────────────────────────────────────────
+    const { data: queueItem, error: queueError } = await svc
+      .from('automation_queue')
+      .select('*')
+      .eq('id', queueItemId)
+      .single()
+
+    if (queueError || !queueItem) {
+      return Response.json({ error: 'Queue item not found' }, { status: 404 })
+    }
+
+    if (queueItem.status !== 'approved' && queueItem.status !== 'pending') {
+      return Response.json(
+        { error: `Queue item status is "${queueItem.status}" — only approved or pending items can be executed` },
+        { status: 400 }
+      )
+    }
+
+    // ── 2. Fetch organization name for context ──────────────────────────
+    const { data: org } = await svc
+      .from('organizations')
+      .select('name')
+      .eq('id', queueItem.organization_id)
+      .single()
+
+    const businessName: string = org?.name ?? 'OIOS Business'
+
+    // ── 3. Build context from queue item payload ────────────────────────
+    const payload = (queueItem.payload ?? {}) as Record<string, unknown>
+    const context: AutomationContext = {
+      businessName,
+      customerName: (payload.customer_name as string) || 'Valued Customer',
+      customerEmail: (payload.customer_email as string) || '',
+      metadata: (payload.metadata as Record<string, unknown>) ?? payload,
+    }
+
+    const targetContact = context.customerEmail
+    const targetName = context.customerName
+
+    if (!targetContact) {
+      const errMsg = 'No customer email found in queue item payload'
+      console.error(`[automations/execute] ${errMsg} — queue item ${queueItemId}`)
+
+      await svc
+        .from('automation_queue')
+        .update({ status: 'failed', error: errMsg, executed_at: new Date().toISOString() })
+        .eq('id', queueItemId)
+
+      await svc.from('automation_log').insert({
+        organization_id: queueItem.organization_id,
+        queue_item_id: queueItemId,
+        action_type: queueItem.action_type,
+        status: 'failed',
+        target_name: targetName,
+        target_contact: '',
+        details: errMsg,
+      })
+
+      return Response.json({ error: errMsg }, { status: 422 })
+    }
+
+    // ── 4. Get email template ───────────────────────────────────────────
+    const template = getTemplate(queueItem.action_type, context)
+    if (!template) {
+      const errMsg = `Unknown action_type: ${queueItem.action_type}`
+
+      await svc
+        .from('automation_queue')
+        .update({ status: 'failed', error: errMsg, executed_at: new Date().toISOString() })
+        .eq('id', queueItemId)
+
+      await svc.from('automation_log').insert({
+        organization_id: queueItem.organization_id,
+        queue_item_id: queueItemId,
+        action_type: queueItem.action_type,
+        status: 'failed',
+        target_name: targetName,
+        target_contact: targetContact,
+        details: errMsg,
+      })
+
+      return Response.json({ error: errMsg }, { status: 400 })
+    }
+
+    // ── 5. Generate email HTML via Claude Haiku ─────────────────────────
+    let emailHtml: string
+    try {
+      emailHtml = await generateEmailHtml(template.bodyPrompt)
+    } catch (claudeErr) {
+      const errMsg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      console.error('[automations/execute] Claude generation failed:', claudeErr)
+
+      await svc
+        .from('automation_queue')
+        .update({ status: 'failed', error: `Claude error: ${errMsg}`, executed_at: new Date().toISOString() })
+        .eq('id', queueItemId)
+
+      await svc.from('automation_log').insert({
+        organization_id: queueItem.organization_id,
+        queue_item_id: queueItemId,
+        action_type: queueItem.action_type,
+        status: 'failed',
+        target_name: targetName,
+        target_contact: targetContact,
+        details: `Claude generation failed: ${errMsg}`,
+      })
+
+      return Response.json({ error: 'Email generation failed', detail: errMsg }, { status: 500 })
+    }
+
+    // ── 6. Send email via Resend ─────────────────────────────────────────
+    const sendResult = await sendEmail({
+      to: targetContact,
+      subject: template.subject,
+      html: emailHtml,
+    })
+
+    const now = new Date().toISOString()
+
+    if (sendResult.error) {
+      console.error('[automations/execute] Resend error:', sendResult.error)
+
+      await svc
+        .from('automation_queue')
+        .update({
+          status: 'failed',
+          error: `Send error: ${sendResult.error}`,
+          executed_at: now,
+        })
+        .eq('id', queueItemId)
+
+      await svc.from('automation_log').insert({
+        organization_id: queueItem.organization_id,
+        queue_item_id: queueItemId,
+        action_type: queueItem.action_type,
+        status: 'failed',
+        target_name: targetName,
+        target_contact: targetContact,
+        details: `Resend error: ${sendResult.error}`,
+      })
+
+      // Notify org about failure
+      await svc.from('notifications').insert({
+        organization_id: queueItem.organization_id,
+        user_id: null,
+        type: 'automation_completed',
+        title: 'Automation failed to send',
+        body: `Could not send "${queueItem.action_type}" email to ${targetName}: ${sendResult.error}`,
+        icon: 'AlertCircle',
+        href: '/dashboard/automations',
+      })
+
+      return Response.json({ error: 'Email delivery failed', detail: sendResult.error }, { status: 502 })
+    }
+
+    // ── 7. Success: update queue item, log, notify ───────────────────────
+    await svc
+      .from('automation_queue')
+      .update({ status: 'executed', executed_at: now })
+      .eq('id', queueItemId)
+
+    await svc.from('automation_log').insert({
+      organization_id: queueItem.organization_id,
+      queue_item_id: queueItemId,
+      action_type: queueItem.action_type,
+      status: 'sent',
+      target_name: targetName,
+      target_contact: targetContact,
+      details: `Email sent via Resend${sendResult.id ? ` (id: ${sendResult.id})` : ''}`,
+    })
+
+    await svc.from('notifications').insert({
+      organization_id: queueItem.organization_id,
+      user_id: null,
+      type: 'automation_completed',
+      title: 'Automation email sent',
+      body: `"${queueItem.action_type}" email was sent to ${targetName} (${targetContact})`,
+      icon: 'CheckCircle',
+      href: '/dashboard/automations',
+    })
+
+    console.log(`[automations/execute] Success — queue item ${queueItemId} executed, Resend id: ${sendResult.id}`)
+
+    return Response.json({
+      success: true,
+      queue_item_id: queueItemId,
+      resend_id: sendResult.id ?? null,
+      action_type: queueItem.action_type,
+      sent_to: targetContact,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[automations/execute] Unexpected error:', err)
+
+    // Best-effort: mark queue item as failed if we have its id
+    if (queueItemId) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (getSupabase() as any)
+          .from('automation_queue')
+          .update({ status: 'failed', error: message, executed_at: new Date().toISOString() })
+          .eq('id', queueItemId)
+      } catch {
+        // swallow — original error is more important
+      }
+    }
+
+    return Response.json({ error: 'Internal server error', detail: message }, { status: 500 })
+  }
+}

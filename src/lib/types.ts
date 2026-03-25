@@ -289,6 +289,52 @@ export interface PushSubscription {
   created_at: string
 }
 
+// Automation types
+export type AutomationActionType = 'follow_up_email' | 'review_request' | 'invoice_reminder' | 'lead_nurture' | 'appointment_reminder'
+export type AutomationMode = 'auto' | 'approve'
+export type AutomationQueueStatus = 'pending' | 'approved' | 'executed' | 'rejected' | 'failed'
+export type AutomationLogStatus = 'sent' | 'delivered' | 'failed' | 'opened' | 'clicked'
+
+export interface AutomationRule {
+  id: string
+  organization_id: string
+  action_type: AutomationActionType
+  mode: AutomationMode
+  enabled: boolean
+  config: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
+export interface AutomationQueueItem {
+  id: string
+  organization_id: string
+  rule_id: string
+  action_type: AutomationActionType
+  status: AutomationQueueStatus
+  target_entity_type: string
+  target_entity_id: string
+  payload: Record<string, unknown>
+  scheduled_for: string | null
+  approved_by: string | null
+  approved_at: string | null
+  executed_at: string | null
+  error: string | null
+  created_at: string
+}
+
+export interface AutomationLogEntry {
+  id: string
+  organization_id: string
+  queue_item_id: string | null
+  action_type: AutomationActionType
+  status: AutomationLogStatus
+  target_name: string | null
+  target_contact: string | null
+  details: string | null
+  created_at: string
+}
+
 // Supabase Database type (simplified for direct use)
 export interface Database {
   public: {

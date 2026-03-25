@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useRealtimeFeed } from '@/hooks/useRealtimeFeed'
 import { LiveActivityFeed } from '@/components/dashboard/live-activity-feed'
 import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
+import { ApprovalQueue } from '@/components/dashboard/approval-queue'
 
 // ---------------------------------------------------------------------------
 // Subcomponents
@@ -171,6 +172,9 @@ export default function CommandCenterPage() {
 
         {/* Right Column */}
         <div className="space-y-6">
+          {/* Approval Queue */}
+          <ApprovalQueue organizationId={orgId} />
+
           {/* Quick Actions */}
           <div className={cardClass}>
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
