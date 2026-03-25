@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
+import { EmptyState } from '@/components/dashboard/empty-state'
 import type { Appointment, AppointmentStatus, Customer, User as UserType } from '@/lib/types'
 
 /* ------------------------------------------------------------------ */
@@ -393,6 +394,7 @@ export default function SchedulePage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [users, setUsers] = useState<UserType[]>([])
+  const [loading, setLoading] = useState(true)
 
   const supabase = createSupabaseBrowserClient()
 
@@ -406,6 +408,7 @@ export default function SchedulePage() {
       if (apptRes.data) setAppointments(apptRes.data as unknown as Appointment[])
       if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
       if (usersRes.data) setUsers(usersRes.data as unknown as UserType[])
+      setLoading(false)
     }
     fetchData()
   }, [])
@@ -468,7 +471,17 @@ export default function SchedulePage() {
       {/* ---- List View ---- */}
       {viewMode === 'list' && (
         <>
+          {/* Empty State */}
+          {!loading && appointments.length === 0 && (
+            <EmptyState
+              icon={Calendar}
+              title="No appointments yet"
+              description="Appointments will appear when booked via calls or the scheduling system."
+            />
+          )}
+
           {/* Desktop table */}
+          {appointments.length > 0 && (<>
           <div className="hidden overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] md:block">
             <table className="w-full min-w-[900px] text-left">
               <thead>
@@ -513,6 +526,7 @@ export default function SchedulePage() {
               <AppointmentCard key={apt.id} appointment={apt} customers={customers} users={users} />
             ))}
           </div>
+          </>)}
         </>
       )}
 

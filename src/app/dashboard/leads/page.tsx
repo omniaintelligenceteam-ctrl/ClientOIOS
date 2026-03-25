@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Lead, LeadSource, LeadStatus } from '@/lib/types'
+import { EmptyState } from '@/components/dashboard/empty-state'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -412,6 +413,15 @@ export default function LeadsPipelinePage() {
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-[#2DD4BF]" />
         </div>
+      )}
+
+      {/* ---- Empty State ---- */}
+      {!loading && leads.length === 0 && (
+        <EmptyState
+          icon={Target}
+          title="No leads yet"
+          description="Leads are automatically created when callers express interest. They'll appear here."
+        />
       )}
 
       {/* ---- Board View ---- */}

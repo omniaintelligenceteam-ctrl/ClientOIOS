@@ -15,6 +15,7 @@ import {
   XCircle,
   Bell,
 } from 'lucide-react'
+import { EmptyState } from '@/components/dashboard/empty-state'
 import type { Invoice, Customer, InvoiceStatus } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
@@ -340,7 +341,17 @@ export default function InvoicingPage() {
         })}
       </div>
 
+      {/* ── Empty State ──────────────────────────────────────────────── */}
+      {invoices.length === 0 && (
+        <EmptyState
+          icon={Receipt}
+          title="No invoices yet"
+          description="Create your first invoice to start tracking payments and revenue."
+        />
+      )}
+
       {/* ── Invoice Table ────────────────────────────────────────────── */}
+      {invoices.length > 0 && (
       <div
         className={`${cardClass} overflow-hidden !p-0`}
       >
@@ -464,6 +475,7 @@ export default function InvoicingPage() {
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

@@ -15,6 +15,7 @@ import {
   Globe,
   Facebook,
 } from 'lucide-react'
+import { EmptyState } from '@/components/dashboard/empty-state'
 import type { Review, ReviewPlatform, ReviewResponseStatus, Sentiment } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
@@ -381,6 +382,13 @@ export default function ReviewsPage() {
         <h2 className="mb-4 text-lg font-semibold text-[#F8FAFC]">
           Recent Reviews
         </h2>
+        {reviews.length === 0 && (
+          <EmptyState
+            icon={Star}
+            title="No reviews tracked yet"
+            description="Reviews will appear here as customers leave feedback. Connect your Google Business Profile for automatic tracking."
+          />
+        )}
         <div className="space-y-4">
           {reviews.map((review) => {
             const showActions =

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Customer } from '@/lib/types'
+import { EmptyState } from '@/components/dashboard/empty-state'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -487,6 +488,17 @@ export default function CustomersPage() {
 
       {/* ---- Stats Row ---- */}
       <StatsRow customers={customers} />
+
+      {/* ---- Empty State ---- */}
+      {!loading && customers.length === 0 && (
+        <EmptyState
+          icon={Users}
+          title="No customers yet"
+          description="Import your existing customers or let OIOS build your directory from calls."
+          actionLabel="Import Customers"
+          actionHref="#"
+        />
+      )}
 
       {/* ---- Desktop Table ---- */}
       <div className="hidden overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] md:block">

@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Truck,
 } from 'lucide-react'
+import { EmptyState } from '@/components/dashboard/empty-state'
 import type { TeamMember } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
@@ -112,6 +113,7 @@ function ScoreBadge({ score }: { score: number }) {
 
 export default function TeamPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(true)
 
   const supabase = createSupabaseBrowserClient()
 
@@ -122,6 +124,7 @@ export default function TeamPage() {
         .select('*')
         .order('created_at', { ascending: false })
       if (data) setTeamMembers(data as unknown as TeamMember[])
+      setLoading(false)
     }
     fetchData()
   }, [])
@@ -138,6 +141,15 @@ export default function TeamPage() {
           {teamMembers.length} members
         </p>
       </div>
+
+      {/* ── Empty State ─────────────────────────────────────────────── */}
+      {!loading && teamMembers.length === 0 && (
+        <EmptyState
+          icon={HardHat}
+          title="No team members yet"
+          description="Add your first team member to start dispatching jobs and tracking performance."
+        />
+      )}
 
       {/* ── Team Cards ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

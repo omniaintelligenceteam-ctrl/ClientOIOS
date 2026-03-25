@@ -22,6 +22,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import type { Call, Sentiment } from '@/lib/types'
+import { EmptyState } from '@/components/dashboard/empty-state'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -199,7 +200,17 @@ export default function CallLogPage() {
         </div>
       </div>
 
+      {/* Empty State */}
+      {!loading && calls.length === 0 && (
+        <EmptyState
+          icon={Phone}
+          title="No calls yet"
+          description="Your AI receptionist is ready and waiting. Calls will appear here as they come in."
+        />
+      )}
+
       {/* Table */}
+      {(loading || calls.length > 0) && (
       <div className="overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827]">
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -268,6 +279,7 @@ export default function CallLogPage() {
           </table>
         )}
       </div>
+      )}
     </div>
   )
 }
