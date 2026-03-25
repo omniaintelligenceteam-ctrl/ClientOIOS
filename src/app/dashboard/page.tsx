@@ -17,6 +17,7 @@ import { useRealtimeFeed } from '@/hooks/useRealtimeFeed'
 import { LiveActivityFeed } from '@/components/dashboard/live-activity-feed'
 import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
 import { ApprovalQueue } from '@/components/dashboard/approval-queue'
+import { RoiSummaryCard } from '@/components/dashboard/roi-summary-card'
 
 // ---------------------------------------------------------------------------
 // Subcomponents
@@ -150,6 +151,9 @@ export default function CommandCenterPage() {
         <StatCard label="Jobs Booked" value={String(metrics.jobsBookedToday)} subtext={metrics.pipelineValue > 0 ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : undefined} animDelay={160} />
         <StatCard label="Revenue This Month" value={metrics.revenueThisMonth > 0 ? `$${metrics.revenueThisMonth.toLocaleString()}` : '$0'} animDelay={240} />
       </div>
+
+      {/* ROI Summary */}
+      <RoiSummaryCard organizationId={orgId} />
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6">

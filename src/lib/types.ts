@@ -335,6 +335,45 @@ export interface AutomationLogEntry {
   created_at: string
 }
 
+// Business Intelligence types
+export type RevenueEventType = 'invoice_paid' | 'job_completed' | 'subscription_payment'
+export type RevenueSource = 'phone_call' | 'web_form' | 'referral' | 'social_media' | 'walk_in' | 'marketing_campaign' | 'manual'
+
+export interface RevenueEvent {
+  id: string
+  organization_id: string
+  customer_id: string | null
+  lead_id: string | null
+  invoice_id: string | null
+  event_type: RevenueEventType
+  amount: number
+  cost: number
+  source: string | null
+  event_date: string
+  created_at: string
+}
+
+export interface BusinessMetricsDaily {
+  id: string
+  organization_id: string
+  metric_date: string
+  calls_total: number
+  calls_answered: number
+  calls_missed: number
+  avg_call_duration_seconds: number
+  leads_created: number
+  leads_converted: number
+  appointments_booked: number
+  appointments_completed: number
+  revenue: number
+  invoices_sent: number
+  invoices_paid: number
+  invoices_overdue: number
+  reviews_received: number
+  avg_review_rating: number
+  automations_executed: number
+}
+
 // Supabase Database type (simplified for direct use)
 export interface Database {
   public: {
