@@ -29,7 +29,7 @@ export default function MapPage() {
         setLastUpdated(new Date())
         setRefreshKey(k => k + 1)
       })
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         setIsLive(status === 'SUBSCRIBED')
       })
     return () => { supabase.removeChannel(channel) }
