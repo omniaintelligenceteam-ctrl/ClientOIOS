@@ -15,6 +15,10 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Bot,
+  Mail,
+  Phone,
+  Rocket,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -201,9 +205,9 @@ export default function AdminOnboardPage() {
 
     try {
       const body = {
-        company_name: form.companyName.trim(),
+        name: form.companyName.trim(),
         trade: form.trade,
-        phone: form.phone.trim() || null,
+        phone_number: form.phone.trim() || null,
         timezone: form.timezone,
         business_hours: {
           monday: { open: form.weekdayOpen, close: form.weekdayClose },
@@ -272,41 +276,11 @@ export default function AdminOnboardPage() {
 
   if (createdOrg) {
     return (
-      <div className="mx-auto max-w-2xl py-8">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#2DD4BF]/10">
-            <CheckCircle2 size={36} className="text-[#2DD4BF]" />
-          </div>
-          <h2 className="text-2xl font-bold text-[#F8FAFC] mb-2">Client Created Successfully</h2>
-          <p className="text-[#94A3B8] mb-8">
-            The organization and owner account have been set up.
-          </p>
-
-          <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#0B1120] p-6 text-left mb-8">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-[#64748B] mb-4">
-              New Organization Details
-            </h3>
-            <div className="space-y-3">
-              <DetailRow label="Organization" value={createdOrg.name} />
-              {createdOrg.id && <DetailRow label="Org ID" value={createdOrg.id} mono />}
-              {createdOrg.slug && <DetailRow label="Slug" value={createdOrg.slug} mono />}
-              <DetailRow
-                label="Tier"
-                value={TIERS.find((t) => t.value === createdOrg.tier)?.label ?? createdOrg.tier}
-              />
-              <DetailRow label="Owner Email" value={createdOrg.ownerEmail} />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={resetWizard}
-            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal-500 to-teal-400 px-6 py-2.5 text-sm font-semibold text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all hover:shadow-[#2DD4BF]/30 active:scale-[0.98]"
-          >
-            Create Another Client
-          </button>
-        </div>
-      </div>
+      <SuccessPanel
+        createdOrg={createdOrg}
+        form={form}
+        onReset={resetWizard}
+      />
     )
   }
 
@@ -719,6 +693,238 @@ export default function AdminOnboardPage() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Success Panel with Post-Creation Actions                           */
+/* ------------------------------------------------------------------ */
+
+function SuccessPanel({
+  createdOrg,
+  form,
+  onReset,
+}: {
+  createdOrg: { id: string; name: string; slug: string; tier: string; ownerEmail: string }
+  form: FormData
+  onReset: () => void
+}) {
+  const [provisionStatus, setProvisionStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [provisionResult, setProvisionResult] = useState<{ agent_id?: string; phone_number?: string } | null>(null)
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [liveStatus, setLiveStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+  async function handleProvision() {
+    setProvisionStatus('loading')
+    try {
+      const res = await fetch(`/api/admin/onboard/${createdOrg.id}/agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provision: true,
+          business_config: {
+            businessName: createdOrg.name,
+            trade: form.trade,
+            ownerName: form.ownerName,
+            services: [],
+            businessHours: `${formatTime(form.weekdayOpen)} - ${formatTime(form.weekdayClose)}, Mon-Fri`,
+            timezone: form.timezone,
+            phone: form.phone || '',
+            faq: [],
+          },
+        }),
+      })
+      if (!res.ok) throw new Error('Provisioning failed')
+      const data = await res.json()
+      setProvisionResult(data)
+      setProvisionStatus('done')
+    } catch {
+      setProvisionStatus('error')
+    }
+  }
+
+  async function handleWelcomeEmail() {
+    setEmailStatus('loading')
+    try {
+      const res = await fetch(`/api/admin/onboard/${createdOrg.id}/welcome-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (!res.ok) throw new Error('Email failed')
+      setEmailStatus('done')
+    } catch {
+      setEmailStatus('error')
+    }
+  }
+
+  async function handleGoLive() {
+    setLiveStatus('loading')
+    try {
+      const res = await fetch(`/api/admin/onboard/${createdOrg.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboarding_status: 'live' }),
+      })
+      if (!res.ok) throw new Error('Status update failed')
+      setLiveStatus('done')
+    } catch {
+      setLiveStatus('error')
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl py-8 space-y-6">
+      {/* Header */}
+      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#2DD4BF]/10">
+          <CheckCircle2 size={36} className="text-[#2DD4BF]" />
+        </div>
+        <h2 className="text-2xl font-bold text-[#F8FAFC] mb-2">Client Created Successfully</h2>
+        <p className="text-[#94A3B8]">
+          Organization and owner account are set up. Complete the steps below to go live.
+        </p>
+      </div>
+
+      {/* Org Details */}
+      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[#64748B] mb-4">
+          Organization Details
+        </h3>
+        <div className="space-y-3">
+          <DetailRow label="Organization" value={createdOrg.name} />
+          {createdOrg.id && <DetailRow label="Org ID" value={createdOrg.id} mono />}
+          <DetailRow
+            label="Tier"
+            value={TIERS.find((t) => t.value === createdOrg.tier)?.label ?? createdOrg.tier}
+          />
+          <DetailRow label="Owner Email" value={createdOrg.ownerEmail} />
+        </div>
+      </div>
+
+      {/* Post-Creation Actions */}
+      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6 space-y-4">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[#64748B] mb-2">
+          Setup Actions
+        </h3>
+
+        {/* Step 1: Provision Agent */}
+        <ActionButton
+          icon={Bot}
+          label="Provision AI Agent"
+          description="Creates a custom Sarah agent with business-specific prompt and assigns a phone number"
+          status={provisionStatus}
+          onClick={handleProvision}
+          successText={
+            provisionResult?.phone_number
+              ? `Agent created — ${provisionResult.phone_number}`
+              : 'Agent provisioned'
+          }
+        />
+
+        {/* Step 2: Send Welcome Email */}
+        <ActionButton
+          icon={Mail}
+          label="Send Welcome Email"
+          description="Sends the client their login info, agent phone number, and call forwarding instructions"
+          status={emailStatus}
+          onClick={handleWelcomeEmail}
+          disabled={provisionStatus !== 'done'}
+          successText="Welcome email sent"
+        />
+
+        {/* Step 3: Go Live */}
+        <ActionButton
+          icon={Rocket}
+          label="Mark as Live"
+          description="Sets onboarding status to live — the client can start using the dashboard"
+          status={liveStatus}
+          onClick={handleGoLive}
+          disabled={provisionStatus !== 'done'}
+          successText="Client is live!"
+        />
+      </div>
+
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={onReset}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-6 py-2.5 text-sm font-medium text-[#94A3B8] transition-colors hover:border-slate-600 hover:text-[#F8FAFC]"
+        >
+          Create Another Client
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ActionButton({
+  icon: Icon,
+  label,
+  description,
+  status,
+  onClick,
+  disabled,
+  successText,
+}: {
+  icon: React.ElementType
+  label: string
+  description: string
+  status: 'idle' | 'loading' | 'done' | 'error'
+  onClick: () => void
+  disabled?: boolean
+  successText: string
+}) {
+  const isDisabled = disabled || status === 'loading' || status === 'done'
+
+  return (
+    <div
+      className={`flex items-center gap-4 rounded-xl border p-4 transition-all ${
+        status === 'done'
+          ? 'border-[#2DD4BF]/30 bg-[#2DD4BF]/5'
+          : status === 'error'
+            ? 'border-red-500/30 bg-red-500/5'
+            : 'border-slate-700/50 bg-[#0B1120]'
+      }`}
+    >
+      <div
+        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${
+          status === 'done' ? 'bg-[#2DD4BF]/10' : 'bg-slate-800/50'
+        }`}
+      >
+        {status === 'done' ? (
+          <Check size={18} className="text-[#2DD4BF]" />
+        ) : status === 'loading' ? (
+          <Loader2 size={18} className="animate-spin text-[#2DD4BF]" />
+        ) : (
+          <Icon size={18} className={disabled ? 'text-slate-600' : 'text-slate-400'} />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium ${status === 'done' ? 'text-[#2DD4BF]' : 'text-[#F8FAFC]'}`}>
+          {status === 'done' ? successText : label}
+        </p>
+        <p className="text-xs text-[#64748B] mt-0.5">{description}</p>
+      </div>
+      {status === 'idle' && (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={isDisabled}
+          className="flex-shrink-0 rounded-lg bg-gradient-to-r from-teal-500 to-teal-400 px-4 py-2 text-xs font-semibold text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all hover:shadow-[#2DD4BF]/30 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Run
+        </button>
+      )}
+      {status === 'error' && (
+        <button
+          type="button"
+          onClick={onClick}
+          className="flex-shrink-0 rounded-lg border border-red-500/30 px-4 py-2 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
+        >
+          Retry
+        </button>
+      )}
     </div>
   )
 }
