@@ -369,7 +369,7 @@ export default function AIPage() {
 function generateFallback(prompt: string, context: string): string {
   const p = prompt.toLowerCase()
   if (p.includes('pipeline') || p.includes('stage')) {
-    const match = context.match(/Pipeline stages: ({.*?})/s)
+    const match = context.match(/Pipeline stages: ([\s\S]*?})\s*$/)
     return match ? `Here's your current pipeline:\n\n${formatPipelineContext(match[1])}` : 'No pipeline data available right now.'
   }
   if (p.includes('revenue') || p.includes('forecast')) {
