@@ -111,7 +111,6 @@ export default function NotificationsPage() {
   const fetchNotifications = useCallback(async (reset = false) => {
     if (!organizationId || !userId) return
     const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
 
     const currentOffset = reset ? 0 : offset
     if (reset) setLoading(true)
@@ -165,7 +164,6 @@ export default function NotificationsPage() {
     if (ids.length === 0) return
     setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)))
     const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
     await supabase.from('notifications').update({ read: true }).in('id', ids)
   }
 
@@ -173,7 +171,6 @@ export default function NotificationsPage() {
     if (!organizationId) return
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
     await supabase
       .from('notifications')
       .update({ read: true })

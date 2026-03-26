@@ -483,6 +483,7 @@ export interface Database {
       team_members: { Row: TeamMember; Insert: Partial<TeamMember>; Update: Partial<TeamMember> }
       chat_conversations: { Row: ChatConversation; Insert: Partial<ChatConversation>; Update: Partial<ChatConversation> }
       chat_messages: { Row: ChatMessage; Insert: Partial<ChatMessage>; Update: Partial<ChatMessage> }
+      notifications: { Row: AppNotification; Insert: Partial<AppNotification>; Update: Partial<AppNotification> }
     }
   }
 }

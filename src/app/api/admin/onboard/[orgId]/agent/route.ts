@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { provisionAgent, type BusinessConfig } from '@/lib/retell-provisioning'
 
 function getSupabase() {
   return createClient(
@@ -11,11 +12,12 @@ function getSupabase() {
 /**
  * POST /api/admin/onboard/[orgId]/agent
  *
- * Links a Retell agent to the organization, or creates a new one via the Retell API.
+ * Links a Retell agent to the organization, or provisions a new one with a custom prompt.
  *
- * Body (link existing):  { agent_id, agent_name, phone_number }
- * Body (create new):     { create_new: true, agent_name }
- * Returns: { agent_id }
+ * Body (link existing):    { agent_id, agent_name, phone_number }
+ * Body (provision new):    { provision: true, business_config: BusinessConfig }
+ * Body (create bare):      { create_new: true, agent_name }
+ * Returns: { agent_id, phone_number }
  */
 export async function POST(
   request: NextRequest,
@@ -23,14 +25,13 @@ export async function POST(
 ) {
   try {
     const supabase = getSupabase()
-    const RETELL_API_KEY = process.env.RETELL_API_KEY || 'key_57a1e44d75cffc9b5e9f8188f048'
     const { orgId } = await params
     const body = await request.json()
 
     // ── Validate org exists ───────────────────────────────────────────
     const { data: org, error: orgError } = await supabase
       .from('organizations')
-      .select('id')
+      .select('id, name, trade')
       .eq('id', orgId)
       .single()
 
@@ -45,8 +46,27 @@ export async function POST(
     let agentName: string
     let phoneNumber: string | null = null
 
-    if (body.create_new) {
-      // ── Create a new agent via Retell API ─────────────────────────
+    if (body.provision && body.business_config) {
+      // ── Full provisioning: create agent with custom prompt + phone ──
+      const config: BusinessConfig = body.business_config
+      // Fill in defaults from org if not provided
+      config.businessName = config.businessName || org.name
+      config.trade = config.trade || org.trade
+
+      const result = await provisionAgent(config)
+      agentId = result.agentId
+      agentName = `Sarah - ${config.businessName}`
+      phoneNumber = result.phoneNumber
+
+      // Update onboarding status to configuring
+      await supabase
+        .from('organizations')
+        .update({ onboarding_status: 'configuring' })
+        .eq('id', orgId)
+
+    } else if (body.create_new) {
+      // ── Create bare agent via Retell API (legacy) ──────────────────
+      const RETELL_API_KEY = process.env.RETELL_API_KEY || ''
       if (!body.agent_name) {
         return NextResponse.json(
           { error: 'agent_name is required when creating a new agent' },
@@ -62,9 +82,7 @@ export async function POST(
         },
         body: JSON.stringify({
           agent_name: body.agent_name,
-          response_engine: body.response_engine || {
-            type: 'retell-llm',
-          },
+          response_engine: body.response_engine || { type: 'retell-llm' },
           voice_id: body.voice_id || undefined,
         }),
       })
@@ -97,7 +115,6 @@ export async function POST(
           { status: 400 }
         )
       }
-
       agentId = body.agent_id
       agentName = body.agent_name
       phoneNumber = body.phone_number || null
@@ -121,17 +138,15 @@ export async function POST(
     }
 
     // ── Update organization.retell_agent_id ──────────────────────────
-    const { error: updateError } = await supabase
+    await supabase
       .from('organizations')
       .update({ retell_agent_id: agentId })
       .eq('id', orgId)
 
-    if (updateError) {
-      console.error('Organization agent update failed:', updateError)
-      // Non-fatal — the retell_agents row is the source of truth
-    }
-
-    return NextResponse.json({ agent_id: agentId }, { status: 201 })
+    return NextResponse.json(
+      { agent_id: agentId, phone_number: phoneNumber },
+      { status: 201 }
+    )
   } catch (err) {
     console.error('Agent setup error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
