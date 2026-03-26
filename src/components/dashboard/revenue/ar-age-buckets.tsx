@@ -11,6 +11,7 @@ interface ARBucket {
   range: string
   color: string
   textColor: string
+  badge: string
   invoices: Invoice[]
   total: number
 }
