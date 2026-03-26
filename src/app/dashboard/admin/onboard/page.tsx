@@ -25,20 +25,6 @@ import {
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const TRADES = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'hvac', label: 'HVAC' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'landscape_lighting', label: 'Landscape Lighting' },
-  { value: 'pest_control', label: 'Pest Control' },
-  { value: 'locksmith', label: 'Locksmith' },
-  { value: 'roofing', label: 'Roofing' },
-  { value: 'painting', label: 'Painting' },
-  { value: 'cleaning', label: 'Cleaning' },
-  { value: 'dental', label: 'Dental' },
-  { value: 'auto_repair', label: 'Auto Repair' },
-  { value: 'other', label: 'Other' },
-]
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern (ET)' },
@@ -158,7 +144,7 @@ export default function AdminOnboardPage() {
   function validateStep1(): boolean {
     const errs: FormErrors = {}
     if (!form.companyName.trim()) errs.companyName = 'Company name is required'
-    if (!form.trade) errs.trade = 'Please select a trade'
+    if (!form.trade.trim()) errs.trade = 'Business type is required'
     if (form.phone && !/^[\d\s\-+()]{7,20}$/.test(form.phone)) {
       errs.phone = 'Enter a valid phone number'
     }
@@ -380,29 +366,18 @@ export default function AdminOnboardPage() {
               )}
             </div>
 
-            {/* Trade */}
+            {/* Business Type */}
             <div>
               <label className={labelClasses}>
-                Trade / Industry <span className="text-red-400">*</span>
+                Business <span className="text-red-400">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={form.trade}
-                  onChange={(e) => updateField('trade', e.target.value)}
-                  className={`${errors.trade ? inputErrorClasses : selectClasses}`}
-                >
-                  <option value="">Select a trade...</option>
-                  {TRADES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronRight
-                  size={16}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-[#64748B]"
-                />
-              </div>
+              <input
+                type="text"
+                value={form.trade}
+                onChange={(e) => updateField('trade', e.target.value)}
+                placeholder="e.g. Plumbing, HVAC, Dental, Auto Repair"
+                className={errors.trade ? inputErrorClasses : inputClasses}
+              />
               {errors.trade && <p className="mt-1 text-xs text-red-400">{errors.trade}</p>}
             </div>
 
@@ -599,8 +574,8 @@ export default function AdminOnboardPage() {
               <div className="space-y-2.5">
                 <DetailRow label="Company" value={form.companyName} />
                 <DetailRow
-                  label="Trade"
-                  value={TRADES.find((t) => t.value === form.trade)?.label ?? form.trade}
+                  label="Business"
+                  value={form.trade}
                 />
                 <DetailRow label="Phone" value={form.phone || 'Not provided'} muted={!form.phone} />
                 <DetailRow
