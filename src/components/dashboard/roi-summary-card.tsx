@@ -129,13 +129,13 @@ export function RoiSummaryCard({ organizationId }: RoiSummaryCardProps) {
       <div className="flex flex-wrap gap-2">
         <Pill
           label="ROI"
-          value={`${data.roi_percentage.toFixed(0)}%`}
-          trend={data.roi_percentage >= 0 ? 'up' : 'down'}
+          value={`${(data.roi_percentage ?? 0).toFixed(0)}%`}
+          trend={(data.roi_percentage ?? 0) >= 0 ? 'up' : 'down'}
         />
         <Pill
           label="Conversion"
-          value={`${data.conversion_rate.toFixed(1)}%`}
-          trend={data.conversion_rate > 0 ? 'up' : 'neutral'}
+          value={`${(data.conversion_rate ?? 0).toFixed(1)}%`}
+          trend={(data.conversion_rate ?? 0) > 0 ? 'up' : 'neutral'}
         />
         <Pill
           label="Rev / Call"

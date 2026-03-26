@@ -224,7 +224,7 @@ export default function AnalyticsPage() {
             {/* Big ROI number */}
             <div className="mb-6">
               <p className="text-5xl font-extrabold text-[#2DD4BF] tabular-nums">
-                {roi.roi_percentage >= 0 ? '+' : ''}{roi.roi_percentage.toFixed(0)}%
+                {(roi.roi_percentage ?? 0) >= 0 ? '+' : ''}{(roi.roi_percentage ?? 0).toFixed(0)}%
               </p>
               <p className="text-sm text-slate-500 mt-1">ROI over last {period} days</p>
             </div>
@@ -248,7 +248,7 @@ export default function AnalyticsPage() {
               />
               <StatPill
                 label="Conversion Rate"
-                value={`${roi.conversion_rate.toFixed(1)}%`}
+                value={`${(roi.conversion_rate ?? 0).toFixed(1)}%`}
                 icon={Users}
               />
             </div>
