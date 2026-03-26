@@ -43,7 +43,7 @@ export function ARAgeBuckets({ organizationId }: ARAgeBucketsProps) {
       .select('id, customer:customers(full_name), total_amount, status')
       .eq('organization_id', organizationId)
       .in('status', ['sent', 'viewed', 'overdue'])
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (!data) return
         const today = new Date()
         const filled = BUCKETS.map((b) => ({ ...b, invoices: [] as Invoice[], total: 0 }))

@@ -25,7 +25,7 @@ export function InvoiceThreatBoard({ organizationId }: InvoiceThreatBoardProps) 
       .in('status', ['sent', 'overdue'])
       .lt('created_at', cutoff)
       .order('created_at', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (!data) return
         setThreats(data.map((inv: any) => {
           const dueDays = Math.floor((today.getTime() - new Date(inv.created_at).getTime()) / 86400000)
