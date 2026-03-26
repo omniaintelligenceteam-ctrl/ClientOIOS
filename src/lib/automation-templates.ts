@@ -145,3 +145,106 @@ The email should:
 Keep it concise (2–3 short paragraphs). Use a simple HTML layout with inline styles. Highlight the date/time in bold. No images. Include a soft footer with the business name. Do not include a subject line in the HTML.`,
   }
 }
+
+// ============================================================
+// Campaign & Review Response Templates (Phase 6)
+// ============================================================
+
+export interface CampaignTemplate {
+  id: string
+  name: string
+  description: string
+  channel: 'Email' | 'SMS' | 'Both'
+  subject?: string
+  body: string
+  previewLines: string[]
+}
+
+export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
+  {
+    id: 'review-request',
+    name: 'Review Request',
+    description: 'Ask happy customers to leave a review',
+    channel: 'Both',
+    subject: 'Quick favor — share your experience?',
+    body: 'Hi [name], we hope you loved your recent service! Could you take 30 seconds to leave us a quick review? It really helps small businesses like ours. [link]',
+    previewLines: [
+      'Hi [name],',
+      'We hope you loved your recent service!',
+      'Leave us a quick review → [link]',
+      'Thanks so much!',
+    ],
+  },
+  {
+    id: 're-engagement',
+    name: 'Re-engagement',
+    description: 'Reach out to dormant or inactive customers',
+    channel: 'Email',
+    subject: "It's been a while — we'd love to catch up!",
+    body: "Hi [name], it's been a while since we heard from you. We just wanted to check in and let you know we're here if you ever need us. Same great service, same friendly team!",
+    previewLines: [
+      "Hi [name], it's been a while!",
+      'Just checking in — we miss you.',
+      'Same great service, same friendly team.',
+      'Reply to book anytime → [link]',
+    ],
+  },
+  {
+    id: 'seasonal-promotion',
+    name: 'Seasonal Promotion',
+    description: 'Seasonal offer or holiday greeting',
+    channel: 'Both',
+    subject: 'Happy [season] from [business]!',
+    body: "Hi [name], happy [season] from all of us at [business]! As our way of saying thanks, we're offering [discount] off your next service. Valid through [date]. Book now → [link]",
+    previewLines: [
+      'Hi [name],',
+      'Happy [season] from [business]!',
+      '[discount] off your next service.',
+      'Book now → [link]',
+    ],
+  },
+  {
+    id: 'win-back',
+    name: 'Win-back',
+    description: 'Loyalty offer to win back lost customers',
+    channel: 'Email',
+    subject: "We'd love to have you back, [name]!",
+    body: "Hi [name], we noticed you haven't been by in a while. We'd love to have you back! As a special thank-you, enjoy [discount] on your next visit. No strings attached. Book now → [link]",
+    previewLines: [
+      'Hi [name],',
+      "We'd love to have you back!",
+      '[discount] off your next visit.',
+      'No strings attached. Book now → [link]',
+    ],
+  },
+  {
+    id: 'monthly-newsletter',
+    name: 'Monthly Newsletter',
+    description: 'Regular updates, tips, and news',
+    channel: 'Email',
+    subject: '[Business] Monthly Update — [Month]',
+    body: "Hi [name], here's what's new at [business] this month:\n\n• [Tip or news item 1]\n• [Tip or news item 2]\n• [Special offer for subscribers]\n\nHave questions? Reply anytime. We're happy to help!",
+    previewLines: [
+      "Hi [name], here's what's new:",
+      '• [News/tip 1]',
+      '• [News/tip 2]',
+      '• [Subscriber special]',
+    ],
+  },
+]
+
+// ── Review response builder ───────────────────────────────────
+
+export function buildReviewResponseTemplate(
+  reviewerName: string,
+  rating: number,
+  sentiment: 'positive' | 'neutral' | 'negative' | 'urgent'
+): string {
+  const templates: Record<string, string> = {
+    positive: `Hi ${reviewerName}, thank you so much for your wonderful ${rating}-star review! We're thrilled to hear about your positive experience. Our team takes great pride in delivering top-quality service, and your kind words mean the world to us. We look forward to serving you again soon!`,
+    neutral: `Hi ${reviewerName}, thank you for taking the time to share your feedback. We appreciate your input and always strive to improve. If there's anything we could have done better, please don't hesitate to reach out directly. We'd love to hear from you!`,
+    negative: `Hi ${reviewerName}, we're sorry to hear your experience didn't meet your expectations. That's not the standard we hold ourselves to, and we take this seriously. Please reach out to us directly so we can make this right. We value your business and want to ensure every interaction is a positive one.`,
+    urgent: `Hi ${reviewerName}, we are so sorry about your experience. This is absolutely not how we do business, and we take full responsibility. Please contact us immediately at [phone] so we can address this directly. Your satisfaction is our top priority, and we will make this right.`,
+  }
+  return templates[sentiment] || templates.neutral
+}

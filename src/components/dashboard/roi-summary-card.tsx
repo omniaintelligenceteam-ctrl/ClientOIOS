@@ -17,7 +17,7 @@ interface RoiData {
   revenue_per_call: number
 }
 
-const cardClass = 'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+const cardClass = 'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-4 sm:p-6'
 
 function Pill({
   label,

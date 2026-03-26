@@ -1,0 +1,55 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  LayoutDashboard,
+  Target,
+  Calendar,
+  MessageSquare,
+  Settings,
+} from 'lucide-react'
+
+const NAV_ITEMS = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Leads', href: '/dashboard/leads', icon: Target },
+  { label: 'Calendar', href: '/dashboard/schedule', icon: Calendar },
+  { label: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+]
+
+function isActive(pathname: string, href: string): boolean {
+  if (href === '/dashboard') return pathname === '/dashboard'
+  return pathname.startsWith(href)
+}
+
+export function BottomNav() {
+  const pathname = usePathname()
+
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-stretch border-t border-[rgba(148,163,184,0.1)] bg-[#111827] pb-safe"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      {NAV_ITEMS.map((item) => {
+        const Icon = item.icon
+        const active = isActive(pathname, item.href)
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] transition-colors ${
+              active
+                ? 'text-[#2DD4BF]'
+                : 'text-[#64748B] hover:text-[#94A3B8]'
+            }`}
+          >
+            <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+            <span className="text-[10px] font-medium leading-none">{item.label}</span>
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}

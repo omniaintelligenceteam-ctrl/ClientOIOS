@@ -48,7 +48,7 @@ export function CallHeatmap({ data }: CallHeatmapProps) {
   const maxVal = Math.max(...data.flatMap((row) => row), 1)
 
   return (
-    <div className="relative">
+    <div className="relative overflow-x-auto -mx-1 px-1">
       {/* Hour axis labels */}
       <div className="flex ml-10 mb-1">
         {Array.from({ length: 24 }, (_, h) => (

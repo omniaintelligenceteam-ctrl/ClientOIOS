@@ -9,6 +9,7 @@ import {
   Phone,
   Target,
   Calendar,
+  CalendarDays,
   Users,
   Receipt,
   Star,
@@ -27,8 +28,12 @@ import {
   Menu,
   X,
   MessageSquare,
+  Bot,
+  GitFork,
 } from 'lucide-react'
 import { ChatProvider } from '@/components/dashboard/chat/chat-provider'
+import { MobileHeader } from '@/components/dashboard/mobile-header'
+import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { ChatFAB } from '@/components/dashboard/chat/chat-fab'
 import { NotificationCenter } from '@/components/dashboard/notification-center'
 
@@ -69,13 +74,17 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Calls', href: '/dashboard/calls', icon: Phone },
   { label: 'Leads', href: '/dashboard/leads', icon: Target, minTier: 'office_manager' },
+  { label: 'Pipeline', href: '/dashboard/pipeline', icon: GitFork, minTier: 'office_manager' },
   { label: 'Schedule', href: '/dashboard/schedule', icon: Calendar, minTier: 'office_manager' },
+  { label: 'Calendar', href: '/dashboard/calendar', icon: CalendarDays, minTier: 'office_manager' },
   { label: 'Customers', href: '/dashboard/customers', icon: Users, minTier: 'office_manager' },
   { label: 'Invoicing', href: '/dashboard/invoicing', icon: Receipt, minTier: 'growth_engine' },
   { label: 'Reviews', href: '/dashboard/reviews', icon: Star, minTier: 'office_manager' },
   { label: 'Marketing', href: '/dashboard/marketing', icon: Megaphone, minTier: 'growth_engine' },
+  { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, minTier: 'growth_engine' },
   { label: 'Team', href: '/dashboard/team', icon: HardHat, minTier: 'growth_engine' },
   { label: 'Chat', href: '/dashboard/chat', icon: MessageSquare, minTier: 'office_manager' },
+  { label: 'AI Assistant', href: '/dashboard/ai', icon: Bot, minTier: 'office_manager' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp, minTier: 'office_manager' },
   { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
   { label: 'Billing', href: '/dashboard/billing', icon: CreditCard },
@@ -393,7 +402,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* ============================================================ */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex h-16 flex-shrink-0 items-center gap-3 border-b border-[rgba(148,163,184,0.1)] bg-[#111827]/80 px-4 backdrop-blur-sm sm:gap-4 sm:px-6">
+        <header className="hidden md:flex flex-shrink-0 items-center gap-3 h-16 border-b border-[rgba(148,163,184,0.1)] bg-[#111827]/80 px-4 backdrop-blur-sm sm:gap-4 sm:px-6">
           {/* Mobile hamburger */}
           <button
             type="button"
@@ -437,7 +446,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <MobileHeader onMenuClick={toggleMobileMenu} />
+
+        <main className="flex-1 overflow-y-auto p-4 pb-24 sm:pb-0 sm:px-6">{children}</main>
+
+        <BottomNav />
 
         {/* Chat FAB — floating on all pages */}
         <ChatFAB />

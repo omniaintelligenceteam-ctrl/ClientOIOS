@@ -8,8 +8,15 @@ import {
   CalendarPlus,
   Mail,
   FileBarChart,
-  AlertTriangle,
-  CircleDot,
+  Phone,
+  Target,
+  CalendarCheck,
+  DollarSign,
+  Users,
+  GitFork,
+  TrendingUp,
+  Wifi,
+  WifiOff,
 } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/lib/auth-context'
@@ -18,50 +25,75 @@ import { LiveActivityFeed } from '@/components/dashboard/live-activity-feed'
 import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
 import { ApprovalQueue } from '@/components/dashboard/approval-queue'
 import { RoiSummaryCard } from '@/components/dashboard/roi-summary-card'
+import { PipelineFunnel } from '@/components/dashboard/pipeline-funnel'
+import { LeadSourceChart } from '@/components/dashboard/lead-source-chart'
+import { AtRiskAlerts } from '@/components/dashboard/at-risk-alerts'
+import { AgentStatusGrid } from '@/components/dashboard/agent-status-grid'
 
 // ---------------------------------------------------------------------------
-// Subcomponents
+// Constants
 // ---------------------------------------------------------------------------
 
 const cardClass = 'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
 
-function StatCard({ label, value, comparison, subtext, trend, animDelay }: {
-  label: string; value: string; comparison?: string; subtext?: string; trend?: 'up' | 'down'; animDelay: number
+// ---------------------------------------------------------------------------
+// StatCard
+// ---------------------------------------------------------------------------
+
+function StatCard({
+  label,
+  value,
+  comparison,
+  subtext,
+  trend,
+  icon: Icon,
+  animDelay,
+}: {
+  label: string
+  value: string
+  comparison?: string
+  subtext?: string
+  trend?: 'up' | 'down'
+  icon: React.ElementType
+  animDelay: number
 }) {
   const [visible, setVisible] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setVisible(true), animDelay); return () => clearTimeout(t) }, [animDelay])
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), animDelay)
+    return () => clearTimeout(t)
+  }, [animDelay])
 
   return (
     <div className={cardClass}>
-      <p className="text-sm text-slate-400 mb-1">{label}</p>
-      <p className={`text-3xl font-bold transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>{value}</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm text-slate-400">{label}</p>
+        <div className="p-2 rounded-lg bg-[rgba(45,212,191,0.08)]">
+          <Icon className="h-4 w-4 text-teal-400" />
+        </div>
+      </div>
+      <p
+        className={`text-3xl font-bold transition-all duration-700 ease-out ${
+          visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+        }`}
+      >
+        {value}
+      </p>
       {comparison && (
         <p className="text-sm text-slate-400 mt-1 flex items-center gap-1">
           {trend === 'up' && <ArrowUpRight className="h-4 w-4 text-green-400" />}
           {trend === 'down' && <ArrowDownRight className="h-4 w-4 text-red-400" />}
-          <span className={trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : ''}>{comparison}</span>
+          <span className={trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : ''}>
+            {comparison}
+          </span>
         </p>
       )}
-      {subtext && <p className="text-sm text-slate-400 mt-1">{subtext}</p>}
-    </div>
-  )
-}
-
-function AgentCard({ name, role, stat }: { name: string; role: string; stat: string }) {
-  return (
-    <div className="bg-[rgba(148,163,184,0.04)] border border-[rgba(148,163,184,0.08)] rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <CircleDot className="h-3 w-3 text-green-400 animate-pulse" />
-        <span className="text-sm font-semibold text-slate-200">{name}</span>
-      </div>
-      <p className="text-xs text-slate-500 mb-1">{role}</p>
-      <p className="text-xs text-slate-400">{stat}</p>
+      {subtext && <p className="text-xs text-slate-500 mt-1">{subtext}</p>}
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Page
+// Metrics type
 // ---------------------------------------------------------------------------
 
 interface Metrics {
@@ -73,41 +105,129 @@ interface Metrics {
   pipelineValue: number
   revenueThisMonth: number
   revenueLastMonth: number
+  projectedNextMonth: number
 }
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function CommandCenterPage() {
   const { profile } = useAuth()
   const orgId = profile?.organization_id || ''
+
   const [metrics, setMetrics] = useState<Metrics>({
-    callsToday: 0, callsYesterday: 0, leadsToday: 0, conversionRate: 0,
-    jobsBookedToday: 0, pipelineValue: 0, revenueThisMonth: 0, revenueLastMonth: 0,
+    callsToday: 0,
+    callsYesterday: 0,
+    leadsToday: 0,
+    conversionRate: 0,
+    jobsBookedToday: 0,
+    pipelineValue: 0,
+    revenueThisMonth: 0,
+    revenueLastMonth: 0,
+    projectedNextMonth: 0,
   })
 
-  // Realtime feed hook — also increments metrics on call/lead inserts
   const { activities, connected } = useRealtimeFeed(orgId, {
     onCallInsert: () => setMetrics((prev) => ({ ...prev, callsToday: prev.callsToday + 1 })),
     onLeadInsert: () => setMetrics((prev) => ({ ...prev, leadsToday: prev.leadsToday + 1 })),
   })
 
   useEffect(() => {
+    if (!orgId) return
     const supabase = createSupabaseBrowserClient()
-    const load = async () => {
-      const today = new Date().toISOString().split('T')[0]
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-      // Parallel queries
-      const [callsRes, yesterdayCallsRes, leadsRes, leadsAllRes, appointmentsRes] = await Promise.all([
-        supabase.from('calls').select('id', { count: 'exact', head: true }).gte('started_at', today),
-        supabase.from('calls').select('id', { count: 'exact', head: true }).gte('started_at', yesterday).lt('started_at', today),
-        supabase.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', today),
-        supabase.from('leads').select('id, status, estimated_value'),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).gte('created_at', today).in('status', ['scheduled', 'confirmed']),
+    const load = async () => {
+      const now = new Date()
+      const today = now.toISOString().split('T')[0]
+      const yesterday = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
+
+      // Current month bounds
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString()
+
+      // Last month bounds
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
+      const lastMonthEnd = monthStart
+
+      const [
+        callsRes,
+        yesterdayCallsRes,
+        leadsRes,
+        leadsAllRes,
+        appointmentsRes,
+        invoicesThisMonthRes,
+        invoicesLastMonthRes,
+      ] = await Promise.all([
+        supabase
+          .from('calls')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .gte('started_at', today),
+
+        supabase
+          .from('calls')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .gte('started_at', yesterday)
+          .lt('started_at', today),
+
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .gte('created_at', today),
+
+        supabase
+          .from('leads')
+          .select('id, status, estimated_value')
+          .eq('organization_id', orgId),
+
+        supabase
+          .from('appointments')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .gte('created_at', today)
+          .in('status', ['scheduled', 'confirmed']),
+
+        supabase
+          .from('invoices')
+          .select('amount')
+          .eq('organization_id', orgId)
+          .eq('status', 'paid')
+          .gte('paid_at', monthStart)
+          .lt('paid_at', monthEnd),
+
+        supabase
+          .from('invoices')
+          .select('amount')
+          .eq('organization_id', orgId)
+          .eq('status', 'paid')
+          .gte('paid_at', lastMonthStart)
+          .lt('paid_at', lastMonthEnd),
       ])
 
-      const allLeads = leadsAllRes.data || []
-      const wonLeads = allLeads.filter((l: any) => l.status === 'won').length
+      const allLeads = (leadsAllRes.data as any[]) || []
+      const wonLeads = allLeads.filter((l) => l.status === 'won').length
       const totalLeads = allLeads.length
-      const pipelineValue = allLeads.filter((l: any) => !['won', 'lost'].includes(l.status)).reduce((s: number, l: any) => s + (l.estimated_value || 0), 0)
+      const pipelineValue = allLeads
+        .filter((l) => !['won', 'lost'].includes(l.status))
+        .reduce((s, l) => s + (l.estimated_value || 0), 0)
+
+      const revenueThisMonth = ((invoicesThisMonthRes.data as any[]) || []).reduce(
+        (s, inv) => s + (inv.amount || 0),
+        0
+      )
+      const revenueLastMonth = ((invoicesLastMonthRes.data as any[]) || []).reduce(
+        (s, inv) => s + (inv.amount || 0),
+        0
+      )
+
+      // Simple projection: if we're d days into month, project full month
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+      const dayOfMonth = now.getDate()
+      const projectedNextMonth =
+        dayOfMonth > 0 ? Math.round((revenueThisMonth / dayOfMonth) * daysInMonth) : 0
 
       setMetrics({
         callsToday: callsRes.count || 0,
@@ -116,62 +236,166 @@ export default function CommandCenterPage() {
         conversionRate: totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0,
         jobsBookedToday: appointmentsRes.count || 0,
         pipelineValue,
-        revenueThisMonth: 0,
-        revenueLastMonth: 0,
+        revenueThisMonth,
+        revenueLastMonth,
+        projectedNextMonth,
       })
     }
+
     load()
-  }, [])
+  }, [orgId])
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
+  // Revenue trend comparison
+  const revDiff = metrics.revenueThisMonth - metrics.revenueLastMonth
+  const revTrend: 'up' | 'down' | undefined =
+    metrics.revenueLastMonth > 0 ? (revDiff >= 0 ? 'up' : 'down') : undefined
+  const revComparison =
+    metrics.revenueLastMonth > 0
+      ? `${revDiff >= 0 ? '+' : ''}${Math.round((revDiff / metrics.revenueLastMonth) * 100)}% vs last month`
+      : undefined
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
-        <p className="text-slate-400 mt-1">{greeting}, {firstName}. Here&apos;s what&apos;s happening.</p>
+      {/* ------------------------------------------------------------------ */}
+      {/* Header                                                               */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
+          <p className="text-slate-400 mt-1">
+            {greeting}, {firstName}. Here&apos;s what&apos;s happening.
+          </p>
+        </div>
+        {/* Connection status */}
+        <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border ${
+          connected
+            ? 'bg-green-500/10 border-green-500/20 text-green-400'
+            : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+        }`}>
+          {connected ? (
+            <><Wifi className="h-3.5 w-3.5" /> Live</>
+          ) : (
+            <><WifiOff className="h-3.5 w-3.5" /> Reconnecting</>
+          )}
+        </div>
       </div>
 
-      {/* Morning Briefing */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Morning Briefing                                                     */}
+      {/* ------------------------------------------------------------------ */}
       <MorningBriefingCard organizationId={orgId} />
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ------------------------------------------------------------------ */}
+      {/* Stat Cards                                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Calls Today"
           value={String(metrics.callsToday)}
-          comparison={metrics.callsYesterday > 0 ? `vs ${metrics.callsYesterday} yesterday` : undefined}
+          comparison={
+            metrics.callsYesterday > 0
+              ? `vs ${metrics.callsYesterday} yesterday`
+              : undefined
+          }
           trend={metrics.callsToday >= metrics.callsYesterday ? 'up' : 'down'}
+          icon={Phone}
           animDelay={0}
         />
-        <StatCard label="New Leads" value={String(metrics.leadsToday)} subtext={metrics.conversionRate > 0 ? `${metrics.conversionRate}% conversion rate` : undefined} animDelay={80} />
-        <StatCard label="Jobs Booked" value={String(metrics.jobsBookedToday)} subtext={metrics.pipelineValue > 0 ? `$${metrics.pipelineValue.toLocaleString()} pipeline` : undefined} animDelay={160} />
-        <StatCard label="Revenue This Month" value={metrics.revenueThisMonth > 0 ? `$${metrics.revenueThisMonth.toLocaleString()}` : '$0'} animDelay={240} />
+        <StatCard
+          label="New Leads"
+          value={String(metrics.leadsToday)}
+          subtext={
+            metrics.conversionRate > 0
+              ? `${metrics.conversionRate}% all-time conversion`
+              : undefined
+          }
+          icon={Target}
+          animDelay={80}
+        />
+        <StatCard
+          label="Jobs Booked Today"
+          value={String(metrics.jobsBookedToday)}
+          subtext={
+            metrics.pipelineValue > 0
+              ? `$${metrics.pipelineValue.toLocaleString()} pipeline`
+              : undefined
+          }
+          icon={CalendarCheck}
+          animDelay={160}
+        />
+        <StatCard
+          label="Revenue This Month"
+          value={
+            metrics.revenueThisMonth > 0
+              ? `$${metrics.revenueThisMonth.toLocaleString()}`
+              : '$0'
+          }
+          comparison={revComparison}
+          trend={revTrend}
+          subtext={
+            metrics.projectedNextMonth > 0
+              ? `~$${metrics.projectedNextMonth.toLocaleString()} projected`
+              : undefined
+          }
+          icon={DollarSign}
+          animDelay={240}
+        />
       </div>
 
-      {/* ROI Summary */}
+      {/* ------------------------------------------------------------------ */}
+      {/* At-Risk Alerts Strip                                                 */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="bg-[rgba(148,163,184,0.02)] border border-[rgba(148,163,184,0.07)] rounded-xl px-4 py-3">
+        <AtRiskAlerts organizationId={orgId} />
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Charts Row — Pipeline Funnel + Lead Source                          */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Pipeline Funnel */}
+        <div className={cardClass}>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <GitFork className="h-5 w-5 text-teal-400" />
+              <h2 className="text-lg font-semibold">Pipeline Funnel</h2>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span className="font-medium text-slate-400">Count</span>
+              <span className="font-medium text-teal-400">Value</span>
+              <span>Rate</span>
+            </div>
+          </div>
+          <PipelineFunnel organizationId={orgId} />
+        </div>
+
+        {/* Lead Source Breakdown */}
+        <div className={cardClass}>
+          <div className="flex items-center gap-2 mb-5">
+            <Users className="h-5 w-5 text-teal-400" />
+            <h2 className="text-lg font-semibold">Lead Sources</h2>
+          </div>
+          <LeadSourceChart organizationId={orgId} />
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* ROI Summary                                                          */}
+      {/* ------------------------------------------------------------------ */}
       <RoiSummaryCard organizationId={orgId} />
 
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-[3fr_2fr] gap-6">
+      {/* ------------------------------------------------------------------ */}
+      {/* Main two-column layout                                               */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
         {/* Left Column */}
         <div className="space-y-6">
           {/* Live Activity Feed */}
           <LiveActivityFeed activities={activities} connected={connected} />
-
-          {/* AI Team Status */}
-          <div className={cardClass}>
-            <h2 className="text-lg font-semibold mb-4">AI Team Status</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <AgentCard name="Sarah" role="Receptionist" stat={`Answered ${metrics.callsToday} calls today`} />
-              <AgentCard name="Follow-Up Agent" role="Lead Nurturing" stat="Monitoring leads" />
-              <AgentCard name="Review Manager" role="Reputation Management" stat="Watching reviews" />
-              <AgentCard name="Invoice Agent" role="Billing & Collections" stat="Tracking payments" />
-            </div>
-          </div>
         </div>
 
         {/* Right Column */}
@@ -183,42 +407,33 @@ export default function CommandCenterPage() {
           <div className={cardClass}>
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 py-3 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <Plus className="h-4 w-4" />Add Lead
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 py-3 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <CalendarPlus className="h-4 w-4" />Schedule
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 py-3 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <Mail className="h-4 w-4" />Follow-Up
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 py-3 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <FileBarChart className="h-4 w-4" />Report
               </button>
             </div>
           </div>
-
-          {/* Urgent Items */}
-          <div className={cardClass}>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-400" />Urgent Items
-            </h2>
-            <div className="space-y-3">
-              {metrics.callsToday === 0 && metrics.leadsToday === 0 ? (
-                <p className="text-sm text-slate-500">No urgent items right now.</p>
-              ) : (
-                <>
-                  {metrics.leadsToday > 0 && (
-                    <div className="flex items-start gap-3 text-sm">
-                      <span className="mt-0.5 h-2 w-2 rounded-full bg-orange-400 flex-shrink-0" />
-                      <span className="text-orange-400">{metrics.leadsToday} new lead{metrics.leadsToday > 1 ? 's' : ''} need follow-up</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
         </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Agent Status Grid                                                    */}
+      {/* ------------------------------------------------------------------ */}
+      <div className={cardClass}>
+        <div className="flex items-center gap-2 mb-5">
+          <TrendingUp className="h-5 w-5 text-teal-400" />
+          <h2 className="text-lg font-semibold">Squad Status</h2>
+          <span className="ml-2 text-xs text-slate-500">9 agents</span>
+        </div>
+        <AgentStatusGrid organizationId={orgId} />
       </div>
     </div>
   )

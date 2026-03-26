@@ -4,6 +4,7 @@ interface FunnelStage {
   stage: string
   count: number
   rate: number
+  value?: number
 }
 
 interface LeadFunnelProps {
@@ -22,6 +23,12 @@ function formatStageName(stage: string): string {
   return stage
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatCurrency(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}k`
+  return `$${value.toLocaleString()}`
 }
 
 export function LeadFunnel({ data }: LeadFunnelProps) {
@@ -43,6 +50,12 @@ export function LeadFunnel({ data }: LeadFunnelProps) {
                 <span className="text-slate-200 font-semibold tabular-nums w-8 text-right">
                   {item.count.toLocaleString()}
                 </span>
+                {item.value !== undefined && item.value > 0 && (
+                  <span className="text-teal-400 tabular-nums text-xs w-20 text-right font-medium">
+                    {formatCurrency(item.value)}
+                  </span>
+                )}
+                {item.value === undefined && <span className="w-20" />}
                 {idx > 0 && (
                   <span className="text-slate-500 tabular-nums w-14 text-right">
                     {item.rate.toFixed(1)}%

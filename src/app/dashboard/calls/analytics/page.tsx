@@ -1,347 +1,119 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import {
-  Phone,
-  PhoneIncoming,
-  Timer,
-  Gauge,
-  ArrowLeft,
-} from 'lucide-react'
-import {
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import { useAuth } from '@/lib/auth-context'
+import { BarChart3, ArrowLeft, Phone } from 'lucide-react'
+import { SentimentTrendChart } from '@/components/dashboard/calls/sentiment-trend-chart'
+import { TopIntents } from '@/components/dashboard/calls/top-intents'
+import { AgentPerformance } from '@/components/dashboard/calls/agent-performance'
+import { PeakHoursChart } from '@/components/dashboard/calls/peak-hours-chart'
+import { MissedCallQueue } from '@/components/dashboard/calls/missed-call-queue'
 
-/* ------------------------------------------------------------------ */
-/*  Mock chart data                                                    */
-/* ------------------------------------------------------------------ */
+type DateRange = 'today' | '7d' | '30d' | '90d' | 'all'
 
-const callsOverTime = (() => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const values = [3, 5, 4, 6, 8, 5, 4]
-  return days.map((day, i) => ({ day, calls: values[i] }))
-})()
-
-const intentData = [
-  { name: 'Schedule', value: 40, color: '#2DD4BF' },
-  { name: 'Quote', value: 25, color: '#f97316' },
-  { name: 'Emergency', value: 15, color: '#ef4444' },
-  { name: 'General', value: 10, color: '#8b5cf6' },
-  { name: 'Follow-up', value: 10, color: '#3b82f6' },
-]
-
-const sentimentData = [
-  { name: 'Positive', count: 4, fill: '#34d399' },
-  { name: 'Neutral', count: 1, fill: '#facc15' },
-  { name: 'Negative', count: 1, fill: '#f87171' },
-  { name: 'Urgent', count: 1, fill: '#ef4444' },
-]
-
-const peakHoursData = (() => {
-  const hours = [
-    { hour: '7am', calls: 1 },
-    { hour: '8am', calls: 3 },
-    { hour: '9am', calls: 5 },
-    { hour: '10am', calls: 7 },
-    { hour: '11am', calls: 4 },
-    { hour: '12pm', calls: 2 },
-    { hour: '1pm', calls: 3 },
-    { hour: '2pm', calls: 6 },
-    { hour: '3pm', calls: 5 },
-    { hour: '4pm', calls: 4 },
-    { hour: '5pm', calls: 2 },
-    { hour: '6pm', calls: 1 },
-  ]
-  return hours
-})()
-
-/* ------------------------------------------------------------------ */
-/*  Shared tooltip style                                               */
-/* ------------------------------------------------------------------ */
-
-const tooltipStyle = {
-  contentStyle: {
-    backgroundColor: '#1e293b',
-    border: '1px solid rgba(148,163,184,0.15)',
-    borderRadius: '0.75rem',
-    color: '#e2e8f0',
-    fontSize: '0.8rem',
-  },
-  itemStyle: { color: '#cbd5e1' },
-  cursor: { stroke: 'rgba(45,212,191,0.3)' },
+const dateRangeLabels: Record<DateRange, string> = {
+  today: 'Today',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
+  '90d': 'Last 90 days',
+  all: 'All time',
 }
-
-/* ------------------------------------------------------------------ */
-/*  Custom pie label                                                   */
-/* ------------------------------------------------------------------ */
-
-const renderPieLabel = ({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  name,
-  value,
-}: {
-  cx: number
-  cy: number
-  midAngle: number
-  innerRadius: number
-  outerRadius: number
-  name: string
-  value: number
-}) => {
-  const RADIAN = Math.PI / 180
-  const radius = outerRadius + 24
-  const x = cx + radius * Math.cos(-midAngle * RADIAN)
-  const y = cy + radius * Math.sin(-midAngle * RADIAN)
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="#94a3b8"
-      textAnchor={x > cx ? 'start' : 'end'}
-      dominantBaseline="central"
-      fontSize={12}
-    >
-      {name} ({value}%)
-    </text>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
 
 export default function CallAnalyticsPage() {
+  const { profile } = useAuth()
+  const organizationId = profile?.organization_id ?? ''
+  const [dateRange, setDateRange] = useState<DateRange>('30d')
+
+  if (!organizationId) {
+    return (
+      <div className="flex items-center justify-center h-64 text-slate-500">
+        Loading analytics...
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* ---- Header ---- */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/dashboard/calls"
-          className="flex items-center justify-center rounded-xl border border-slate-700 p-2 text-slate-400 transition-colors hover:border-[#2DD4BF]/40 hover:text-[#2DD4BF]"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Call Analytics</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Performance insights for your AI receptionist
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <Link href="/dashboard/calls" className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Call Log
+            </Link>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-[#2DD4BF]" />
+            Call Analytics
+          </h1>
+          <p className="mt-1 text-sm text-slate-400">Deep insights into your call center performance</p>
+        </div>
+
+        {/* Date Range Picker */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(['today', '7d', '30d', '90d', 'all'] as DateRange[]).map((range) => (
+            <button
+              key={range}
+              onClick={() => setDateRange(range)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                dateRange === range
+                  ? 'bg-[#2DD4BF]/15 text-[#2DD4BF] border border-[#2DD4BF]/30'
+                  : 'border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+              }`}
+            >
+              {dateRangeLabels[range]}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ---- Stat Cards ---- */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[
-          {
-            label: 'Total Calls',
-            value: '7',
-            sub: 'This period',
-            icon: Phone,
-            color: 'text-[#2DD4BF]',
-          },
-          {
-            label: 'Answer Rate',
-            value: '86%',
-            sub: '6 of 7 answered',
-            icon: PhoneIncoming,
-            color: 'text-emerald-400',
-          },
-          {
-            label: 'Avg Duration',
-            value: '3:06',
-            sub: '186 seconds',
-            icon: Timer,
-            color: 'text-blue-400',
-          },
-          {
-            label: 'Minutes Used',
-            value: '247 / 500',
-            sub: '49% of plan',
-            icon: Gauge,
-            color: 'text-orange-400',
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
-                {s.label}
-              </span>
-              <s.icon className={`h-4 w-4 ${s.color}`} />
-            </div>
-            <p className={`mt-2 text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="mt-1 text-xs text-slate-500">{s.sub}</p>
+      {/* Row 1: Sentiment Trend + Top Intents */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+          <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-[#2DD4BF]" />
+            Sentiment Trend (30 Days)
+          </h2>
+          <SentimentTrendChart organizationId={organizationId} />
+        </div>
 
-            {/* Minutes progress bar */}
-            {s.label === 'Minutes Used' && (
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#2DD4BF] to-orange-400"
-                  style={{ width: '49.4%' }}
-                />
-              </div>
-            )}
-          </div>
-        ))}
+        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+          <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-f97316" />
+            Top Call Intents (90 Days)
+          </h2>
+          <TopIntents organizationId={organizationId} />
+        </div>
       </div>
 
-      {/* ---- Charts Grid ---- */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Calls Over Time */}
+      {/* Row 2: Agent Performance + Peak Hours */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            Calls Over Time
+          <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-purple-500" />
+            AI vs Human Performance (30 Days)
           </h2>
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={callsOverTime}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={{ stroke: 'rgba(148,163,184,0.1)' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip {...tooltipStyle} />
-                <Line
-                  type="monotone"
-                  dataKey="calls"
-                  stroke="#2DD4BF"
-                  strokeWidth={2.5}
-                  dot={{ fill: '#2DD4BF', r: 4, strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: '#2DD4BF', stroke: '#111827', strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <AgentPerformance organizationId={organizationId} />
         </div>
 
-        {/* Intent Distribution */}
         <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            Intent Distribution
+          <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+            Peak Call Hours (90 Days)
           </h2>
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={intentData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={85}
-                  dataKey="value"
-                  label={renderPieLabel}
-                  paddingAngle={3}
-                  stroke="none"
-                >
-                  {intentData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={tooltipStyle.contentStyle}
-                  itemStyle={tooltipStyle.itemStyle}
-                  formatter={(value: number) => [`${value}%`, 'Share']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          <PeakHoursChart organizationId={organizationId} />
         </div>
+      </div>
 
-        {/* Sentiment Breakdown */}
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            Sentiment Breakdown
-          </h2>
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sentimentData} barSize={40}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={{ stroke: 'rgba(148,163,184,0.1)' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip {...tooltipStyle} />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {sentimentData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Peak Hours */}
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-300">
-            Peak Hours
-          </h2>
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={peakHoursData} barSize={28}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.08)" />
-                <XAxis
-                  dataKey="hour"
-                  tick={{ fill: '#64748b', fontSize: 11 }}
-                  axisLine={{ stroke: 'rgba(148,163,184,0.1)' }}
-                  tickLine={false}
-                  interval={0}
-                  angle={-35}
-                  textAnchor="end"
-                  height={45}
-                />
-                <YAxis
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                  allowDecimals={false}
-                />
-                <Tooltip {...tooltipStyle} />
-                <Bar dataKey="calls" fill="#2DD4BF" radius={[6, 6, 0, 0]}>
-                  {peakHoursData.map((entry) => (
-                    <Cell
-                      key={entry.hour}
-                      fill={entry.calls >= 6 ? '#f97316' : '#2DD4BF'}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Row 3: Missed Call Queue (full width) */}
+      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+        <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <Phone className="h-4 w-4 text-red-400" />
+          Missed Call Queue (Last 7 Days)
+        </h2>
+        <MissedCallQueue organizationId={organizationId} />
       </div>
     </div>
   )

@@ -81,7 +81,7 @@ interface LiveActivityFeedProps {
 
 export function LiveActivityFeed({ activities, connected }: LiveActivityFeedProps) {
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6">
+    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-4 sm:p-6">
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <Zap className="h-5 w-5 text-teal-400" />
         Live Activity Feed

@@ -125,7 +125,7 @@ function QueueItemRow({ item, onApprove, onReject, isActing }: QueueItemRowProps
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span className="font-medium text-slate-200 text-sm">{customerName}</span>
-          <span className="text-xs text-slate-500 truncate">{customerEmail}</span>
+          <span className="text-xs text-slate-500 truncate max-w-[100px] sm:max-w-none">{customerEmail}</span>
         </div>
         <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">
           <span className="font-medium text-teal-400">{config.label}</span>
@@ -144,7 +144,7 @@ function QueueItemRow({ item, onApprove, onReject, isActing }: QueueItemRowProps
           title="Approve"
           onClick={() => onApprove(item.id)}
           disabled={isActing}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 transition-colors hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 transition-colors hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Check size={15} />
         </button>
@@ -153,7 +153,7 @@ function QueueItemRow({ item, onApprove, onReject, isActing }: QueueItemRowProps
           title="Reject"
           onClick={() => onReject(item.id)}
           disabled={isActing}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <X size={15} />
         </button>
@@ -267,7 +267,7 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
   )
 
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6">
+    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-4 sm:p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">

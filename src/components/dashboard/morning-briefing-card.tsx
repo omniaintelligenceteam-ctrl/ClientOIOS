@@ -37,7 +37,7 @@ function getTodayString(): string {
 
 function SkeletonPulse() {
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6 animate-pulse">
+    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-4 sm:p-6 animate-pulse">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <div className="h-5 w-5 rounded-full bg-[rgba(148,163,184,0.12)]" />
@@ -62,10 +62,10 @@ function SkeletonPulse() {
 
 function NoBriefingYet() {
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6">
+    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-4 sm:p-6">
       <div className="flex items-center gap-3 mb-4">
         <Sun className="h-5 w-5 text-[#2DD4BF]" />
-        <span className="text-sm font-semibold text-[#F8FAFC]">Morning Briefing</span>
+        <span className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Morning Briefing</span>
       </div>
       <div className="flex flex-col items-center py-6 gap-3 text-center">
         <Clock className="h-8 w-8 text-[#64748B]" />
@@ -179,19 +179,19 @@ export function MorningBriefingCard({ organizationId }: MorningBriefingCardProps
       : `$${Math.round(revenueCollected)}`
 
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6">
+    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-4 sm:p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <Sun className="h-5 w-5 text-[#2DD4BF] flex-shrink-0" />
-        <span className="text-sm font-semibold text-[#F8FAFC]">Morning Briefing</span>
-        <span className="ml-auto text-xs text-[#64748B] flex-shrink-0">{todayFormatted}</span>
+        <span className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Morning Briefing</span>
+        <span className="ml-auto text-[10px] sm:text-xs text-[#64748B] flex-shrink-0 hidden sm:block">{todayFormatted}</span>
       </div>
 
       {/* Narrative */}
       <p className="text-slate-300 text-sm leading-relaxed mb-5">{narrative}</p>
 
       {/* Metric pills */}
-      <div className="flex gap-2 mb-5">
+      <div className="grid grid-cols-4 sm:flex gap-2 mb-5">
         <MetricPill
           icon={<Phone className="h-3.5 w-3.5" />}
           value={callsTotal}
