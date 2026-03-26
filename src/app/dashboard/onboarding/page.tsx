@@ -78,7 +78,7 @@ function ProgressBar({ completed }: { completed: number }) {
   const percent = Math.round((completed / TOTAL_STEPS) * 100)
 
   return (
-    <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-slate-300">
           Setup Progress
@@ -119,7 +119,7 @@ function StepIndicator({
               ? 'border-[#2DD4BF] bg-[#2DD4BF] text-[#0B1120]'
               : isCurrent
                 ? 'border-[#2DD4BF] bg-[#2DD4BF]/10 text-[#2DD4BF] shadow-lg shadow-[#2DD4BF]/20'
-                : 'border-slate-600 bg-[#111827] text-slate-500'
+                : 'border-slate-600 bg-white/[0.03] text-slate-500'
           }
         `}
       >
@@ -238,7 +238,7 @@ function LiveSuccessBanner({ orgName }: { orgName: string }) {
           </a>
           <a
             href="/dashboard/calls"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-[#111827] px-6 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-slate-200"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-white/[0.03] px-6 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-slate-200"
           >
             <Phone size={16} />
             View Calls
@@ -433,7 +433,7 @@ function Step3Content({
         href="https://getoios.com/demo"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-[#111827] px-5 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-slate-200"
+        className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-white/[0.03] px-5 py-3 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-slate-200"
       >
         <Globe size={16} />
         Try Web Demo
@@ -697,10 +697,10 @@ function StepCard({
         <div
           className={`rounded-2xl border transition-all duration-300 ${
             isCurrent
-              ? 'border-[#2DD4BF]/20 bg-[#111827] shadow-lg shadow-[#2DD4BF]/5'
+              ? 'border-[#2DD4BF]/20 bg-white/[0.03] shadow-lg shadow-[#2DD4BF]/5'
               : isCompleted
-                ? 'border-[rgba(148,163,184,0.1)] bg-[#111827]/60'
-                : 'border-[rgba(148,163,184,0.06)] bg-[#111827]/30'
+                ? 'border-[rgba(148,163,184,0.1)] bg-white/[0.02]'
+                : 'border-[rgba(148,163,184,0.06)] bg-white/[0.01]'
           }`}
         >
           {/* Header — always visible */}

@@ -188,10 +188,10 @@ export default function CallLogPage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={syncCalls} disabled={syncing} className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/40 hover:text-[#2DD4BF] disabled:opacity-50">
-            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {syncing ? <div className="h-5 w-5 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin"></div> : <RefreshCw className="h-4 w-4" />}
             {syncing ? 'Syncing...' : 'Sync Retell'}
           </button>
-          <div className="flex items-center gap-1 rounded-xl bg-[#111827] p-1 border border-[rgba(148,163,184,0.1)]">
+          <div className="flex items-center gap-1 rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
             <button className="rounded-lg bg-[#2DD4BF]/15 px-4 py-2 text-sm font-medium text-[#2DD4BF]">Log</button>
             <Link href="/dashboard/calls/analytics" className="rounded-lg px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors">
               <span className="flex items-center gap-1.5"><BarChart3 className="h-4 w-4" />Analytics</span>
@@ -207,7 +207,7 @@ export default function CallLogPage() {
           <button
             key={range}
             onClick={() => setDateRange(range)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors min-h-[44px] ${
               dateRange === range
                 ? 'bg-[#2DD4BF]/15 text-[#2DD4BF] border border-[#2DD4BF]/30'
                 : 'border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300'
@@ -229,7 +229,7 @@ export default function CallLogPage() {
           { label: 'AI Handled', value: `${stats.aiHandledPct}%`, icon: Bot, color: 'text-purple-400' },
           { label: 'Positive Sentiment', value: `${stats.positiveRate}%`, icon: TrendingUp, color: 'text-[#2DD4BF]' },
         ].map((s) => (
-          <div key={s.label} className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+          <div key={s.label} className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{s.label}</span>
               <s.icon className={`h-4 w-4 ${s.color}`} />
@@ -241,7 +241,7 @@ export default function CallLogPage() {
 
       {/* Peak Hours Heatmap */}
       {organizationId && (
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="mb-4 text-sm font-semibold text-slate-300">Peak Call Hours (Last 90 Days)</h2>
           <PeakHoursChart organizationId={organizationId} />
         </div>
@@ -249,7 +249,7 @@ export default function CallLogPage() {
 
       {/* Missed Call Queue (collapsible) */}
       {organizationId && (
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] overflow-hidden">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden">
           <button
             onClick={() => setMissedExpanded(!missedExpanded)}
             className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-slate-800/30 transition-colors"
@@ -269,7 +269,7 @@ export default function CallLogPage() {
       )}
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+      <div className="flex flex-wrap items-center gap-3 backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-200 outline-none focus:border-[#2DD4BF]/50 focus:ring-1 focus:ring-[#2DD4BF]/30">
           <option value="all">All Statuses</option>
           <option value="answered">Answered</option>
@@ -301,10 +301,10 @@ export default function CallLogPage() {
 
       {/* Table */}
       {(loading || calls.length > 0) && (
-        <div className="overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827]">
+        <div className="overflow-x-auto backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-[#2DD4BF]" />
+              <div className="h-5 w-5 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin"></div>
             </div>
           ) : (
             <table className="w-full text-left text-sm">
@@ -357,7 +357,7 @@ export default function CallLogPage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={(e) => { e.stopPropagation(); setSelectedCall(call) }}
-                        className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 opacity-0 transition-all group-hover:opacity-100 hover:border-[#2DD4BF]/40 hover:text-[#2DD4BF]"
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 opacity-0 transition-all group-hover:opacity-100 hover:border-[#2DD4BF]/40 hover:text-[#2DD4BF] min-h-[44px]"
                       >
                         <Eye className="h-3.5 w-3.5" />View
                       </button>
@@ -390,20 +390,20 @@ export default function CallLogPage() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Sentiment Trend */}
-            <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+            <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
               <h3 className="mb-4 text-sm font-semibold text-slate-300">Sentiment Trend (30 Days)</h3>
               <SentimentTrendChart organizationId={organizationId} />
             </div>
 
             {/* Top Intents */}
-            <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+            <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
               <h3 className="mb-4 text-sm font-semibold text-slate-300">Top Call Intents (90 Days)</h3>
               <TopIntents organizationId={organizationId} />
             </div>
           </div>
 
           {/* Agent Performance */}
-          <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+          <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
             <h3 className="mb-4 text-sm font-semibold text-slate-300">Agent Performance (30 Days)</h3>
             <AgentPerformance organizationId={organizationId} />
           </div>

@@ -103,13 +103,13 @@ export function BulkActionsBar({
           <button
             onClick={() => { setShowAssign(a => !a); setShowTag(false) }}
             disabled={loading === 'assign'}
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF] disabled:opacity-50">
+            className="flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF] disabled:opacity-50">
             {loading === 'assign' ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
             Assign
             <ChevronDown size={11} />
           </button>
           {showAssign && (
-            <div className="absolute left-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] shadow-2xl">
+            <div className="absolute left-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-2xl">
               {teamMembers.length === 0 && (
                 <p className="px-4 py-3 text-xs text-slate-500">No team members found</p>
               )}
@@ -131,12 +131,12 @@ export function BulkActionsBar({
           <button
             onClick={() => { setShowTag(t => !t); setShowAssign(false) }}
             disabled={loading === 'tag'}
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF] disabled:opacity-50">
+            className="flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF] disabled:opacity-50">
             {loading === 'tag' ? <Loader2 size={13} className="animate-spin" /> : <Tag size={13} />}
             Tag
           </button>
           {showTag && (
-            <div className="absolute left-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-3 shadow-2xl">
+            <div className="absolute left-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] p-3 shadow-2xl">
               <p className="mb-2 text-xs text-slate-500">Add tag to {selectedIds.length} leads</p>
               <div className="flex gap-2">
                 <input
@@ -155,14 +155,14 @@ export function BulkActionsBar({
 
         {/* Export CSV */}
         <button onClick={handleExport}
-          className="flex h-9 items-center gap-1.5 rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]">
+          className="flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]">
           <Download size={13} />
           Export CSV
         </button>
 
         {/* Add to Campaign (placeholder) */}
         <button
-          className="flex h-9 items-center gap-1.5 rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]">
+          className="flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]">
           <Megaphone size={13} />
           Campaign
         </button>

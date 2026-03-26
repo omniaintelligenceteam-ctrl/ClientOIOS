@@ -218,12 +218,12 @@ function FollowUpForm({ leadId, organizationId, onScheduled }: {
       <div>
         <label className="mb-1 block text-xs text-slate-500">Date & Time</label>
         <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)} required
-          className="w-full rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 py-2 text-sm text-[#F8FAFC] outline-none focus:border-[#2DD4BF]/50" />
+          className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-[#F8FAFC] outline-none focus:border-[#2DD4BF]/50" />
       </div>
       <div>
         <label className="mb-1 block text-xs text-slate-500">Type</label>
         <select value={type} onChange={e => setType(e.target.value as FollowUpType)}
-          className="w-full rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 py-2 text-sm text-[#F8FAFC] outline-none focus:border-[#2DD4BF]/50">
+          className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-[#F8FAFC] outline-none focus:border-[#2DD4BF]/50">
           <option value="call">📞 Call</option>
           <option value="sms">💬 SMS</option>
           <option value="email">📧 Email</option>
@@ -232,7 +232,7 @@ function FollowUpForm({ leadId, organizationId, onScheduled }: {
       <div>
         <label className="mb-1 block text-xs text-slate-500">Notes</label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Optional notes..."
-          className="w-full rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 py-2 text-sm text-[#F8FAFC] outline-none focus:border-[#2DD4BF]/50 resize-none" />
+          className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-[#F8FAFC] outline-none focus:border-[#2DD4BF]/50 resize-none" />
       </div>
       <button type="submit" disabled={loading}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2DD4BF] px-4 py-2 text-sm font-semibold text-[#0B1120] transition-opacity hover:opacity-90 disabled:opacity-50">
@@ -302,7 +302,7 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
       <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Drawer - desktop: right slide-over, mobile: bottom sheet */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-[rgba(148,163,184,0.1)] bg-[#111827] shadow-2xl">
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-[rgba(148,163,184,0.1)] bg-white/[0.03] shadow-2xl">
 
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-[rgba(148,163,184,0.1)] px-6 py-4">

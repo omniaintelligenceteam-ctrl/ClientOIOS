@@ -119,7 +119,7 @@ export function LeadSearch({
           onFocus={() => { if (results.length > 0) setOpen(true) }}
           onKeyDown={handleKeyDown}
           placeholder="Search leads..."
-          className="h-10 w-full rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] pl-9 pr-8 text-sm text-[#F8FAFC] placeholder-slate-500 outline-none transition-colors focus:border-[#2DD4BF]/50"
+          className="h-10 w-full rounded-xl border border-white/[0.06] bg-white/[0.03] pl-9 pr-8 text-sm text-[#F8FAFC] placeholder-slate-500 outline-none transition-colors focus:border-[#2DD4BF]/50"
         />
         {query && (
           <button onClick={() => { setQuery(''); setResults([]); setOpen(false) }}
@@ -131,7 +131,7 @@ export function LeadSearch({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] shadow-2xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-2xl">
           {loading && (
             <div className="px-4 py-3 text-center text-xs text-slate-500">Searching...</div>
           )}

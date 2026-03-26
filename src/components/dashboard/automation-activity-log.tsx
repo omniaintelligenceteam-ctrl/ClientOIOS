@@ -203,7 +203,7 @@ export function AutomationActivityLog({ organizationId }: AutomationActivityLogP
   }, [organizationId])
 
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
       {/* Header */}
       <h2 className="text-lg font-semibold text-slate-200 mb-4">
         Automation Activity

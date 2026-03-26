@@ -199,7 +199,7 @@ function TodaySummary({ appointments }: { appointments: Appointment[] }) {
   ]
 
   return (
-    <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
       <div className="mb-4 flex items-center gap-2">
         <AlertCircle size={16} className="text-[#2DD4BF]" />
         <h2 className="text-sm font-semibold text-[#F8FAFC]">
@@ -335,7 +335,7 @@ function AppointmentCard({ appointment, customers, users }: { appointment: Appoi
 
   return (
     <div
-      className={`rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4 transition-all hover:border-[#2DD4BF]/20 ${
+      className={`backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 transition-all hover:border-[#2DD4BF]/20 ${
         today ? 'border-l-2 border-l-[#2DD4BF]' : ''
       }`}
     >
@@ -437,7 +437,7 @@ export default function SchedulePage() {
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] p-0.5">
+        <div className="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5">
           <button
             type="button"
             onClick={() => setViewMode('list')}
@@ -482,7 +482,7 @@ export default function SchedulePage() {
 
           {/* Desktop table */}
           {appointments.length > 0 && (<>
-          <div className="hidden overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] md:block">
+          <div className="hidden overflow-x-auto backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl md:block">
             <table className="w-full min-w-[900px] text-left">
               <thead>
                 <tr className="border-b border-[rgba(148,163,184,0.1)]">
@@ -532,7 +532,7 @@ export default function SchedulePage() {
 
       {/* ---- Calendar View (placeholder) ---- */}
       {viewMode === 'calendar' && (
-        <div className="flex flex-1 items-center justify-center rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-12">
+        <div className="flex flex-1 items-center justify-center backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-12">
           <div className="text-center">
             <Calendar
               size={48}

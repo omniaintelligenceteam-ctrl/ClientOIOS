@@ -12,7 +12,7 @@ export function CommandCenterHeader({ pageName = 'Command Center' }: CommandCent
   const [searchFocused, setSearchFocused] = useState(false)
 
   return (
-    <div className="hidden md:flex items-center gap-4 h-12 px-4 border-b border-[rgba(148,163,184,0.06)] bg-[#111827]/40 backdrop-blur-sm">
+    <div className="hidden md:flex items-center gap-4 h-12 px-4 border-b border-[rgba(148,163,184,0.06)] bg-white/[0.015] backdrop-blur-sm">
       {/* Logo */}
       <span className="gradient-text text-sm font-extrabold tracking-tight mr-2">OIOS</span>
 

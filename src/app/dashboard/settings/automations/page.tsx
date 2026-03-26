@@ -142,7 +142,7 @@ function AutomationCard({
   const mode: Mode = hasRule ? rule.mode : 'auto'
 
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6 flex flex-col gap-5">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start gap-4">
         <div
@@ -360,7 +360,7 @@ export default function AutomationsSettingsPage() {
           {ALL_ACTION_TYPES.map((type) => (
             <div
               key={type}
-              className="h-52 animate-pulse rounded-2xl bg-[#111827]"
+              className="h-52 animate-pulse rounded-2xl bg-white/[0.03]"
             />
           ))}
         </div>

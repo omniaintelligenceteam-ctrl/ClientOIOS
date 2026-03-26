@@ -104,7 +104,7 @@ export function PredictiveRevenue({ organizationId }: PredictiveRevenueProps) {
         return (
           <div
             key={days}
-            className="flex flex-col gap-1.5 rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4"
+            className="flex flex-col gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4"
           >
             <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
               {label} Forecast

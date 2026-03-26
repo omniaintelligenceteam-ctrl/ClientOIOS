@@ -13,7 +13,7 @@ import { CallHeatmap } from '@/components/dashboard/charts/call-heatmap'
 // Constants
 // ---------------------------------------------------------------------------
 
-const cardClass = 'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+const cardClass = 'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 const PIE_COLORS = ['#2DD4BF', '#818cf8', '#f59e0b', '#f472b6', '#34d399', '#60a5fa']
 

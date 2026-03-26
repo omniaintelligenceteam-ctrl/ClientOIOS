@@ -97,7 +97,7 @@ export default function BillingPage() {
       </div>
 
       {/* Current Plan */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function BillingPage() {
       </div>
 
       {/* Usage */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <div className="mb-4 flex items-center gap-2">
           <TrendingUp size={18} className="text-slate-400" />
           <h3 className="text-base font-semibold text-slate-200">Monthly Usage</h3>
@@ -198,7 +198,7 @@ export default function BillingPage() {
       </div>
 
       {/* Billing History */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-semibold text-slate-200">Billing History</h3>
           <span className="rounded-full bg-[#f97316]/10 px-3 py-1 text-xs font-medium text-[#f97316]">Coming soon</span>

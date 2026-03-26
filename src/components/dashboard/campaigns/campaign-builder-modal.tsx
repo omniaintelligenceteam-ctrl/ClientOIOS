@@ -123,7 +123,7 @@ export function CampaignBuilderModal({ organizationId, onClose, onCreated }: Pro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-2xl rounded-2xl border border-[rgba(148,163,184,0.15)] bg-[#111827] shadow-2xl">
+      <div className="relative w-full max-w-2xl rounded-2xl border border-[rgba(148,163,184,0.15)] bg-white/[0.03] shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.1)] px-6 py-4">
           <div className="flex items-center gap-3">

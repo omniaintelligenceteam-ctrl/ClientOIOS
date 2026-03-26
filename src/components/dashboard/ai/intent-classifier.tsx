@@ -99,7 +99,7 @@ export function IntentClassifier({ transcriptSummary, onIntentDetected }: Intent
 
   if (!transcriptSummary || !result) {
     return (
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4 text-center">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-center">
         <MessageSquare size={20} className="mx-auto mb-2 text-[#475569]" />
         <p className="text-xs text-[#64748B]">No transcript available for intent detection</p>
       </div>
@@ -109,7 +109,7 @@ export function IntentClassifier({ transcriptSummary, onIntentDetected }: Intent
   const Icon = result.icon
 
   return (
-    <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Detected Intent</span>
         <div

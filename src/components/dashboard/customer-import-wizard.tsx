@@ -571,7 +571,7 @@ export function CustomerImportWizard({
       onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
     >
       {/* Card */}
-      <div className="w-full max-w-2xl bg-[#111827] border border-[rgba(148,163,184,0.12)] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[rgba(148,163,184,0.08)]">
           <div>

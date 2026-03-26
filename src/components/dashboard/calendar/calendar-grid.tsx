@@ -97,7 +97,7 @@ function MonthView({
   }, [days])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827]">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03]">
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-[rgba(148,163,184,0.1)]">
         {DAY_NAMES.map((name) => (
@@ -203,7 +203,7 @@ function WeekView({
   }, [weekStart])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827]">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03]">
       {/* Day headers */}
       <div className="grid grid-cols-8 border-b border-[rgba(148,163,184,0.1)]">
         <div className="w-12 flex-shrink-0 border-r border-[rgba(148,163,184,0.05)]" />
@@ -305,7 +305,7 @@ function DayView({
   const dayAppts = getAppointmentsForDay(appointments, dayStr)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827]">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03]">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-[rgba(148,163,184,0.1)] px-4 py-3">
         <span

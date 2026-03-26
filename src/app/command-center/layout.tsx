@@ -411,7 +411,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
       {/*  Desktop Sidebar                                              */}
       {/* ============================================================ */}
       <aside
-        className="hidden md:flex flex-col border-r border-[rgba(148,163,184,0.1)] bg-[#111827] transition-[width] duration-300 ease-in-out"
+        className="hidden md:flex flex-col border-r border-white/[0.06] bg-white/[0.03] transition-[width] duration-300 ease-in-out"
         style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       >
         {renderSidebarContent(sidebarCollapsed)}
@@ -426,7 +426,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
 
       <aside
         ref={mobileMenuRef}
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-[rgba(148,163,184,0.1)] bg-[#111827] transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.06] bg-white/[0.03] transition-transform duration-300 ease-in-out md:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -448,7 +448,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
       {/* ============================================================ */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-[rgba(148,163,184,0.1)] bg-[#111827]/80 px-4 backdrop-blur-sm sm:px-6">
+        <header className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-[rgba(148,163,184,0.1)] bg-black/[0.6] px-4 backdrop-blur-sm sm:px-6">
           {/* Mobile hamburger */}
           <button
             type="button"

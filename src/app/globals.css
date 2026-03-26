@@ -402,3 +402,102 @@ body {
   from { transform: translateY(-100%); }
   to { transform: translateY(0); }
 }
+
+/* ============================================================
+   PHASE ALPHA: Enhanced Visual Foundation
+   ============================================================ */
+
+/* ---- Background gradient: #0B1120 → #0D1526 ---- */
+.bg-dashboard {
+  background: linear-gradient(160deg, #0B1120 0%, #0D1526 50%, #0B1120 100%);
+  min-height: 100vh;
+}
+
+/* ---- Noise texture overlay (CSS only) ---- */
+.noise-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+
+/* ---- Gradient text for value/revenue numbers ---- */
+.gradient-text-value {
+  background: linear-gradient(135deg, #2DD4BF 0%, #5EEAD4 50%, #67E8F9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-orange {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Skeleton shimmer (override with more vibrant variant) ---- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(30, 41, 59, 0.8) 25%,
+    rgba(51, 65, 85, 0.9) 50%,
+    rgba(30, 41, 59, 0.8) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ---- Glass morphism cards ---- */
+.glass-card {
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(45, 212, 191, 0.15);
+  box-shadow: 0 0 24px rgba(45, 212, 191, 0.06);
+  transform: scale(1.003);
+}
+
+/* ---- Sidebar glass ---- */
+.glass-sidebar {
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  background: rgba(11, 17, 32, 0.9);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ---- Header glass ---- */
+.glass-header {
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  background: rgba(11, 17, 32, 0.75);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ---- Stat card glow on hover ---- */
+.stat-card-glow:hover {
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.08), 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* ---- Animated number shimmer (ensure shimmer keyframe exported) ---- */
+@keyframes number-pop {
+  0% { transform: scale(0.95); opacity: 0; }
+  60% { transform: scale(1.02); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-number-pop { animation: number-pop 0.4s ease-out forwards; }

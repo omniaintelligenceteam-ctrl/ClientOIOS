@@ -102,7 +102,7 @@ const calendarDots: Record<number, string[]> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const cardClass = 'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+const cardClass = 'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 function channelIcon(channel: string) {
   switch (channel) {

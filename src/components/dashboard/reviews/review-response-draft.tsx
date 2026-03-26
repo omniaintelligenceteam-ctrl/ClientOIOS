@@ -19,7 +19,7 @@ interface Props {
 }
 
 const cardClass =
-  'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-5'
+  'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5'
 
 export function ReviewResponseDraft({ review, onPosted }: Props) {
   const [draft, setDraft] = useState(review.response_text || '')

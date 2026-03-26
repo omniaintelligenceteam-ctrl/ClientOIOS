@@ -176,7 +176,7 @@ function HealthCard({ client }: { client: ClientHealth }) {
   const { org, callsThisWeek, callsLastWeek, healthScore, lastCallAt } = client
 
   return (
-    <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5 transition-all hover:border-[rgba(148,163,184,0.2)] hover:bg-[#111827]/80">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 transition-all hover:border-[rgba(148,163,184,0.2)] hover:bg-white/[0.05]">
       {/* Top row: name + health score */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
@@ -430,7 +430,7 @@ export default function ClientHealthPage() {
   if (!isSuperAdmin) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 text-center max-w-md">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 text-center max-w-md">
           <ShieldAlert size={48} className="mx-auto mb-4 text-[#f97316]" />
           <h2 className="text-xl font-bold text-[#F8FAFC] mb-2">Access Denied</h2>
           <p className="text-sm text-[#94A3B8]">
@@ -468,7 +468,7 @@ export default function ClientHealthPage() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
               Avg Score
@@ -479,7 +479,7 @@ export default function ClientHealthPage() {
             {summary.avgScore}
           </p>
         </div>
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
               Total
@@ -488,7 +488,7 @@ export default function ClientHealthPage() {
           </div>
           <p className="text-2xl font-bold text-[#2DD4BF]">{summary.total}</p>
         </div>
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
               Healthy
@@ -497,7 +497,7 @@ export default function ClientHealthPage() {
           </div>
           <p className="text-2xl font-bold text-emerald-400">{summary.healthy}</p>
         </div>
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
               Attention
@@ -508,7 +508,7 @@ export default function ClientHealthPage() {
             {summary.needsAttention}
           </p>
         </div>
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
               At Risk
@@ -522,10 +522,10 @@ export default function ClientHealthPage() {
       {/* Client Health Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-[#2DD4BF]" />
+          <div className="h-5 w-5 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin"></div>
         </div>
       ) : clients.length === 0 ? (
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-12 text-center">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-12 text-center">
           <Building2 className="mx-auto mb-3 h-10 w-10 text-slate-600" />
           <p className="text-sm text-slate-500">
             No clients found. Onboard your first client to see health scores.

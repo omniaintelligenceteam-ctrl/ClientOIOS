@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   Receipt,
@@ -14,8 +14,12 @@ import {
   FileText,
   XCircle,
   Bell,
+  Copy,
+  Trash2,
 } from 'lucide-react'
 import { EmptyState } from '@/components/dashboard/empty-state'
+import { InlineEdit } from '@/components/ui/inline-edit'
+import { ContextMenu, type ContextMenuItem } from '@/components/ui/context-menu'
 import type { Invoice, Customer, InvoiceStatus } from '@/lib/types'
 
 // ---------------------------------------------------------------------------
@@ -23,7 +27,7 @@ import type { Invoice, Customer, InvoiceStatus } from '@/lib/types'
 // ---------------------------------------------------------------------------
 
 const cardClass =
-  'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+  'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -322,10 +326,10 @@ export default function InvoicingPage() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors min-h-[44px] ${
                 isActive
                   ? 'border-[#2DD4BF]/40 bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                  : 'border-[rgba(148,163,184,0.1)] bg-[#111827] text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                  : 'border-[rgba(148,163,184,0.1)] bg-white/[0.03] text-slate-400 hover:border-slate-600 hover:text-slate-300'
               }`}
             >
               {label}
@@ -388,9 +392,19 @@ export default function InvoicingPage() {
             <tbody>
               {filteredInvoices.map((inv) => {
                 const isOverdue = inv.status === 'overdue'
+                const invoiceContextItems: ContextMenuItem[] = [
+                  { id: 'view', label: 'View Invoice', icon: Eye, onClick: () => {} },
+                  { id: 'copy', label: 'Copy Invoice #', icon: Copy, onClick: () => navigator.clipboard?.writeText(inv.invoice_number ?? '') },
+                  { id: 'send', label: 'Send Reminder', icon: Send, onClick: () => {} },
+                  { id: 'div', label: '', onClick: () => {}, divider: true },
+                  { id: 'delete', label: 'Delete Invoice', icon: Trash2, danger: true, onClick: async () => {
+                    setInvoices(prev => prev.filter(i => i.id !== inv.id))
+                    await supabase.from('invoices').delete().eq('id', inv.id)
+                  }},
+                ]
                 return (
+                  <ContextMenu key={inv.id} items={invoiceContextItems}>
                   <tr
-                    key={inv.id}
                     className={`group border-b border-[rgba(148,163,184,0.06)] transition-colors hover:bg-white/[0.02] ${
                       isOverdue ? 'border-l-2 border-l-red-500' : ''
                     }`}
@@ -411,8 +425,19 @@ export default function InvoicingPage() {
                     </td>
 
                     {/* Amount */}
-                    <td className="whitespace-nowrap px-6 py-4 text-right font-semibold text-[#F8FAFC]">
-                      {formatCurrencyExact(inv.amount)}
+                    <td className="whitespace-nowrap px-6 py-4 text-right font-semibold text-[#F8FAFC]" onClick={e => e.stopPropagation()}>
+                      <InlineEdit
+                        value={inv.amount}
+                        type="currency"
+                        formatDisplay={v => formatCurrencyExact(Number(v))}
+                        onSave={async (v) => {
+                          const num = parseFloat(String(v).replace(/[$,]/g, ''))
+                          if (isNaN(num)) return
+                          await supabase.from('invoices').update({ amount: num }).eq('id', inv.id)
+                          setInvoices(prev => prev.map(i => i.id === inv.id ? { ...i, amount: num } : i))
+                        }}
+                        className="text-right font-semibold text-[#F8FAFC]"
+                      />
                     </td>
 
                     {/* Status */}
@@ -458,6 +483,7 @@ export default function InvoicingPage() {
                       )}
                     </td>
                   </tr>
+                  </ContextMenu>
                 )
               })}
 

@@ -27,7 +27,7 @@ import type { Review, ReviewPlatform, ReviewResponseStatus, Sentiment } from '@/
 // ---------------------------------------------------------------------------
 
 const cardClass =
-  'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+  'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -302,7 +302,7 @@ export default function ReviewsPage() {
                 return (
                   <div
                     key={review.id}
-                    className={`rounded-2xl border bg-[#111827] p-5 transition-all ${
+                    className={`rounded-2xl border backdrop-blur-xl bg-white/[0.03] p-5 transition-all ${
                       selectedReview?.id === review.id
                         ? 'border-[#2DD4BF]/40'
                         : 'border-[rgba(148,163,184,0.1)]'
@@ -418,7 +418,7 @@ export default function ReviewsPage() {
 
             {/* Queue list */}
             {needsResponse.length === 0 && !selectedReview ? (
-              <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] px-5 py-8 text-center">
+              <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl px-5 py-8 text-center">
                 <CheckCircle2 className="mx-auto mb-3 h-8 w-8 text-green-400" />
                 <p className="text-sm font-semibold text-[#F8FAFC]">All caught up!</p>
                 <p className="mt-1 text-xs text-slate-500">No reviews need a response right now.</p>
@@ -432,7 +432,7 @@ export default function ReviewsPage() {
                     <button
                       key={r.id}
                       onClick={() => setSelectedReview(r)}
-                      className="w-full rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-3.5 text-left transition-all hover:border-[#2DD4BF]/30 hover:bg-[#2DD4BF]/5"
+                      className="w-full backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-3.5 text-left transition-all hover:border-[#2DD4BF]/30 hover:bg-[#2DD4BF]/5"
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <StarRating rating={r.rating} size={12} />

@@ -24,7 +24,7 @@ import type { Organization, OnboardingStatus } from '@/lib/types'
 /* ------------------------------------------------------------------ */
 
 const cardClass =
-  'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+  'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 const STATUS_COLORS: Record<OnboardingStatus, string> = {
   live: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -247,7 +247,7 @@ export default function AdminOverviewPage() {
   if (!isSuperAdmin) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 text-center max-w-md">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 text-center max-w-md">
           <ShieldAlert size={48} className="mx-auto mb-4 text-[#f97316]" />
           <h2 className="text-xl font-bold text-[#F8FAFC] mb-2">Access Denied</h2>
           <p className="text-sm text-[#94A3B8]">
@@ -319,7 +319,7 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+      <div className="flex flex-wrap items-center gap-3 backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -357,10 +357,10 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Client Table */}
-      <div className="overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827]">
+      <div className="overflow-x-auto backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl">
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-[#2DD4BF]" />
+            <div className="h-5 w-5 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin"></div>
           </div>
         ) : (
           <table className="w-full text-left text-sm">

@@ -113,7 +113,7 @@ export default function ActivityPage() {
           type="button"
           onClick={handleExport}
           disabled={exporting}
-          className="flex items-center gap-2 rounded-lg border border-[rgba(148,163,184,0.15)] bg-[#111827] px-3 py-2 text-sm text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC] disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg border border-[rgba(148,163,184,0.15)] bg-white/[0.03] px-3 py-2 text-sm text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC] disabled:opacity-50"
         >
           <Download size={15} />
           {exporting ? 'Exporting...' : 'Export JSON'}
@@ -133,12 +133,12 @@ export default function ActivityPage() {
             placeholder="Search by actor or action..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] pl-9 pr-3 text-sm text-[#F8FAFC] placeholder-[#64748B] outline-none transition-colors focus:border-[#2DD4BF]/40 focus:ring-1 focus:ring-[#2DD4BF]/20"
+            className="h-10 w-full bg-white/[0.03] border border-white/[0.06] rounded-lg pl-9 pr-3 text-sm text-[#F8FAFC] placeholder-[#64748B] outline-none transition-colors focus:border-[#2DD4BF]/40 focus:ring-1 focus:ring-[#2DD4BF]/20"
           />
         </div>
 
         {/* Date range */}
-        <div className="flex gap-1 rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] p-1">
+        <div className="flex gap-1 bg-white/[0.03] border border-white/[0.06] rounded-lg p-1">
           {DATE_RANGES.map((r) => (
             <button
               key={r}
@@ -166,7 +166,7 @@ export default function ActivityPage() {
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               entityFilter === f
                 ? 'bg-[#2DD4BF] text-[#0B1120]'
-                : 'border border-[rgba(148,163,184,0.15)] bg-[#111827] text-[#94A3B8] hover:border-[rgba(45,212,191,0.3)] hover:text-[#2DD4BF]'
+                : 'border border-[rgba(148,163,184,0.15)] bg-white/[0.03] text-[#94A3B8] hover:border-[rgba(45,212,191,0.3)] hover:text-[#2DD4BF]'
             }`}
           >
             {f}
@@ -175,7 +175,7 @@ export default function ActivityPage() {
       </div>
 
       {/* Feed */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
         <ActivityFeedList
           organizationId={organizationId}
           filters={filters}

@@ -129,7 +129,7 @@ export function ProposalGenerator({ lead, businessName = 'Our Team', onGenerated
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
         <h3 className="text-sm font-semibold text-[#F8FAFC] mb-3">
           Generate Proposal for {lead.first_name} {lead.last_name}
         </h3>
@@ -190,7 +190,7 @@ export function ProposalGenerator({ lead, businessName = 'Our Team', onGenerated
       </div>
 
       {displayProposal && (
-        <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4">
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-[#2DD4BF] uppercase tracking-wider">
               Generated Proposal

@@ -66,14 +66,14 @@ function PipelineColumn({ stage, leads, onLeadClick }: {
   const totalValue = leads.reduce((s, l) => s + (l.estimated_value || 0), 0)
   return (
     <div className="flex flex-col min-w-[240px] max-w-[280px] flex-1">
-      <div className={`rounded-t-xl border border-b-0 border-[rgba(148,163,184,0.1)] border-t-4 ${stage.borderColor} bg-[#111827] px-3 py-3`}>
+      <div className={`rounded-t-xl border border-b-0 border-[rgba(148,163,184,0.1)] border-t-4 ${stage.borderColor} bg-white/[0.03] px-3 py-3`}>
         <div className="flex items-center justify-between">
           <span className={`text-xs font-bold uppercase tracking-wider ${stage.textColor}`}>{stage.label}</span>
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${stage.countColor} ${stage.textColor}`}>{leads.length}</span>
         </div>
         {totalValue > 0 && <p className="text-xs text-slate-500 mt-1">{fmt(totalValue)}</p>}
       </div>
-      <div className="flex-1 overflow-y-auto rounded-b-xl border border-t-0 border-[rgba(148,163,184,0.1)] bg-[#111827]/60 p-2 space-y-2 min-h-[200px]">
+      <div className="flex-1 overflow-y-auto rounded-b-xl border border-t-0 border-[rgba(148,163,184,0.1)] bg-white/[0.02] p-2 space-y-2 min-h-[200px]">
         {leads.length === 0 ? (
           <p className="text-xs text-slate-600 py-4 text-center">No leads</p>
         ) : (
@@ -105,7 +105,7 @@ function StatsBar({ leads }: { leads: Lead[] }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {stats.map(({ label, value, Icon, color }) => (
-        <div key={label} className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-xl p-4">
+        <div key={label} className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs text-slate-500">{label}</p>
             <Icon className={`h-4 w-4 ${color}`} />
@@ -179,7 +179,7 @@ export default function PipelinePage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-teal-400" /></div>
+        <div className="flex items-center justify-center h-64"><div className="h-5 w-5 rounded-full border-2 border-teal-400/30 border-t-teal-400 animate-spin"></div></div>
       ) : (
         <>
           <StatsBar leads={filtered} />

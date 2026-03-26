@@ -223,7 +223,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 rounded-xl bg-[#111827] p-1 border border-[rgba(148,163,184,0.1)]">
+      <div className="flex gap-1 rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -241,7 +241,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notification list */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] overflow-hidden">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden">
         {loading ? (
           <div>
             <RowSkeleton />

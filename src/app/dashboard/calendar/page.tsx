@@ -165,19 +165,19 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={goToPrev}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] text-sm text-slate-400 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]"
+            className="flex h-8 w-8 items-center justify-center bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-slate-400 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]"
           >
             ‹
           </button>
           <button
             onClick={goToNext}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] text-sm text-slate-400 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]"
+            className="flex h-8 w-8 items-center justify-center bg-white/[0.03] border border-white/[0.06] rounded-lg text-sm text-slate-400 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]"
           >
             ›
           </button>
           <button
             onClick={goToToday}
-            className="rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]"
+            className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]"
           >
             Today
           </button>
@@ -187,7 +187,7 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#111827] p-0.5">
+          <div className="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5">
             {(['month', 'week', 'day'] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
@@ -225,7 +225,7 @@ export default function CalendarPage() {
       </div>
 
       {(viewMode === 'month' || viewMode === 'week') && (
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4 lg:hidden">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 lg:hidden">
           <h2 className="mb-3 text-sm font-semibold text-[#F8FAFC]">
             {selectedDay.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             {' — '}

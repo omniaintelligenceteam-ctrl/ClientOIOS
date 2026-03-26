@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   Users,
   Search,
@@ -17,6 +17,8 @@ import {
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Customer } from '@/lib/types'
 import { EmptyState } from '@/components/dashboard/empty-state'
+import { InlineEdit } from '@/components/ui/inline-edit'
+import { ContextMenu, type ContextMenuItem } from '@/components/ui/context-menu'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -197,7 +199,7 @@ function StatsRow({ customers }: { customers: Customer[] }) {
   ]
 
   return (
-    <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon
@@ -261,8 +263,27 @@ function SortButton({
 /*  Customer Row                                                       */
 /* ------------------------------------------------------------------ */
 
-function CustomerRow({ customer }: { customer: Customer }) {
+function CustomerRow({ customer, onUpdate }: { customer: Customer; onUpdate?: (c: Customer) => void }) {
+  const supabase = createSupabaseBrowserClient()
+
+  const handleSave = useCallback(async (field: string, value: string | number) => {
+    const { data } = await supabase
+      .from('customers')
+      .update({ [field]: value })
+      .eq('id', customer.id)
+      .select()
+      .single()
+    if (data && onUpdate) onUpdate(data as unknown as Customer)
+  }, [customer.id, onUpdate, supabase])
+
+  const contextItems: ContextMenuItem[] = [
+    { id: 'call', label: 'Call Customer', icon: Phone, onClick: () => window.open(`tel:${customer.phone}`) },
+    { id: 'email', label: 'Send Email', icon: Mail, onClick: () => window.open(`mailto:${customer.email}`) },
+    { id: 'copy', label: 'Copy Phone', icon: Phone, onClick: () => navigator.clipboard?.writeText(customer.phone) },
+  ]
+
   return (
+    <ContextMenu items={contextItems}>
     <tr className="group border-b border-[rgba(148,163,184,0.05)] transition-all hover:border-[#2DD4BF]/20 hover:bg-white/[0.02]">
       {/* Name */}
       <td className="px-4 py-3.5">
@@ -279,10 +300,10 @@ function CustomerRow({ customer }: { customer: Customer }) {
       </td>
 
       {/* Phone */}
-      <td className="px-4 py-3.5">
+      <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
         <div className="flex items-center gap-1.5 text-sm text-slate-400">
           <Phone size={12} className="flex-shrink-0 text-slate-600" />
-          {customer.phone}
+          <InlineEdit value={customer.phone} type="text" onSave={v => handleSave('phone', v)} className="text-sm text-slate-400" />
         </div>
       </td>
 
@@ -340,6 +361,7 @@ function CustomerRow({ customer }: { customer: Customer }) {
         </div>
       </td>
     </tr>
+    </ContextMenu>
   )
 }
 
@@ -349,7 +371,7 @@ function CustomerRow({ customer }: { customer: Customer }) {
 
 function CustomerCard({ customer }: { customer: Customer }) {
   return (
-    <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-4 transition-all hover:border-[#2DD4BF]/20">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 transition-all hover:border-[#2DD4BF]/20">
       {/* Top row */}
       <div className="mb-3 flex items-start justify-between">
         <div>
@@ -501,7 +523,7 @@ export default function CustomersPage() {
       )}
 
       {/* ---- Desktop Table ---- */}
-      <div className="hidden overflow-x-auto rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] md:block">
+      <div className="hidden overflow-x-auto backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl md:block">
         <table className="w-full min-w-[1000px] text-left">
           <thead>
             <tr className="border-b border-[rgba(148,163,184,0.1)]">
@@ -548,7 +570,7 @@ export default function CustomersPage() {
           </thead>
           <tbody>
             {sortedCustomers.map((customer, idx) => (
-              <CustomerRow key={customer.id} customer={customer} />
+              <CustomerRow key={customer.id} customer={customer} onUpdate={updated => setCustomers(prev => prev.map(c => c.id === updated.id ? updated : c))} />
             ))}
             {sortedCustomers.length === 0 && (
               <tr>
@@ -576,7 +598,7 @@ export default function CustomersPage() {
           <CustomerCard key={customer.id} customer={customer} />
         ))}
         {sortedCustomers.length === 0 && (
-          <div className="flex flex-col items-center rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] px-4 py-12">
+          <div className="flex flex-col items-center backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-12">
             <Search size={32} className="mb-3 text-slate-600" />
             <p className="text-sm font-medium text-slate-400">
               No customers found

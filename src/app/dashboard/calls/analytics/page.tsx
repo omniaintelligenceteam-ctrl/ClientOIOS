@@ -71,7 +71,7 @@ export default function CallAnalyticsPage() {
 
       {/* Row 1: Sentiment Trend + Top Intents */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-[#2DD4BF]" />
             Sentiment Trend (30 Days)
@@ -79,7 +79,7 @@ export default function CallAnalyticsPage() {
           <SentimentTrendChart organizationId={organizationId} />
         </div>
 
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-f97316" />
             Top Call Intents (90 Days)
@@ -90,7 +90,7 @@ export default function CallAnalyticsPage() {
 
       {/* Row 2: Agent Performance + Peak Hours */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-purple-500" />
             AI vs Human Performance (30 Days)
@@ -98,7 +98,7 @@ export default function CallAnalyticsPage() {
           <AgentPerformance organizationId={organizationId} />
         </div>
 
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
             Peak Call Hours (90 Days)
@@ -108,7 +108,7 @@ export default function CallAnalyticsPage() {
       </div>
 
       {/* Row 3: Missed Call Queue (full width) */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
         <h2 className="mb-4 text-sm font-semibold text-slate-300 flex items-center gap-2">
           <Phone className="h-4 w-4 text-red-400" />
           Missed Call Queue (Last 7 Days)

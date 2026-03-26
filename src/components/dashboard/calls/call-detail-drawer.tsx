@@ -131,9 +131,9 @@ export function CallDetailDrawer({ call, onClose, organizationId }: CallDetailDr
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-lg bg-[#111827] border-l border-slate-800 overflow-y-auto">
+      <div className="fixed right-0 top-0 z-50 h-full w-full max-w-lg bg-[#0d1526] border-l border-white/[0.06] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-[#111827] px-6 py-4">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] bg-[#0d1526] px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2DD4BF]/10">
               <Phone className="h-5 w-5 text-[#2DD4BF]" />

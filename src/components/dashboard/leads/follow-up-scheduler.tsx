@@ -63,7 +63,7 @@ export function FollowUpScheduler({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5"
+      className="space-y-4 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5"
     >
       <div className="flex items-center gap-2">
         <Calendar size={16} className="text-[#2DD4BF]" />

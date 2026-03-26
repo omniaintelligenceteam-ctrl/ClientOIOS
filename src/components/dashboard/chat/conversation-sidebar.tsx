@@ -102,7 +102,7 @@ export function ConversationSidebar() {
   const orgId = profile?.organization_id || ''
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-[rgba(148,163,184,0.1)] bg-[#111827] lg:w-72">
+    <div className="flex h-full w-64 flex-col border-r border-[rgba(148,163,184,0.1)] bg-white/[0.03] lg:w-72">
       {/* New chat button */}
       <div className="border-b border-[rgba(148,163,184,0.1)] p-3">
         <button

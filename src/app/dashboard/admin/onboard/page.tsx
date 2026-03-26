@@ -118,7 +118,7 @@ export default function AdminOnboardPage() {
   if (!isSuperAdmin) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 text-center max-w-md">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 text-center max-w-md">
           <ShieldAlert size={48} className="mx-auto mb-4 text-[#f97316]" />
           <h2 className="text-xl font-bold text-[#F8FAFC] mb-2">Access Denied</h2>
           <p className="text-sm text-[#94A3B8]">
@@ -342,7 +342,7 @@ export default function AdminOnboardPage() {
       </div>
 
       {/* Card Body */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6 sm:p-8">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 sm:p-8">
         {/* Step 1: Business Details */}
         {step === 1 && (
           <div className="space-y-5">
@@ -753,7 +753,7 @@ function SuccessPanel({
   return (
     <div className="mx-auto max-w-2xl py-8 space-y-6">
       {/* Header */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 text-center">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#2DD4BF]/10">
           <CheckCircle2 size={36} className="text-[#2DD4BF]" />
         </div>
@@ -764,7 +764,7 @@ function SuccessPanel({
       </div>
 
       {/* Org Details */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-[#64748B] mb-4">
           Organization Details
         </h3>
@@ -780,7 +780,7 @@ function SuccessPanel({
       </div>
 
       {/* Post-Creation Actions */}
-      <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6 space-y-4">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 space-y-4">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-[#64748B] mb-2">
           Setup Actions
         </h3>

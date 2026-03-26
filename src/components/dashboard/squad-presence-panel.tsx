@@ -40,7 +40,7 @@ export function SquadPresencePanel() {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   return (
-    <div className="hidden lg:flex flex-col items-center py-4 gap-3 w-[80px] min-w-[80px] border-r border-[rgba(148,163,184,0.1)] bg-[#111827]/50 backdrop-blur-sm">
+    <div className="hidden lg:flex flex-col items-center py-4 gap-3 w-[80px] min-w-[80px] border-r border-[rgba(148,163,184,0.1)] bg-white/[0.02] backdrop-blur-sm">
       <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1">Squad</span>
       {AGENTS.map((agent) => {
         const Icon = agent.icon

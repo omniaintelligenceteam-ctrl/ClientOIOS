@@ -43,7 +43,7 @@ export function ChatInput({ onSend, disabled, placeholder }: ChatInputProps) {
   }, [])
 
   return (
-    <div className="border-t border-[rgba(148,163,184,0.1)] bg-[#111827] p-3">
+    <div className="border-t border-[rgba(148,163,184,0.1)] bg-white/[0.03] p-3">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}

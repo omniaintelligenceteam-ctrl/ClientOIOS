@@ -37,7 +37,7 @@ interface CampaignRow {
 // ---------------------------------------------------------------------------
 
 const cardClass =
-  'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+  'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 const STATUS_COLORS: Record<string, { text: string; bg: string }> = {
   executed: { text: 'text-green-400', bg: 'bg-green-400/10' },

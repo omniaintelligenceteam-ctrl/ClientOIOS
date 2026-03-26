@@ -42,7 +42,7 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-8 shadow-2xl shadow-black/40">
+        <div className="rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] p-8 shadow-2xl shadow-black/40">
           <div className="mb-8 text-center">
             <h1 className="bg-gradient-to-r from-teal-400 to-teal-300 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">
               OIOS

@@ -146,7 +146,7 @@ function BusinessProfileTab({ org }: { org: Organization | null }) {
   return (
     <div className="space-y-8">
       {/* Basic info */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Basic Information</SectionHeading>
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
@@ -173,7 +173,7 @@ function BusinessProfileTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Service Area */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Service Area</SectionHeading>
         <div className="flex flex-wrap gap-2">
           {(org.service_area ?? []).map((zip) => (
@@ -188,7 +188,7 @@ function BusinessProfileTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Business Hours */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Business Hours</SectionHeading>
         <div className="overflow-x-auto">
           <div className="grid grid-cols-[120px_1fr_1fr] gap-y-0 text-sm">
@@ -234,7 +234,7 @@ function BusinessProfileTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Services Offered */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Services Offered</SectionHeading>
         <div className="flex flex-wrap gap-2">
           {(org.services_offered ?? []).map((service) => (
@@ -267,7 +267,7 @@ function AIAgentTab({ org }: { org: Organization | null }) {
   return (
     <div className="space-y-8">
       {/* Agent identity */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Agent Identity</SectionHeading>
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
@@ -282,7 +282,7 @@ function AIAgentTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Greeting */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Greeting Message</SectionHeading>
         <FieldLabel>What {org.ai_agent_name} says when answering calls</FieldLabel>
         <TextAreaReadOnly
@@ -292,7 +292,7 @@ function AIAgentTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Emergency keywords */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Emergency Keywords</SectionHeading>
         <p className="mb-3 text-sm text-slate-400">
           When callers mention these words, {org.ai_agent_name} flags the call as urgent and can escalate immediately.
@@ -311,7 +311,7 @@ function AIAgentTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Personality */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Personality Notes</SectionHeading>
         <FieldLabel>How {org.ai_agent_name} should sound and behave on calls</FieldLabel>
         <TextAreaReadOnly
@@ -341,7 +341,7 @@ function AIAgentTab({ org }: { org: Organization | null }) {
 function NotificationsTab() {
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Alert Preferences</SectionHeading>
         <p className="mb-5 text-sm text-slate-400">
           Control how and when you receive notifications about calls, leads, and business activity.
@@ -354,7 +354,7 @@ function NotificationsTab() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Quiet Hours</SectionHeading>
         <p className="mb-5 text-sm text-slate-400">
           Non-urgent notifications will be held during quiet hours and delivered the next morning.
@@ -402,7 +402,7 @@ function BillingTab({ org }: { org: Organization | null }) {
   return (
     <div className="space-y-8">
       {/* Current Plan */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Current Plan</SectionHeading>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -422,7 +422,7 @@ function BillingTab({ org }: { org: Organization | null }) {
       </div>
 
       {/* Minutes usage */}
-      <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+      <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
         <SectionHeading>Minutes Usage</SectionHeading>
         <div className="mb-2 flex items-end justify-between">
           <span className="text-3xl font-bold text-slate-100">{minutesUsed}</span>
@@ -502,7 +502,7 @@ function TeamTab({ teamMembers }: { teamMembers: TeamMember[] }) {
           return (
             <div
               key={member.id}
-              className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-5"
+              className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-5"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 {/* Avatar & name */}
@@ -602,7 +602,7 @@ export default function SettingsPage() {
     notifications: <NotificationsTab />,
     automations: (
       <div className="space-y-4">
-        <div className="rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-6">
+        <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
           <h3 className="mb-2 text-base font-semibold text-slate-200">Automation Settings</h3>
           <p className="mb-4 text-sm text-slate-400">Configure automated follow-ups, review requests, invoice reminders, and more.</p>
           <a

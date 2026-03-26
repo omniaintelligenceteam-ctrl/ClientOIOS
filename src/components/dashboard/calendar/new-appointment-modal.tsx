@@ -136,7 +136,7 @@ export function NewAppointmentModal({ customers, initialDate, onClose, onCreated
       <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-x-4 bottom-4 top-4 z-50 mx-auto flex max-w-lg flex-col overflow-hidden rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[90vh] sm:-translate-x-1/2 sm:-translate-y-1/2">
+      <div className="fixed inset-x-4 bottom-4 top-4 z-50 mx-auto flex max-w-lg flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[90vh] sm:-translate-x-1/2 sm:-translate-y-1/2">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.1)] px-5 py-4">
           <h2 className="text-base font-semibold text-[#F8FAFC]">New Appointment</h2>

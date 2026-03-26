@@ -276,7 +276,7 @@ export function NotificationCenter({ organizationId, userId }: NotificationCente
       {open && (
         <div
           ref={panelRef}
-          className="absolute right-0 top-full z-50 mt-2 w-[380px] rounded-2xl border border-[rgba(148,163,184,0.1)] bg-[#111827] shadow-xl shadow-black/50"
+          className="absolute right-0 top-full z-50 mt-2 w-[380px] rounded-2xl border border-white/[0.06] bg-white/[0.03] shadow-xl shadow-black/50"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.1)] px-4 py-3">

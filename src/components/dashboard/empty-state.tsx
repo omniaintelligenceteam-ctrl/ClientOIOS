@@ -20,7 +20,7 @@ export function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <div className="bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6">
+    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
       <div className="flex flex-col items-center justify-center py-10 text-center gap-4">
         {/* Icon */}
         <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-[rgba(148,163,184,0.06)]">

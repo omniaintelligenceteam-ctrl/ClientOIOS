@@ -15,6 +15,9 @@ import {
   Users,
   GitFork,
   TrendingUp,
+  Trophy,
+  BarChart2,
+  Activity,
   Wifi,
   WifiOff,
 } from 'lucide-react'
@@ -29,12 +32,27 @@ import { PipelineFunnel } from '@/components/dashboard/pipeline-funnel'
 import { LeadSourceChart } from '@/components/dashboard/lead-source-chart'
 import { AtRiskAlerts } from '@/components/dashboard/at-risk-alerts'
 import { AgentStatusGrid } from '@/components/dashboard/agent-status-grid'
+import { RevenueSparkline } from '@/components/dashboard/charts/revenue-sparkline'
+import { GoalProgressRings } from '@/components/dashboard/charts/goal-progress-rings'
+import { HeatmapCalendar } from '@/components/dashboard/charts/heatmap-calendar'
+import { RevenueForecast } from '@/components/dashboard/charts/revenue-forecast'
+import { TeamLeaderboard } from '@/components/dashboard/team-leaderboard'
+import { MidDayPulse } from '@/components/dashboard/mid-day-pulse'
+import { InsightBadge } from '@/components/ui/insight-badge'
+import {
+  insightForCalls,
+  insightForLeads,
+  insightForJobsBooked,
+  insightForRevenue,
+  insightForConversion,
+  insightForPipeline,
+} from '@/lib/ai/insight-engine'
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const cardClass = 'bg-[#111827] border border-[rgba(148,163,184,0.1)] rounded-2xl p-6'
+const cardClass = 'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
 
 // ---------------------------------------------------------------------------
 // StatCard
@@ -48,6 +66,7 @@ function StatCard({
   trend,
   icon: Icon,
   animDelay,
+  insight,
 }: {
   label: string
   value: string
@@ -56,6 +75,7 @@ function StatCard({
   trend?: 'up' | 'down'
   icon: React.ElementType
   animDelay: number
+  insight?: { text: string; type: 'positive' | 'warning' | 'neutral' | 'info' }
 }) {
   const [visible, setVisible] = useState(false)
   useEffect(() => {
@@ -88,6 +108,11 @@ function StatCard({
         </p>
       )}
       {subtext && <p className="text-xs text-slate-500 mt-1">{subtext}</p>}
+      {insight && visible && (
+        <div className="mt-3">
+          <InsightBadge text={insight.text} type={insight.type} />
+        </div>
+      )}
     </div>
   )
 }
@@ -100,8 +125,10 @@ interface Metrics {
   callsToday: number
   callsYesterday: number
   leadsToday: number
+  leadsYesterday: number
   conversionRate: number
   jobsBookedToday: number
+  jobsBookedYesterday: number
   pipelineValue: number
   revenueThisMonth: number
   revenueLastMonth: number
@@ -120,8 +147,10 @@ export default function CommandCenterPage() {
     callsToday: 0,
     callsYesterday: 0,
     leadsToday: 0,
+    leadsYesterday: 0,
     conversionRate: 0,
     jobsBookedToday: 0,
+    jobsBookedYesterday: 0,
     pipelineValue: 0,
     revenueThisMonth: 0,
     revenueLastMonth: 0,
@@ -141,6 +170,7 @@ export default function CommandCenterPage() {
       const now = new Date()
       const today = now.toISOString().split('T')[0]
       const yesterday = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
+      const dayBeforeYesterday = new Date(Date.now() - 2 * 86_400_000).toISOString().split('T')[0]
 
       // Current month bounds
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
@@ -154,8 +184,10 @@ export default function CommandCenterPage() {
         callsRes,
         yesterdayCallsRes,
         leadsRes,
+        leadsYesterdayRes,
         leadsAllRes,
         appointmentsRes,
+        appointmentsYesterdayRes,
         invoicesThisMonthRes,
         invoicesLastMonthRes,
       ] = await Promise.all([
@@ -180,6 +212,13 @@ export default function CommandCenterPage() {
 
         supabase
           .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .gte('created_at', yesterday)
+          .lt('created_at', today),
+
+        supabase
+          .from('leads')
           .select('id, status, estimated_value')
           .eq('organization_id', orgId),
 
@@ -189,6 +228,14 @@ export default function CommandCenterPage() {
           .eq('organization_id', orgId)
           .gte('created_at', today)
           .in('status', ['scheduled', 'confirmed']),
+
+        supabase
+          .from('appointments')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .gte('created_at', yesterday)
+          .lt('created_at', today)
+          .in('status', ['scheduled', 'confirmed', 'completed']),
 
         supabase
           .from('invoices')
@@ -207,23 +254,22 @@ export default function CommandCenterPage() {
           .lt('paid_at', lastMonthEnd),
       ])
 
-      const allLeads = (leadsAllRes.data as any[]) || []
+      const allLeads = (leadsAllRes.data as Array<{ status: string; estimated_value?: number }>) || []
       const wonLeads = allLeads.filter((l) => l.status === 'won').length
       const totalLeads = allLeads.length
       const pipelineValue = allLeads
         .filter((l) => !['won', 'lost'].includes(l.status))
         .reduce((s, l) => s + (l.estimated_value || 0), 0)
 
-      const revenueThisMonth = ((invoicesThisMonthRes.data as any[]) || []).reduce(
+      const revenueThisMonth = ((invoicesThisMonthRes.data as Array<{ amount: number }>) || []).reduce(
         (s, inv) => s + (inv.amount || 0),
         0
       )
-      const revenueLastMonth = ((invoicesLastMonthRes.data as any[]) || []).reduce(
+      const revenueLastMonth = ((invoicesLastMonthRes.data as Array<{ amount: number }>) || []).reduce(
         (s, inv) => s + (inv.amount || 0),
         0
       )
 
-      // Simple projection: if we're d days into month, project full month
       const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
       const dayOfMonth = now.getDate()
       const projectedNextMonth =
@@ -233,8 +279,10 @@ export default function CommandCenterPage() {
         callsToday: callsRes.count || 0,
         callsYesterday: yesterdayCallsRes.count || 0,
         leadsToday: leadsRes.count || 0,
+        leadsYesterday: leadsYesterdayRes.count || 0,
         conversionRate: totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0,
         jobsBookedToday: appointmentsRes.count || 0,
+        jobsBookedYesterday: appointmentsYesterdayRes.count || 0,
         pipelineValue,
         revenueThisMonth,
         revenueLastMonth,
@@ -258,6 +306,17 @@ export default function CommandCenterPage() {
       ? `${revDiff >= 0 ? '+' : ''}${Math.round((revDiff / metrics.revenueLastMonth) * 100)}% vs last month`
       : undefined
 
+  // Insights
+  const callsInsight   = insightForCalls(metrics.callsToday, metrics.callsYesterday)
+  const leadsInsight   = insightForLeads(metrics.leadsToday, metrics.leadsYesterday)
+  const jobsInsight    = insightForJobsBooked(metrics.jobsBookedToday, metrics.jobsBookedYesterday)
+  const revenueInsight = insightForRevenue(metrics.revenueThisMonth, metrics.revenueLastMonth)
+
+  // Pipeline insight
+  const pipelineInsight = insightForPipeline(metrics.pipelineValue)
+  // Lead source insight (generic info)
+  const leadSourceInsight = insightForConversion(metrics.conversionRate)
+
   return (
     <div className="space-y-8">
       {/* ------------------------------------------------------------------ */}
@@ -270,17 +329,21 @@ export default function CommandCenterPage() {
             {greeting}, {firstName}. Here&apos;s what&apos;s happening.
           </p>
         </div>
-        {/* Connection status */}
-        <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border ${
-          connected
-            ? 'bg-green-500/10 border-green-500/20 text-green-400'
-            : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
-        }`}>
-          {connected ? (
-            <><Wifi className="h-3.5 w-3.5" /> Live</>
-          ) : (
-            <><WifiOff className="h-3.5 w-3.5" /> Reconnecting</>
-          )}
+        <div className="flex items-center gap-3">
+          {/* Revenue Sparkline */}
+          {orgId && <RevenueSparkline organizationId={orgId} />}
+          {/* Connection status */}
+          <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border ${
+            connected
+              ? 'bg-green-500/10 border-green-500/20 text-green-400'
+              : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+          }`}>
+            {connected ? (
+              <><Wifi className="h-3.5 w-3.5" /> Live</>
+            ) : (
+              <><WifiOff className="h-3.5 w-3.5" /> Reconnecting</>
+            )}
+          </div>
         </div>
       </div>
 
@@ -288,6 +351,11 @@ export default function CommandCenterPage() {
       {/* Morning Briefing                                                     */}
       {/* ------------------------------------------------------------------ */}
       <MorningBriefingCard organizationId={orgId} />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Mid-Day Pulse (shows after 12pm)                                    */}
+      {/* ------------------------------------------------------------------ */}
+      <MidDayPulse organizationId={orgId} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Stat Cards                                                           */}
@@ -304,6 +372,7 @@ export default function CommandCenterPage() {
           trend={metrics.callsToday >= metrics.callsYesterday ? 'up' : 'down'}
           icon={Phone}
           animDelay={0}
+          insight={callsInsight}
         />
         <StatCard
           label="New Leads"
@@ -315,6 +384,7 @@ export default function CommandCenterPage() {
           }
           icon={Target}
           animDelay={80}
+          insight={leadsInsight}
         />
         <StatCard
           label="Jobs Booked Today"
@@ -326,6 +396,7 @@ export default function CommandCenterPage() {
           }
           icon={CalendarCheck}
           animDelay={160}
+          insight={jobsInsight}
         />
         <StatCard
           label="Revenue This Month"
@@ -343,6 +414,7 @@ export default function CommandCenterPage() {
           }
           icon={DollarSign}
           animDelay={240}
+          insight={revenueInsight}
         />
       </div>
 
@@ -359,7 +431,7 @@ export default function CommandCenterPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pipeline Funnel */}
         <div className={cardClass}>
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <GitFork className="h-5 w-5 text-teal-400" />
               <h2 className="text-lg font-semibold">Pipeline Funnel</h2>
@@ -370,14 +442,22 @@ export default function CommandCenterPage() {
               <span>Rate</span>
             </div>
           </div>
+          {/* Pipeline insight badge */}
+          <div className="mb-4">
+            <InsightBadge text={pipelineInsight.text} type={pipelineInsight.type} />
+          </div>
           <PipelineFunnel organizationId={orgId} />
         </div>
 
         {/* Lead Source Breakdown */}
         <div className={cardClass}>
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-4">
             <Users className="h-5 w-5 text-teal-400" />
             <h2 className="text-lg font-semibold">Lead Sources</h2>
+          </div>
+          {/* Lead source insight badge */}
+          <div className="mb-4">
+            <InsightBadge text={leadSourceInsight.text} type={leadSourceInsight.type} />
           </div>
           <LeadSourceChart organizationId={orgId} />
         </div>
@@ -394,13 +474,11 @@ export default function CommandCenterPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
         {/* Left Column */}
         <div className="space-y-6">
-          {/* Live Activity Feed */}
           <LiveActivityFeed activities={activities} connected={connected} />
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Approval Queue */}
           <ApprovalQueue organizationId={orgId} />
 
           {/* Quick Actions */}
@@ -422,6 +500,54 @@ export default function CommandCenterPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Analytics 2.0 — Goal Rings + Heatmap                               */}
+      {/* ------------------------------------------------------------------ */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-6">
+        {/* Goal Progress Rings */}
+        <div className={cardClass}>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="h-5 w-5 text-teal-400" />
+            <h2 className="text-lg font-semibold">Monthly Goals</h2>
+          </div>
+          <GoalProgressRings organizationId={orgId} />
+        </div>
+
+        {/* Call Volume Heatmap */}
+        <div className={cardClass}>
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart2 className="h-5 w-5 text-teal-400" />
+            <h2 className="text-lg font-semibold">Call Volume</h2>
+            <span className="ml-auto text-xs text-slate-500">Day × Hour (last 90 days)</span>
+          </div>
+          <HeatmapCalendar organizationId={orgId} />
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Revenue Forecast                                                     */}
+      {/* ------------------------------------------------------------------ */}
+      <div className={cardClass}>
+        <div className="flex items-center gap-2 mb-5">
+          <TrendingUp className="h-5 w-5 text-teal-400" />
+          <h2 className="text-lg font-semibold">Revenue Forecast</h2>
+          <span className="ml-2 text-xs text-slate-500">90-day projection</span>
+        </div>
+        <RevenueForecast organizationId={orgId} />
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Team Leaderboard                                                     */}
+      {/* ------------------------------------------------------------------ */}
+      <div className={cardClass}>
+        <div className="flex items-center gap-2 mb-5">
+          <Trophy className="h-5 w-5 text-yellow-400" />
+          <h2 className="text-lg font-semibold">Team Leaderboard</h2>
+          <span className="ml-2 text-xs text-slate-500">Last 90 days</span>
+        </div>
+        <TeamLeaderboard organizationId={orgId} />
       </div>
 
       {/* ------------------------------------------------------------------ */}

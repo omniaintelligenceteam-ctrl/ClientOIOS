@@ -60,7 +60,7 @@ export function AppointmentCard({ appointment, customerName, onClick }: Appointm
   return (
     <div
       onClick={onClick}
-      className="group cursor-pointer rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#111827] p-3.5 transition-all hover:border-[#2DD4BF]/30 hover:shadow-lg hover:shadow-black/20 active:scale-[0.99]"
+      className="group cursor-pointer rounded-xl border border-white/[0.06] bg-white/[0.03] p-3.5 transition-all hover:border-[#2DD4BF]/30 hover:shadow-lg hover:shadow-black/20 active:scale-[0.99]"
     >
       {/* Top row: name + status */}
       <div className="mb-2 flex items-start justify-between gap-2">

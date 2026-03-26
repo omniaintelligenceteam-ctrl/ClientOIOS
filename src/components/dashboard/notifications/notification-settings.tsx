@@ -114,7 +114,7 @@ export function NotificationSettings({ onClose }: NotificationSettingsProps) {
 
       {/* Slide-over panel */}
       <div className="fixed inset-y-0 right-0 z-50 flex">
-        <div className="w-80 bg-[#111827] border-l border-[rgba(148,163,184,0.1)] shadow-xl shadow-black/50 flex flex-col">
+        <div className="w-80 bg-white/[0.03] border-l border-[rgba(148,163,184,0.1)] shadow-xl shadow-black/50 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[rgba(148,163,184,0.1)] px-5 py-4">
             <div className="flex items-center gap-2">

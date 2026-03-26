@@ -85,7 +85,7 @@ export function AppointmentDrawer({ appointment, customer, onClose, onUpdate }: 
       />
 
       {/* Drawer: right on desktop, bottom sheet on mobile */}
-      <div className="fixed inset-x-0 bottom-0 z-50 flex flex-col max-h-[90vh] rounded-t-2xl animate-slide-up-sheet sm:animate-none border-t border-[rgba(148,163,184,0.1)] bg-[#111827] shadow-2xl transition-transform duration-300 sm:inset-x-auto sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[440px] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0">
+      <div className="fixed inset-x-0 bottom-0 z-50 flex flex-col max-h-[90vh] rounded-t-2xl animate-slide-up-sheet sm:animate-none border-t border-[rgba(148,163,184,0.1)] bg-white/[0.03] shadow-2xl transition-transform duration-300 sm:inset-x-auto sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[440px] sm:rounded-none sm:rounded-l-2xl sm:border-l sm:border-t-0">
         {/* Mobile drag handle */}
         <div className="flex justify-center pt-2 sm:hidden">
           <div className="h-1 w-12 rounded-full bg-slate-700" />
