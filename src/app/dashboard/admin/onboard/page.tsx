@@ -37,8 +37,10 @@ const TIMEZONES = [
 
 const TIERS = [
   { value: 'answering_service', label: 'Answering Service', description: 'AI call handling & messages' },
-  { value: 'office_manager', label: 'Office Manager', description: 'Leads, scheduling & CRM' },
-  { value: 'growth_engine', label: 'Growth Engine', description: 'Full suite with marketing & invoicing' },
+  { value: 'receptionist', label: 'Receptionist', description: 'Call handling, scheduling & basic CRM' },
+  { value: 'office_manager', label: 'Office Manager', description: 'Leads, scheduling, CRM & reporting' },
+  { value: 'coo', label: 'COO', description: 'Full operations — marketing, invoicing & analytics' },
+  { value: 'growth_engine', label: 'Growth Engine', description: 'Everything + outbound marketing & scaling' },
 ]
 
 const STEPS = [
