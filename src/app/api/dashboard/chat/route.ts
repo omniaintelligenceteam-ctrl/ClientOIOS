@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     const systemPrompt = buildSystemPrompt(organization, userProfile, businessContext)
 
     // 10. Route model
-    const modelChoice = routeModel(message)
+    const modelChoice = routeModel(message, organization.tier)
     const modelConfig = getModelConfig(modelChoice)
 
     // 11. Build messages array (exclude the just-inserted user message since it's at the end of history)

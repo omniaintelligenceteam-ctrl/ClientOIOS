@@ -31,6 +31,7 @@ export default function AIAssistantPage() {
         </p>
         <button
           type="button"
+          onClick={() => window.open('https://getoios.com/pricing', '_blank')}
           className="mt-6 flex items-center gap-2 rounded-xl bg-[#2DD4BF] px-6 py-2.5 text-sm font-semibold text-[#0B1120] transition-all hover:bg-[#5EEAD4]"
         >
           Upgrade Now

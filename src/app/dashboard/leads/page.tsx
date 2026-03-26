@@ -189,7 +189,9 @@ function LeadCard({
             <div
               role="checkbox"
               aria-checked={selected}
+              tabIndex={0}
               onClick={e => { e.stopPropagation(); onToggle(lead.id) }}
+              onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onToggle(lead.id) } }}
               className={`flex h-4 w-4 flex-shrink-0 cursor-pointer items-center justify-center rounded border transition-all ${
                 selected
                   ? 'border-[#2DD4BF] bg-[#2DD4BF]'
@@ -202,12 +204,12 @@ function LeadCard({
                 </svg>
               )}
             </div>
-            <h4 className="truncate text-sm font-semibold text-[#F8FAFC]">
+            <h4 className="truncate text-sm font-semibold text-[#F8FAFC]" title={`${lead.first_name} ${lead.last_name}`}>
               {lead.first_name} {lead.last_name}
             </h4>
           </div>
-          <div className="flex flex-shrink-0 items-center gap-1.5" title={priorityLabel}>
-            <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${priorityDot}`} />
+          <div className="flex flex-shrink-0 items-center gap-1.5" title={`Priority: ${priorityLabel}`}>
+            <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${priorityDot}`} aria-hidden="true" />
             <span className="text-[10px] font-medium uppercase tracking-wide text-slate-500">{priorityLabel}</span>
           </div>
         </div>
@@ -644,7 +646,10 @@ export default function LeadsPipelinePage() {
                   <div
                     role="checkbox"
                     aria-checked={selectedIds.size === leads.length && leads.length > 0}
+                    aria-label="Select all leads"
+                    tabIndex={0}
                     onClick={toggleAll}
+                    onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleAll() } }}
                     className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded border transition-all ${
                       selectedIds.size === leads.length && leads.length > 0
                         ? 'border-[#2DD4BF] bg-[#2DD4BF]'
@@ -693,7 +698,9 @@ export default function LeadsPipelinePage() {
                         <div
                           role="checkbox"
                           aria-checked={selectedIds.has(lead.id)}
+                          tabIndex={0}
                           onClick={() => toggleSelect(lead.id)}
+                          onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleSelect(lead.id) } }}
                           className={`flex h-4 w-4 cursor-pointer items-center justify-center rounded border transition-all ${
                             selectedIds.has(lead.id)
                               ? 'border-[#2DD4BF] bg-[#2DD4BF]'
@@ -744,8 +751,8 @@ export default function LeadsPipelinePage() {
                         <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${scoreColor}`}>{lead.score}</span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`h-2.5 w-2.5 rounded-full ${priorityDot}`} />
+                        <div className="flex items-center gap-1.5" title={`Priority: ${priorityLabel}`}>
+                          <span className={`h-2.5 w-2.5 rounded-full ${priorityDot}`} aria-hidden="true" />
                           <span className="text-xs text-slate-400">{priorityLabel}</span>
                         </div>
                       </td>

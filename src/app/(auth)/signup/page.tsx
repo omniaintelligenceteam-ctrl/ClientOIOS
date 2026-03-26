@@ -16,17 +16,22 @@ export default function SignupPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailTouched, setEmailTouched] = useState(false)
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = emailRegex.test(email)
+  const showEmailError = emailTouched && email.length > 0 && !isEmailValid
 
   const passwordsMatch = password === confirmPassword
   const canSubmit =
     fullName.length > 0 &&
-    email.length > 0 &&
+    isEmailValid &&
     password.length >= 8 &&
     passwordsMatch
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!canSubmit) return
+    if (!canSubmit || isLoading) return
     setIsLoading(true)
     setError('')
     try {
@@ -96,9 +101,17 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setEmailTouched(true)}
                 placeholder="you@company.com"
-                className="w-full rounded-lg border border-slate-700 bg-[#0B1120] px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20"
+                className={`w-full rounded-lg border bg-[#0B1120] px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors focus:ring-1 ${
+                  showEmailError
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                    : 'border-slate-700 focus:border-teal-500 focus:ring-teal-500/20'
+                }`}
               />
+              {showEmailError && (
+                <p className="mt-1 text-xs text-red-400">Please enter a valid email address</p>
+              )}
             </div>
 
             {/* Password */}

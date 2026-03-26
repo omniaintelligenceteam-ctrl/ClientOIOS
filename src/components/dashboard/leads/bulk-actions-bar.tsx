@@ -88,7 +88,7 @@ export function BulkActionsBar({
       {/* Count + clear */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold text-[#2DD4BF]">{selectedIds.length} selected</span>
-        <button onClick={onClear} className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2DD4BF]/10 text-[#2DD4BF] hover:bg-[#2DD4BF]/20">
+        <button onClick={onClear} aria-label="Clear selection" className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2DD4BF]/10 text-[#2DD4BF] hover:bg-[#2DD4BF]/20">
           <X size={12} />
         </button>
       </div>

@@ -103,7 +103,8 @@ interface ReportMetrics {
 // ---------------------------------------------------------------------------
 
 export default function ReportsPage() {
-  const { organization } = useAuth()
+  const { organization, profile } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
   const supabase = createSupabaseBrowserClient()
 
   const [metrics, setMetrics] = useState<ReportMetrics>({
@@ -117,19 +118,24 @@ export default function ReportsPage() {
     revenueThisMonth: 0,
     revenueLastMonth: 0,
   })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
+      if (!orgId) { setLoading(false); return }
+      setError(null)
+      try {
       const now = new Date()
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
       const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
 
       const [callsRes, leadsRes, reviewsRes, invoicesThisRes, invoicesLastRes] = await Promise.all([
-        supabase.from('calls').select('id, status'),
-        supabase.from('leads').select('id, status, estimated_value'),
-        supabase.from('reviews').select('id, rating'),
-        supabase.from('invoices').select('id, amount_paid, status').gte('paid_at', monthStart),
-        supabase.from('invoices').select('id, amount_paid, status').gte('paid_at', lastMonthStart).lt('paid_at', monthStart),
+        supabase.from('calls').select('id, status').eq('organization_id', orgId),
+        supabase.from('leads').select('id, status, estimated_value').eq('organization_id', orgId),
+        supabase.from('reviews').select('id, rating').eq('organization_id', orgId),
+        supabase.from('invoices').select('id, amount_paid, status').eq('organization_id', orgId).gte('paid_at', monthStart),
+        supabase.from('invoices').select('id, amount_paid, status').eq('organization_id', orgId).gte('paid_at', lastMonthStart).lt('paid_at', monthStart),
       ])
 
       const calls = callsRes.data || []
@@ -165,9 +171,14 @@ export default function ReportsPage() {
         revenueThisMonth,
         revenueLastMonth,
       })
+      } catch {
+        setError('Failed to load report data.')
+      } finally {
+        setLoading(false)
+      }
     }
     load()
-  }, [organization])
+  }, [organization, orgId])
 
   const keyMetrics: MetricDef[] = [
     {
@@ -203,6 +214,22 @@ export default function ReportsPage() {
   const revenueChange = metrics.revenueLastMonth > 0
     ? ((metrics.revenueThisMonth - metrics.revenueLastMonth) / metrics.revenueLastMonth) * 100
     : 0
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2DD4BF] border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-red-400">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -254,6 +281,7 @@ export default function ReportsPage() {
             return (
               <button
                 key={report.title}
+                onClick={() => alert(`${report.title} — detailed reports coming soon.`)}
                 className={`${cardClass} text-left group hover:border-[rgba(148,163,184,0.2)] transition-all duration-200 hover:shadow-lg hover:shadow-black/10`}
               >
                 <div className="flex items-start gap-4 mb-3">

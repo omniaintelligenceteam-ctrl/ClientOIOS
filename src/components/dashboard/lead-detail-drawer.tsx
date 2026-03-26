@@ -316,13 +316,14 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
               <User size={18} className="text-[#2DD4BF]" />
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-base font-semibold text-[#F8FAFC]">
+              <h2 className="truncate text-base font-semibold text-[#F8FAFC]" title={`${lead.first_name} ${lead.last_name}`}>
                 {lead.first_name} {lead.last_name}
               </h2>
-              <p className="truncate text-xs text-slate-500">{lead.service_needed}</p>
+              <p className="truncate text-xs text-slate-500" title={lead.service_needed}>{lead.service_needed}</p>
             </div>
           </div>
           <button onClick={onClose}
+            aria-label="Close lead details"
             className="ml-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
             <X size={18} />
           </button>
@@ -381,7 +382,7 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
                     <Mail size={16} className="flex-shrink-0 text-[#2DD4BF]" />
                     <div className="min-w-0">
                       <p className="text-[10px] text-slate-500">Email</p>
-                      <p className="truncate text-sm font-medium text-[#F8FAFC]">{lead.email}</p>
+                      <p className="truncate text-sm font-medium text-[#F8FAFC]" title={lead.email ?? undefined}>{lead.email}</p>
                     </div>
                   </a>
                 )}
@@ -399,10 +400,10 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
               {/* Badges */}
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-400">
-                  {getSourceLabel(lead.source)}
+                  <span className="sr-only">Source: </span>{getSourceLabel(lead.source)}
                 </span>
                 <span className="inline-flex items-center rounded-md bg-slate-500/10 px-2.5 py-1 text-xs font-semibold text-slate-400">
-                  {getStatusLabel(lead.status)}
+                  <span className="sr-only">Status: </span>{getStatusLabel(lead.status)}
                 </span>
                 <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold ${getScoreBg(lead.score)} ${getScoreColor(lead.score)}`}>
                   Score: {lead.score}
@@ -411,7 +412,7 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
                   lead.priority === 'hot' ? 'bg-red-500/10 text-red-400' :
                   lead.priority === 'warm' ? 'bg-orange-500/10 text-orange-400' :
                   'bg-blue-500/10 text-blue-400'}`}>
-                  {lead.priority === 'hot' ? '🔥 Hot' : lead.priority === 'warm' ? '🌡️ Warm' : '❄️ Cold'}
+                  <span className="sr-only">Priority: </span>{lead.priority === 'hot' ? '🔥 Hot' : lead.priority === 'warm' ? '🌡️ Warm' : '❄️ Cold'}
                 </span>
               </div>
 
@@ -505,7 +506,7 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
                         </div>
                         <p className="text-xs text-slate-500">{call.caller_phone}</p>
                         {call.transcript_summary && (
-                          <p className="mt-2 line-clamp-2 text-xs text-slate-400">{call.transcript_summary}</p>
+                          <p className="mt-2 line-clamp-2 text-xs text-slate-400" title={call.transcript_summary}>{call.transcript_summary}</p>
                         )}
                         <p className="mt-1 text-[10px] text-slate-600">{formatDateTime(call.started_at)}</p>
                       </div>

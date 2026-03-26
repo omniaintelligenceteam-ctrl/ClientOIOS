@@ -17,6 +17,7 @@ import {
   Copy,
   Trash2,
 } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 import { EmptyState } from '@/components/dashboard/empty-state'
 import { InlineEdit } from '@/components/ui/inline-edit'
 import { ContextMenu, type ContextMenuItem } from '@/components/ui/context-menu'
@@ -151,23 +152,34 @@ function SummaryIcon({
 // ---------------------------------------------------------------------------
 
 export default function InvoicingPage() {
+  const { profile, organization } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [filter, setFilter] = useState<'all' | InvoiceStatus>('all')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!orgId) { setLoading(false); return }
+      setError(null)
       const [invRes, custRes] = await Promise.all([
-        supabase.from('invoices').select('*').order('created_at', { ascending: false }),
-        supabase.from('customers').select('*'),
+        supabase.from('invoices').select('*').eq('organization_id', orgId).order('created_at', { ascending: false }),
+        supabase.from('customers').select('*').eq('organization_id', orgId),
       ])
-      if (invRes.data) setInvoices(invRes.data as unknown as Invoice[])
-      if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
+      if (invRes.error || custRes.error) {
+        setError('Failed to load invoicing data.')
+      } else {
+        if (invRes.data) setInvoices(invRes.data as unknown as Invoice[])
+        if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
+      }
+      setLoading(false)
     }
     fetchData()
-  }, [])
+  }, [orgId])
 
   const unpaidInvoices = useMemo(
     () => invoices.filter((inv) => inv.status !== 'paid' && inv.status !== 'cancelled'),
@@ -214,6 +226,22 @@ export default function InvoicingPage() {
       ? invoices
       : invoices.filter((inv) => inv.status === filter)
 
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2DD4BF] border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-red-400">{error}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
       {/* ── Header ───────────────────────────────────────────────────── */}
@@ -224,7 +252,10 @@ export default function InvoicingPage() {
             Track payments, send reminders, and manage your accounts receivable.
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-xl bg-[#2DD4BF] px-5 py-2.5 text-sm font-semibold text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all hover:bg-[#5EEAD4] hover:shadow-[#2DD4BF]/30 active:scale-[0.97]">
+        <button
+          onClick={() => alert('Invoice creation coming soon.')}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#2DD4BF] px-5 py-2.5 text-sm font-semibold text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all hover:bg-[#5EEAD4] hover:shadow-[#2DD4BF]/30 active:scale-[0.97]"
+        >
           <Plus className="h-4 w-4" />
           Create Invoice
         </button>
@@ -393,9 +424,9 @@ export default function InvoicingPage() {
               {filteredInvoices.map((inv) => {
                 const isOverdue = inv.status === 'overdue'
                 const invoiceContextItems: ContextMenuItem[] = [
-                  { id: 'view', label: 'View Invoice', icon: Eye, onClick: () => {} },
+                  { id: 'view', label: 'View Invoice', icon: Eye, onClick: () => alert('Invoice detail view coming soon.') },
                   { id: 'copy', label: 'Copy Invoice #', icon: Copy, onClick: () => navigator.clipboard?.writeText(inv.invoice_number ?? '') },
-                  { id: 'send', label: 'Send Reminder', icon: Send, onClick: () => {} },
+                  { id: 'send', label: 'Send Reminder', icon: Send, onClick: () => alert('Reminder sending coming soon.') },
                   { id: 'div', label: '', onClick: () => {}, divider: true },
                   { id: 'delete', label: 'Delete Invoice', icon: Trash2, danger: true, onClick: async () => {
                     setInvoices(prev => prev.filter(i => i.id !== inv.id))

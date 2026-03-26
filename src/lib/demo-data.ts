@@ -3,6 +3,10 @@
 // Mike's Plumbing, Gilbert AZ
 // ============================================================
 
+if (process.env.NODE_ENV === 'production') {
+  console.warn('demo-data.ts imported in production — this should not happen')
+}
+
 import type {
   Organization, User, Call, Lead, Customer, Appointment,
   Invoice, Review, ActivityFeedItem, TeamMember,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/lib/auth-context'
 import {
   HardHat,
   Phone,
@@ -61,7 +62,7 @@ function StarRating({ score }: { score: number }) {
       {Array.from({ length: empty }).map((_, i) => (
         <Star key={`e-${i}`} className="h-3.5 w-3.5 text-slate-600" />
       ))}
-      <span className="ml-1.5 text-xs text-slate-400">{score.toFixed(1)}</span>
+      <span className="ml-1.5 text-xs text-slate-400">{(score ?? 0).toFixed(1)}</span>
     </div>
   )
 }
@@ -101,7 +102,7 @@ function ScoreBadge({ score }: { score: number }) {
         />
       </svg>
       <span className="absolute text-sm font-bold" style={{ color }}>
-        {score.toFixed(1)}
+        {(score ?? 0).toFixed(1)}
       </span>
     </div>
   )
@@ -112,22 +113,48 @@ function ScoreBadge({ score }: { score: number }) {
 // ---------------------------------------------------------------------------
 
 export default function TeamPage() {
+  const { profile, organization } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
+      if (!orgId) { setLoading(false); return }
+      setError(null)
+      const { data, error: fetchError } = await supabase
         .from('team_members')
         .select('*')
+        .eq('organization_id', orgId)
         .order('created_at', { ascending: false })
-      if (data) setTeamMembers(data as unknown as TeamMember[])
+      if (fetchError) {
+        setError('Failed to load team data.')
+      } else if (data) {
+        setTeamMembers(data as unknown as TeamMember[])
+      }
       setLoading(false)
     }
     fetchData()
-  }, [])
+  }, [orgId])
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2DD4BF] border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-red-400">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -271,26 +298,20 @@ export default function TeamPage() {
           </div>
           <div>
             <p className="text-sm text-slate-200 font-medium">Today&apos;s Assignments</p>
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="h-2 w-2 rounded-full bg-amber-400 flex-shrink-0" />
-                <span className="text-slate-300">
-                  <span className="font-medium text-amber-400">Jake</span> &mdash; Emergency service at Gilbert Grill (Commercial Drain Cleaning)
-                </span>
+            {teamMembers.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500">No team members to dispatch.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {teamMembers.map((member) => (
+                  <div key={member.id} className="flex items-center gap-2 text-sm">
+                    <span className={`h-2 w-2 rounded-full flex-shrink-0 ${member.is_on_call ? 'bg-[#2DD4BF]' : 'bg-blue-400'}`} />
+                    <span className="text-slate-300">
+                      <span className={`font-medium ${member.is_on_call ? 'text-[#2DD4BF]' : 'text-blue-400'}`}>{member.name.split(' ')[0]}</span> &mdash; {member.is_on_call ? 'On call' : 'Available for dispatch'}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="h-2 w-2 rounded-full bg-blue-400 flex-shrink-0" />
-                <span className="text-slate-300">
-                  <span className="font-medium text-blue-400">Carlos</span> &mdash; At office, available for dispatch
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="h-2 w-2 rounded-full bg-[#2DD4BF] flex-shrink-0" />
-                <span className="text-slate-300">
-                  <span className="font-medium text-[#2DD4BF]">Mike</span> &mdash; On call, handling estimates and callbacks
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

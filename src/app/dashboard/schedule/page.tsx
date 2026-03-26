@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/lib/auth-context'
 import {
   Calendar,
   List,
@@ -390,28 +391,37 @@ function AppointmentCard({ appointment, customers, users }: { appointment: Appoi
 /* ------------------------------------------------------------------ */
 
 export default function SchedulePage() {
+  const { profile, organization } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [users, setUsers] = useState<UserType[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!orgId) { setLoading(false); return }
+      setError(null)
       const [apptRes, custRes, usersRes] = await Promise.all([
-        supabase.from('appointments').select('*').order('scheduled_date', { ascending: true }),
-        supabase.from('customers').select('*'),
-        supabase.from('users').select('*'),
+        supabase.from('appointments').select('*').eq('organization_id', orgId).order('scheduled_date', { ascending: true }),
+        supabase.from('customers').select('*').eq('organization_id', orgId),
+        supabase.from('users').select('*').eq('organization_id', orgId),
       ])
-      if (apptRes.data) setAppointments(apptRes.data as unknown as Appointment[])
-      if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
-      if (usersRes.data) setUsers(usersRes.data as unknown as UserType[])
+      if (apptRes.error || custRes.error || usersRes.error) {
+        setError('Failed to load schedule data.')
+      } else {
+        if (apptRes.data) setAppointments(apptRes.data as unknown as Appointment[])
+        if (custRes.data) setCustomers(custRes.data as unknown as Customer[])
+        if (usersRes.data) setUsers(usersRes.data as unknown as UserType[])
+      }
       setLoading(false)
     }
     fetchData()
-  }, [])
+  }, [orgId])
 
   // Sort appointments: today first, then by date ascending
   const sortedAppointments = useMemo(() => {
@@ -424,6 +434,22 @@ export default function SchedulePage() {
       return a.scheduled_time_start.localeCompare(b.scheduled_time_start)
     })
   }, [appointments])
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2DD4BF] border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-red-400">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col gap-6">

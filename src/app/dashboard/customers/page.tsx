@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/lib/auth-context'
 import type { Customer } from '@/lib/types'
 import { EmptyState } from '@/components/dashboard/empty-state'
 import { InlineEdit } from '@/components/ui/inline-edit'
@@ -292,7 +293,7 @@ function CustomerRow({ customer, onUpdate }: { customer: Customer; onUpdate?: (c
             {customer.first_name} {customer.last_name}
           </span>
           {customer.notes && (
-            <p className="mt-0.5 max-w-[200px] truncate text-xs text-slate-600">
+            <p className="mt-0.5 max-w-[200px] truncate text-xs text-slate-600" title={customer.notes}>
               {customer.notes}
             </p>
           )}
@@ -312,7 +313,7 @@ function CustomerRow({ customer, onUpdate }: { customer: Customer; onUpdate?: (c
         {customer.email ? (
           <div className="flex items-center gap-1.5 text-sm text-slate-400">
             <Mail size={12} className="flex-shrink-0 text-slate-600" />
-            <span className="max-w-[180px] truncate">{customer.email}</span>
+            <span className="max-w-[180px] truncate" title={customer.email ?? undefined}>{customer.email}</span>
           </div>
         ) : (
           <span className="text-xs italic text-slate-600">--</span>
@@ -416,23 +417,33 @@ function CustomerCard({ customer }: { customer: Customer }) {
 /* ------------------------------------------------------------------ */
 
 export default function CustomersPage() {
+  const { profile, organization } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>('name')
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     const fetchCustomers = async () => {
-      const { data } = await supabase
+      if (!orgId) { setLoading(false); return }
+      setError(null)
+      const { data, error: fetchError } = await supabase
         .from('customers')
         .select('*')
+        .eq('organization_id', orgId)
         .order('last_contact_at', { ascending: false })
-      if (data) setCustomers(data as unknown as Customer[])
+      if (fetchError) {
+        setError('Failed to load customers.')
+      } else if (data) {
+        setCustomers(data as unknown as Customer[])
+      }
       setLoading(false)
     }
     fetchCustomers()
-  }, [])
+  }, [orgId])
 
   // Filter customers by search
   const filteredCustomers = useMemo(() => {
@@ -480,6 +491,22 @@ export default function CustomersPage() {
     }
     return sorted
   }, [filteredCustomers, sortField])
+
+  if (loading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-[#2DD4BF]" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-red-400">{error}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full flex-col gap-6">

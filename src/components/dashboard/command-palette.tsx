@@ -252,7 +252,7 @@ export function CommandPalette() {
               <kbd className="hidden rounded border border-[rgba(148,163,184,0.15)] bg-[rgba(148,163,184,0.06)] px-1.5 py-0.5 text-[10px] font-mono text-slate-500 sm:inline-block">
                 ESC
               </kbd>
-              <button onClick={close} className="text-slate-500 hover:text-white transition-colors">
+              <button onClick={close} aria-label="Close command palette" className="text-slate-500 hover:text-white transition-colors">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -309,7 +309,7 @@ export function CommandPalette() {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium leading-none">{cmd.label}</p>
                               {cmd.description && (
-                                <p className="mt-0.5 text-xs text-slate-500 truncate">{cmd.description}</p>
+                                <p className="mt-0.5 text-xs text-slate-500 truncate" title={cmd.description}>{cmd.description}</p>
                               )}
                             </div>
                             {isSelected && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-teal-400" />}

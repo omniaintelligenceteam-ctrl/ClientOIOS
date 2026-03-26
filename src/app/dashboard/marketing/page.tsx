@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 import {
   Megaphone,
   Mail,
@@ -135,6 +136,7 @@ const DAY_HEADERS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // ---------------------------------------------------------------------------
 
 export default function MarketingPage() {
+  useAuth() // Ensure user is authenticated
   const now = new Date()
   const [calMonth, setCalMonth] = useState(now.getMonth())
   const [calYear, setCalYear] = useState(now.getFullYear())
@@ -171,6 +173,11 @@ export default function MarketingPage() {
         <p className="text-slate-400 mt-1">
           Create, manage, and track your outreach campaigns.
         </p>
+      </div>
+
+      {/* ── Demo Data Banner ─────────────────────────────────────────── */}
+      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-400">
+        Showing sample data. Live campaign tracking will replace this once your first campaign is created in the Campaigns page.
       </div>
 
       {/* ── Campaign Stats ──────────────────────────────────────────── */}

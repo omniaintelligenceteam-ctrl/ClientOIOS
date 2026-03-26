@@ -141,10 +141,11 @@ function NotificationItem({
           className={`truncate text-sm font-semibold ${
             notification.read ? 'text-[#94A3B8]' : 'text-[#F8FAFC]'
           }`}
+          title={notification.title}
         >
           {notification.title}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-xs text-[#64748B]">{notification.body}</p>
+        <p className="mt-0.5 line-clamp-2 text-xs text-[#64748B]" title={notification.body}>{notification.body}</p>
       </button>
 
       {/* Time + delete */}
@@ -155,6 +156,7 @@ function NotificationItem({
           onClick={(e) => { e.stopPropagation(); onDelete(notification.id) }}
           className="rounded p-0.5 text-[#64748B] opacity-0 transition-opacity hover:bg-white/10 hover:text-red-400 group-hover:opacity-100"
           title="Dismiss"
+          aria-label="Dismiss notification"
         >
           <X size={12} />
         </button>

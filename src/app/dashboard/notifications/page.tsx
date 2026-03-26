@@ -15,6 +15,7 @@ import {
   Clock,
   Check,
   CheckCheck,
+  Loader2,
 } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/lib/auth-context'
@@ -107,6 +108,7 @@ export default function NotificationsPage() {
   const [hasMore, setHasMore] = useState(true)
   const [activeTab, setActiveTab] = useState<FilterTab>('All')
   const [offset, setOffset] = useState(0)
+  const [markingAllRead, setMarkingAllRead] = useState(false)
 
   const fetchNotifications = useCallback(async (reset = false) => {
     if (!organizationId || !userId) return
@@ -169,6 +171,7 @@ export default function NotificationsPage() {
 
   async function markAllAsRead() {
     if (!organizationId) return
+    setMarkingAllRead(true)
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     const supabase = createSupabaseBrowserClient()
     await supabase
@@ -176,6 +179,7 @@ export default function NotificationsPage() {
       .update({ read: true })
       .eq('organization_id', organizationId)
       .eq('read', false)
+    setMarkingAllRead(false)
   }
 
   function handleNotificationClick(n: AppNotification) {
@@ -211,9 +215,10 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={markAllAsRead}
-            className="flex items-center gap-1.5 rounded-lg border border-[rgba(45,212,191,0.3)] bg-[#2DD4BF]/10 px-3 py-2 text-sm font-medium text-[#2DD4BF] transition-colors hover:bg-[#2DD4BF]/20"
+            disabled={markingAllRead}
+            className="flex items-center gap-1.5 rounded-lg border border-[rgba(45,212,191,0.3)] bg-[#2DD4BF]/10 px-3 py-2 text-sm font-medium text-[#2DD4BF] transition-colors hover:bg-[#2DD4BF]/20 disabled:opacity-50"
           >
-            <CheckCheck size={15} />
+            {markingAllRead ? <Loader2 size={15} className="animate-spin" /> : <CheckCheck size={15} />}
             Mark all read
           </button>
         )}
@@ -284,13 +289,15 @@ export default function NotificationsPage() {
                       <div className="flex-1 overflow-hidden">
                         <div className="flex items-center gap-2">
                           {!n.read && (
-                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[#2DD4BF]" />
+                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[#2DD4BF]" aria-hidden="true">
+                              <span className="sr-only">Unread</span>
+                            </span>
                           )}
-                          <p className={`truncate text-sm font-semibold ${n.read ? 'text-[#94A3B8]' : 'text-[#F8FAFC]'}`}>
+                          <p className={`truncate text-sm font-semibold ${n.read ? 'text-[#94A3B8]' : 'text-[#F8FAFC]'}`} title={n.title}>
                             {n.title}
                           </p>
                         </div>
-                        <p className="mt-0.5 text-sm text-[#64748B] line-clamp-2">{n.body}</p>
+                        <p className="mt-0.5 text-sm text-[#64748B] line-clamp-2" title={n.body}>{n.body}</p>
                       </div>
 
                       {/* Time + check */}
@@ -302,6 +309,7 @@ export default function NotificationsPage() {
                             onClick={(e) => { e.stopPropagation(); markAsRead([n.id]) }}
                             className="rounded p-0.5 text-[#2DD4BF] transition-colors hover:bg-[#2DD4BF]/10"
                             title="Mark as read"
+                            aria-label="Mark as read"
                           >
                             <Check size={13} />
                           </button>

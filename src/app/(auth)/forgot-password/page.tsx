@@ -10,9 +10,15 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+  const [emailTouched, setEmailTouched] = useState(false)
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = emailRegex.test(email)
+  const showEmailError = emailTouched && email.length > 0 && !isEmailValid
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isEmailValid || isLoading) return
     setIsLoading(true)
     setError('')
     try {
@@ -97,17 +103,25 @@ export default function ForgotPasswordPage() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setEmailTouched(true)}
                       placeholder="you@company.com"
-                      className="w-full rounded-lg border border-slate-700 bg-[#0B1120] py-2.5 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20"
+                      className={`w-full rounded-lg border bg-[#0B1120] py-2.5 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors focus:ring-1 ${
+                        showEmailError
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-slate-700 focus:border-teal-500 focus:ring-teal-500/20'
+                      }`}
                     />
                   </div>
+                  {showEmailError && (
+                    <p className="mt-1 text-xs text-red-400">Please enter a valid email address</p>
+                  )}
                 </div>
 
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-teal-500 to-teal-400 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-all hover:shadow-teal-500/30 disabled:opacity-60"
+                  disabled={isLoading || !isEmailValid}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-teal-500 to-teal-400 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-all hover:shadow-teal-500/30 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />

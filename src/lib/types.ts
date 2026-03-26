@@ -2,7 +2,7 @@
 // OIOS Client Dashboard — Type Definitions
 // ============================================================
 
-export type Tier = 'answering_service' | 'receptionist' | 'office_manager' | 'coo'
+export type Tier = 'answering_service' | 'receptionist' | 'office_manager' | 'coo' | 'growth_engine'
 export type OnboardingStatus = 'pending' | 'configuring' | 'testing' | 'live' | 'paused'
 export type UserRole = 'owner' | 'admin' | 'manager' | 'technician' | 'viewer'
 export type CallStatus = 'answered' | 'missed' | 'voicemail' | 'abandoned' | 'transferred'
