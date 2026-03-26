@@ -1,11 +1,17 @@
 import webpush from 'web-push'
 import { createSupabaseServiceClient } from '@/lib/supabase-server'
 
-webpush.setVapidDetails(
-  'mailto:admin@getoios.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+let vapidConfigured = false
+function ensureVapid() {
+  if (!vapidConfigured && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      'mailto:admin@getoios.com',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+    vapidConfigured = true
+  }
+}
 
 function isInQuietHours(
   now: Date,
@@ -45,6 +51,8 @@ function isInQuietHours(
 
 export async function POST(request: Request) {
   try {
+    ensureVapid()
+
     // Verify internal secret
     const authHeader = request.headers.get('authorization')
     const internalSecret = process.env.INTERNAL_API_SECRET
