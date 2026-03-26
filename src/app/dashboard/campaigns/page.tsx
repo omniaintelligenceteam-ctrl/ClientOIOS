@@ -207,7 +207,7 @@ export default function CampaignsPage() {
 
     if (data && data.length > 0) {
       setCampaigns(
-        data.map((d) => ({
+        data.map((d: any) => ({
           id: d.id,
           name: (d.payload as any)?.campaign_name || 'Unnamed Campaign',
           channel: (d.payload as any)?.channel || 'Email',

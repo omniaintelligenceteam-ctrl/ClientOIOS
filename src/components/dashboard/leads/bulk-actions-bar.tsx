@@ -44,7 +44,7 @@ export function BulkActionsBar({
 
   useEffect(() => {
     supabase.from('team_members').select('*').eq('organization_id', organizationId).limit(20)
-      .then(({ data }) => { if (data) setTeamMembers(data as unknown as TeamMember[]) })
+      .then(({ data }: { data: any }) => { if (data) setTeamMembers(data as unknown as TeamMember[]) })
   }, [organizationId])
 
   if (selectedIds.length === 0) return null

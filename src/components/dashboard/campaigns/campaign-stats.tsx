@@ -44,10 +44,10 @@ export function CampaignStats({ campaignId, organizationId }: Props) {
       const { data } = await query
 
       if (data) {
-        const sent = data.filter((d) => d.status === 'sent').length
-        const delivered = data.filter((d) => d.status === 'delivered').length
-        const opened = data.filter((d) => d.status === 'opened').length
-        const clicked = data.filter((d) => d.status === 'clicked').length
+        const sent = data.filter((d: any) => d.status === 'sent').length
+        const delivered = data.filter((d: any) => d.status === 'delivered').length
+        const opened = data.filter((d: any) => d.status === 'opened').length
+        const clicked = data.filter((d: any) => d.status === 'clicked').length
         setStats({ sent, delivered, opened, clicked, replied: 0 })
       }
 

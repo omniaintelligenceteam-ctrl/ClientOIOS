@@ -560,9 +560,9 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
                       <ActivityIcon type="follow_up" subtype={(item.metadata?.follow_up_type as string) ?? 'call'} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-[#F8FAFC]">{item.action}</p>
-                        {item.metadata?.notes && (
-                          <p className="mt-1 text-xs text-slate-400">{item.metadata.notes as string}</p>
-                        )}
+                        {item.metadata?.notes ? (
+                          <p className="mt-1 text-xs text-slate-400">{String(item.metadata.notes)}</p>
+                        ) : null}
                         <p className="mt-1 text-[10px] text-slate-600">{formatDateTime(item.created_at)}</p>
                       </div>
                     </div>

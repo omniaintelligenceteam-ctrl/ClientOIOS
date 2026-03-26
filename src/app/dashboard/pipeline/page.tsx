@@ -191,7 +191,7 @@ export default function PipelinePage() {
         </>
       )}
 
-      <LeadDetailDrawer lead={activeLead} customer={null} onClose={() => setActiveLead(null)} organizationId={orgId} onRefresh={load} />
+      {activeLead && <LeadDetailDrawer lead={activeLead} customer={null} onClose={() => setActiveLead(null)} />}
     </div>
   )
 }

@@ -49,7 +49,7 @@ function formatDateTime(iso: string): string {
   })
 }
 
-const sentimentConfig: Record<Sentiment, { label: string; color: string; bg: string; Icon: (props: { className?: string }) => JSX.Element }> = {
+const sentimentConfig: Record<Sentiment, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
   positive: { label: 'Positive', color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30', Icon: Smile },
   neutral: { label: 'Neutral', color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/30', Icon: Meh },
   negative: { label: 'Negative', color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', Icon: Frown },
