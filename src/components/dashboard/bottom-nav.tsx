@@ -45,7 +45,12 @@ export function BottomNav() {
                 : 'text-[#64748B] hover:text-[#94A3B8]'
             }`}
           >
-            <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+            <div className="relative">
+              <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+              {active && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#2DD4BF] shadow-[0_0_6px_#2DD4BF]" />
+              )}
+            </div>
             <span className="text-[10px] font-medium leading-none">{item.label}</span>
           </Link>
         )

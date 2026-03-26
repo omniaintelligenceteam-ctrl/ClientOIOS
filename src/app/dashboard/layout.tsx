@@ -36,6 +36,8 @@ import { MobileHeader } from '@/components/dashboard/mobile-header'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { ChatFAB } from '@/components/dashboard/chat/chat-fab'
 import { NotificationCenter } from '@/components/dashboard/notification-center'
+import { AmbientParticles } from '@/components/dashboard/ambient-particles'
+import { CommandPalette } from '@/components/dashboard/command-palette'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -421,7 +423,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             />
             <input
               type="text"
-              placeholder="Search calls, leads, customers..."
+              placeholder="Search or press ⌘K..."
               className="h-9 w-full rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#0B1120] pl-9 pr-3 text-sm text-[#F8FAFC] placeholder-[#64748B] outline-none transition-colors focus:border-[#2DD4BF]/40 focus:ring-1 focus:ring-[#2DD4BF]/20"
             />
           </div>
@@ -454,6 +456,12 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
         {/* Chat FAB — floating on all pages */}
         <ChatFAB />
+
+        {/* Phase Theta: Ambient background particles */}
+        <AmbientParticles />
+
+        {/* Phase Theta: Command Palette (Cmd+K) */}
+        <CommandPalette />
       </div>
     </div>
   )
