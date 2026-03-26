@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 function getServiceSupabase() {
@@ -8,13 +8,24 @@ function getServiceSupabase() {
   )
 }
 
+function authorizeBearer(request: NextRequest): boolean {
+  const authHeader = request.headers.get('authorization')
+  if (!authHeader) return false
+  const token = authHeader.replace('Bearer ', '')
+  return token === process.env.COMMAND_CENTER_SECRET
+}
+
 /**
  * GET /api/command-center/orgs
  * Returns all organizations with health scores and active task counts.
- * Uses service role (no RLS) — internal only.
+ * Requires bearer token auth (COMMAND_CENTER_SECRET).
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    if (!authorizeBearer(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = getServiceSupabase()
 
     const { data: orgData, error: orgError } = await supabase

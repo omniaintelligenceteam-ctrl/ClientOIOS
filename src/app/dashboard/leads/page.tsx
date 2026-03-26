@@ -21,12 +21,6 @@ import { ContextMenu, type ContextMenuItem } from '@/components/ui/context-menu'
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const ASSIGNED_NAMES: Record<string, string> = {
-  'user-mike': 'Mike R.',
-  'user-jake': 'Jake T.',
-  'user-carlos': 'Carlos M.',
-}
-
 interface PipelineColumn {
   status: LeadStatus
   label: string
@@ -97,6 +91,7 @@ function LeadCard({
   onClick,
   onDragStart,
   onLeadUpdated,
+  teamMembers,
 }: {
   lead: Lead
   selected: boolean
@@ -104,10 +99,11 @@ function LeadCard({
   onClick: (lead: Lead) => void
   onDragStart: (lead: Lead) => void
   onLeadUpdated: (lead: Lead) => void
+  teamMembers: Record<string, string>
 }) {
   const supabase = createSupabaseBrowserClient()
   const SourceIcon = getSourceIcon(lead.source)
-  const assignedName = lead.assigned_to ? ASSIGNED_NAMES[lead.assigned_to] ?? lead.assigned_to : null
+  const assignedName = lead.assigned_to ? teamMembers[lead.assigned_to] || 'Unassigned' : null
   const { dot: priorityDot, label: priorityLabel } = getPriorityMeta(lead.priority)
   const scoreColor = getScoreColor(lead.score)
 
@@ -266,7 +262,7 @@ function LeadCard({
 
 function KanbanColumn({
   column, leads, selectedIds, onToggle, onLeadClick,
-  onDragStart, onDrop, onLeadUpdated,
+  onDragStart, onDrop, onLeadUpdated, teamMembers,
 }: {
   column: PipelineColumn
   leads: Lead[]
@@ -276,6 +272,7 @@ function KanbanColumn({
   onDragStart: (lead: Lead) => void
   onDrop: (status: LeadStatus) => void
   onLeadUpdated: (lead: Lead) => void
+  teamMembers: Record<string, string>
 }) {
   const [isDragOver, setIsDragOver] = useState(false)
 
@@ -311,6 +308,7 @@ function KanbanColumn({
               onClick={onLeadClick}
               onDragStart={onDragStart}
               onLeadUpdated={onLeadUpdated}
+              teamMembers={teamMembers}
             />
           ))
         )}
@@ -446,9 +444,28 @@ export default function LeadsPipelinePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [activeLead, setActiveLead] = useState<Lead | null>(null)
   const dragLeadRef = useRef<Lead | null>(null)
+  const [teamMembers, setTeamMembers] = useState<Record<string, string>>({})
   const supabase = createSupabaseBrowserClient()
 
   const orgId = profile?.organization_id ?? ''
+
+  // Fetch team members for assigned-to display
+  useEffect(() => {
+    if (!orgId) return
+    supabase
+      .from('users')
+      .select('id, full_name')
+      .eq('organization_id', orgId)
+      .then(({ data }: { data: { id: string; full_name: string | null }[] | null }) => {
+        if (data) {
+          const map: Record<string, string> = {}
+          for (const u of data as { id: string; full_name: string | null }[]) {
+            if (u.full_name) map[u.id] = u.full_name
+          }
+          setTeamMembers(map)
+        }
+      })
+  }, [orgId])
 
   const fetchLeads = useCallback(async () => {
     const query = supabase.from('leads').select('*').order('created_at', { ascending: false })
@@ -610,6 +627,7 @@ export default function LeadsPipelinePage() {
                 onDragStart={handleDragStart}
                 onDrop={handleDrop}
                 onLeadUpdated={handleLeadUpdated}
+                teamMembers={teamMembers}
               />
             ))}
           </div>
@@ -648,7 +666,7 @@ export default function LeadsPipelinePage() {
             <tbody className="divide-y divide-[rgba(148,163,184,0.05)]">
               {leads.map(lead => {
                 const SourceIcon = getSourceIcon(lead.source)
-                const assignedName = lead.assigned_to ? ASSIGNED_NAMES[lead.assigned_to] ?? lead.assigned_to : null
+                const assignedName = lead.assigned_to ? teamMembers[lead.assigned_to] || 'Unassigned' : null
                 const colDef = COLUMNS.find(c => c.status === lead.status)
                 const scoreColor = getScoreColor(lead.score)
                 const { dot: priorityDot, label: priorityLabel } = getPriorityMeta(lead.priority)

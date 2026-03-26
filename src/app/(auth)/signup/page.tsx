@@ -1,30 +1,44 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, UserPlus } from 'lucide-react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [fullName, setFullName] = useState('')
-  const [email] = useState('invited@mikesplumbing.com')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const passwordsMatch = password === confirmPassword
   const canSubmit =
     fullName.length > 0 &&
+    email.length > 0 &&
     password.length >= 8 &&
     passwordsMatch
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
     setIsLoading(true)
-    // Demo — no real auth
-    setTimeout(() => setIsLoading(false), 1500)
+    setError('')
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) throw error
+      router.push('/dashboard/onboarding')
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -67,7 +81,7 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Email (pre-filled / disabled for invite flow) */}
+            {/* Email */}
             <div>
               <label
                 htmlFor="email"
@@ -78,13 +92,13 @@ export default function SignupPage() {
               <input
                 id="email"
                 type="email"
-                disabled
+                autoComplete="email"
+                required
                 value={email}
-                className="w-full cursor-not-allowed rounded-lg border border-slate-700 bg-[#0B1120] px-4 py-2.5 text-sm text-slate-400 opacity-60 outline-none"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className="w-full rounded-lg border border-slate-700 bg-[#0B1120] px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20"
               />
-              <p className="mt-1 text-xs text-slate-500">
-                Pre-filled from your team invitation
-              </p>
             </div>
 
             {/* Password */}
@@ -168,6 +182,10 @@ export default function SignupPage() {
                 </>
               )}
             </button>
+
+            {error && (
+              <p className="text-sm text-red-400 text-center">{error}</p>
+            )}
           </form>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   Check,
   Building2,
@@ -307,9 +308,32 @@ function Step1Content({
   )
 }
 
-function Step2Content({ onConfirm }: { onConfirm: () => void }) {
+function Step2Content({ onConfirm, agentPhoneNumber }: { onConfirm: () => void; agentPhoneNumber?: string | null }) {
   const [selectedCarrier, setSelectedCarrier] = useState(0)
-  const carrier = CARRIER_INSTRUCTIONS[selectedCarrier]
+  const displayPhone = agentPhoneNumber || OIOS_PHONE_NUMBER
+  const rawPhone = displayPhone.replace(/[^0-9]/g, '')
+
+  const carrierInstructions = [
+    {
+      name: 'AT&T',
+      code: `*21*${rawPhone}#`,
+      deactivate: '#21#',
+      note: 'Dial from your phone, wait for confirmation tone.',
+    },
+    {
+      name: 'Verizon',
+      code: `*72${rawPhone}`,
+      deactivate: '*73',
+      note: 'Dial and wait for the confirmation beep before hanging up.',
+    },
+    {
+      name: 'T-Mobile',
+      code: `**21*${rawPhone}#`,
+      deactivate: '##21#',
+      note: 'Dial from your phone. You will see a confirmation message.',
+    },
+  ]
+  const carrier = carrierInstructions[selectedCarrier]
 
   return (
     <div className="space-y-5">
@@ -324,9 +348,9 @@ function Step2Content({ onConfirm }: { onConfirm: () => void }) {
           <p className="text-xs font-medium uppercase tracking-wider text-[#2DD4BF]/70">
             Your OIOS AI Number
           </p>
-          <p className="text-lg font-bold text-[#F8FAFC]">{OIOS_PHONE_NUMBER}</p>
+          <p className="text-lg font-bold text-[#F8FAFC]">{displayPhone}</p>
         </div>
-        <CopyButton text={OIOS_PHONE_RAW} />
+        <CopyButton text={rawPhone} />
       </div>
 
       {/* Carrier tabs */}
@@ -335,7 +359,7 @@ function Step2Content({ onConfirm }: { onConfirm: () => void }) {
           Select your carrier
         </p>
         <div className="flex gap-2">
-          {CARRIER_INSTRUCTIONS.map((c, i) => (
+          {carrierInstructions.map((c, i) => (
             <button
               key={c.name}
               type="button"
@@ -396,13 +420,13 @@ function Step2Content({ onConfirm }: { onConfirm: () => void }) {
 }
 
 function Step3Content({
-  orgPhoneNumber,
+  agentPhoneNumber,
   onConfirm,
 }: {
-  orgPhoneNumber: string | null
+  agentPhoneNumber: string | null
   onConfirm: () => void
 }) {
-  const displayNumber = orgPhoneNumber || OIOS_PHONE_NUMBER
+  const displayNumber = agentPhoneNumber || OIOS_PHONE_NUMBER
 
   return (
     <div className="space-y-5">
@@ -781,13 +805,46 @@ export default function OnboardingPage() {
   const [isGoingLive, setIsGoingLive] = useState(false)
   const [isLive, setIsLive] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [agentPhone, setAgentPhone] = useState<string | null>(null)
 
-  // Load persisted state
+  // Load persisted state — try DB first, fall back to localStorage
   useEffect(() => {
-    const saved = loadCompletedSteps()
-    setCompletedSteps(saved)
-    setMounted(true)
-  }, [])
+    async function loadSteps() {
+      if (organization?.id) {
+        const supabase = createSupabaseBrowserClient()
+        const { data } = await supabase
+          .from('organizations')
+          .select('onboarding_steps')
+          .eq('id', organization.id)
+          .single()
+        if (data?.onboarding_steps) {
+          setCompletedSteps(new Set(data.onboarding_steps))
+          setMounted(true)
+          return
+        }
+      }
+      // Fall back to localStorage
+      const saved = loadCompletedSteps()
+      setCompletedSteps(saved)
+      setMounted(true)
+    }
+    loadSteps()
+  }, [organization?.id])
+
+  // Fetch agent phone number from retell_agents table
+  useEffect(() => {
+    if (!organization?.id) return
+    const supabase = createSupabaseBrowserClient()
+    supabase
+      .from('retell_agents')
+      .select('phone_number')
+      .eq('organization_id', organization.id)
+      .eq('is_default', true)
+      .single()
+      .then(({ data }: { data: { phone_number: string | null } | null }) => {
+        if (data?.phone_number) setAgentPhone(data.phone_number)
+      })
+  }, [organization?.id])
 
   // Check if already live
   useEffect(() => {
@@ -818,10 +875,19 @@ export default function OnboardingPage() {
         const next = new Set(prev)
         next.add(stepNumber)
         saveCompletedSteps(next)
+        // Persist to Supabase
+        if (organization?.id) {
+          const supabase = createSupabaseBrowserClient()
+          supabase
+            .from('organizations')
+            .update({ onboarding_steps: [...next] })
+            .eq('id', organization.id)
+            .then(() => {})
+        }
         return next
       })
     },
-    []
+    [organization?.id]
   )
 
   const toggleStep = useCallback((stepNumber: number) => {
@@ -940,11 +1006,11 @@ export default function OnboardingPage() {
                 />
               )}
               {step.number === 2 && (
-                <Step2Content onConfirm={() => completeStep(2)} />
+                <Step2Content onConfirm={() => completeStep(2)} agentPhoneNumber={agentPhone} />
               )}
               {step.number === 3 && (
                 <Step3Content
-                  orgPhoneNumber={organization?.phone_number || null}
+                  agentPhoneNumber={agentPhone}
                   onConfirm={() => completeStep(3)}
                 />
               )}

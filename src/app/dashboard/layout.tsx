@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import {
   LayoutDashboard,
@@ -544,7 +544,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { profile, organization, isSuperAdmin, signOut } = useAuth()
+  const router = useRouter()
+  const { profile, organization, isLoading, isSuperAdmin, signOut } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
@@ -606,6 +607,15 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [mobileMenuOpen])
+
+  /* Redirect to onboarding if org is not live */
+  useEffect(() => {
+    if (!isLoading && organization && organization.onboarding_status && organization.onboarding_status !== 'live') {
+      if (!pathname.startsWith('/dashboard/onboarding') && !pathname.startsWith('/dashboard/admin') && !pathname.startsWith('/command-center')) {
+        router.push('/dashboard/onboarding')
+      }
+    }
+  }, [isLoading, organization, pathname, router])
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed((c) => !c), [])
   const toggleMobileMenu = useCallback(() => setMobileMenuOpen((o) => !o), [])

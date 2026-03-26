@@ -162,6 +162,7 @@ export function BulkActionsBar({
 
         {/* Add to Campaign (placeholder) */}
         <button
+          onClick={() => { window.alert('Campaigns feature coming soon!') }}
           className="flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 text-xs font-medium text-slate-300 transition-colors hover:border-[#2DD4BF]/30 hover:text-[#2DD4BF]">
           <Megaphone size={13} />
           Campaign

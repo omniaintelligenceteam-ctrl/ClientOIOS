@@ -37,15 +37,15 @@ export async function POST(req: Request) {
     const { data: org } = await supabase
       .from('organizations')
       .select('*')
-      .eq('id', (profile as unknown as User).organization_id)
+      .eq('id', (profile as User).organization_id)
       .single()
 
     if (!org) {
       return Response.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    const organization = org as unknown as Organization
-    const userProfile = profile as unknown as User
+    const organization = org as Organization
+    const userProfile = profile as User
 
     // 3. Tier gate
     const tierRank = TIER_RANK[organization.tier] ?? 0
@@ -162,18 +162,33 @@ export async function POST(req: Request) {
           )
 
           // Persist assistant message
-          await svc.from('chat_messages').insert({
-            conversation_id: conversationId,
-            role: 'assistant',
-            content: fullResponse,
-            model_used: modelChoice,
-            context_tokens: finalMessage.usage?.input_tokens ?? null,
-          })
+          try {
+            await svc.from('chat_messages').insert({
+              conversation_id: conversationId,
+              role: 'assistant',
+              content: fullResponse,
+              model_used: modelChoice,
+              context_tokens: finalMessage.usage?.input_tokens ?? null,
+            })
+          } catch (insertErr) {
+            console.error('Failed to persist assistant message:', insertErr)
+          }
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : 'Stream error'
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ type: 'error', error: errorMsg })}\n\n`)
           )
+          // Attempt to save an error message so the conversation stays coherent
+          try {
+            await svc.from('chat_messages').insert({
+              conversation_id: conversationId,
+              role: 'assistant',
+              content: `[Error: ${errorMsg}] I encountered an issue generating a response. Please try again.`,
+              model_used: modelChoice ?? null,
+            })
+          } catch (fallbackErr) {
+            console.error('Failed to persist error message:', fallbackErr)
+          }
         } finally {
           controller.close()
         }

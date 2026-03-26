@@ -272,19 +272,24 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
 
   const fetchActivities = async () => {
     setLoadingActivities(true)
-    const [callsRes, apptsRes, feedRes] = await Promise.all([
-      supabase.from('calls').select('id,caller_phone,caller_name,direction,status,duration_seconds,started_at,sentiment,transcript_summary')
-        .eq('lead_id', lead.id).order('started_at', { ascending: false }).limit(20),
-      supabase.from('appointments').select('id,service_type,status,scheduled_date,scheduled_time_start,address,estimated_value')
-        .eq('lead_id', lead.id).order('scheduled_date', { ascending: false }).limit(20),
-      supabase.from('activity_feed').select('*')
-        .eq('organization_id', lead.organization_id).eq('entity_type', 'follow_up')
-        .eq('entity_id', lead.id).order('created_at', { ascending: false }).limit(20),
-    ])
-    if (callsRes.data) setCalls(callsRes.data as unknown as CallRecord[])
-    if (apptsRes.data) setAppointments(apptsRes.data as unknown as AppointmentRecord[])
-    if (feedRes.data) setFollowUps(feedRes.data as unknown as ActivityItem[])
-    setLoadingActivities(false)
+    try {
+      const [callsRes, apptsRes, feedRes] = await Promise.all([
+        supabase.from('calls').select('id,caller_phone,caller_name,direction,status,duration_seconds,started_at,sentiment,transcript_summary')
+          .eq('lead_id', lead.id).order('started_at', { ascending: false }).limit(20),
+        supabase.from('appointments').select('id,service_type,status,scheduled_date,scheduled_time_start,address,estimated_value')
+          .eq('lead_id', lead.id).order('scheduled_date', { ascending: false }).limit(20),
+        supabase.from('activity_feed').select('*')
+          .eq('organization_id', lead.organization_id).eq('entity_type', 'follow_up')
+          .eq('entity_id', lead.id).order('created_at', { ascending: false }).limit(20),
+      ])
+      if (callsRes.data) setCalls(callsRes.data as unknown as CallRecord[])
+      if (apptsRes.data) setAppointments(apptsRes.data as unknown as AppointmentRecord[])
+      if (feedRes.data) setFollowUps(feedRes.data as unknown as ActivityItem[])
+    } catch (err) {
+      console.error('Failed to fetch lead activities:', err)
+    } finally {
+      setLoadingActivities(false)
+    }
   }
 
   const handleNotesSave = async () => {
@@ -348,10 +353,10 @@ export function LeadDetailDrawer({ lead, customer, onClose, onLeadUpdated }: {
                 <div className="flex-1">
                   <p className="mb-2 text-xs text-slate-500">Score Reasons</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {(lead.score_reasons ?? []).map((r, i) => (
+                    {(lead.score_reasons ?? []).filter(Boolean).map((r, i) => (
                       <span key={i} className="inline-flex items-center rounded-md bg-white/5 px-2 py-0.5 text-xs text-slate-400">{r}</span>
                     ))}
-                    {(!lead.score_reasons || lead.score_reasons.length === 0) && (
+                    {(!lead.score_reasons || lead.score_reasons.filter(Boolean).length === 0) && (
                       <span className="text-xs italic text-slate-600">No reasons recorded</span>
                     )}
                   </div>

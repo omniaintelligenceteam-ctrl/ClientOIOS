@@ -27,45 +27,50 @@ export function useRealtimeFeed(
 
     const supabase = createSupabaseBrowserClient()
 
-    // Fetch initial 15 activity feed items
+    // Fetch initial 15 activity feed items (filtered by org)
     supabase
       .from('activity_feed')
       .select('*')
+      .eq('organization_id', organizationId)
       .order('created_at', { ascending: false })
       .limit(15)
       .then(({ data }: { data: unknown[] | null }) => {
-        if (data) setActivities(data as unknown as ActivityFeedItem[])
+        if (data) setActivities(data as ActivityFeedItem[])
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to fetch activity feed:', err)
       })
 
-    // Subscribe to realtime changes
+    // Subscribe to realtime changes (filtered by org)
     const channel = supabase
       .channel(`realtime-feed-${organizationId}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'activity_feed' },
+        { event: 'INSERT', schema: 'public', table: 'activity_feed', filter: `organization_id=eq.${organizationId}` },
         (payload: { new: Record<string, unknown> }) => {
+          const item = payload.new as unknown as ActivityFeedItem
           setActivities((prev) =>
-            [payload.new as unknown as ActivityFeedItem, ...prev].slice(0, 15)
+            [item, ...prev].slice(0, 15)
           )
         }
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'calls' },
+        { event: 'INSERT', schema: 'public', table: 'calls', filter: `organization_id=eq.${organizationId}` },
         () => {
           options.onCallInsert?.()
         }
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'leads' },
+        { event: 'INSERT', schema: 'public', table: 'leads', filter: `organization_id=eq.${organizationId}` },
         () => {
           options.onLeadInsert?.()
         }
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'appointments' },
+        { event: 'INSERT', schema: 'public', table: 'appointments', filter: `organization_id=eq.${organizationId}` },
         () => {
           options.onAppointmentInsert?.()
         }

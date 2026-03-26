@@ -27,6 +27,13 @@ export async function GET(request: Request) {
     .single() as { data: { organization_id: string } | null }
   if (!profile) return Response.json({ error: 'Profile not found' }, { status: 401 })
 
+  // Fetch org tier for pricing
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('tier')
+    .eq('id', profile.organization_id)
+    .single() as { data: { tier: string } | null }
+
   const orgId = profile.organization_id
 
   // ---------------------------------------------------------------------------
@@ -94,10 +101,12 @@ export async function GET(request: Request) {
 
   // ---------------------------------------------------------------------------
   // OIOS ROI calculation
-  // Use a default $300/month subscription if not configured
   // ---------------------------------------------------------------------------
   const avg_call_value = total_calls > 0 ? Math.round((total_revenue / total_calls) * 100) / 100 : 0
-  const monthly_subscription = 300 // TODO: read from org subscription tier when available
+  const TIER_PRICING: Record<string, number> = {
+    answering_service: 197, receptionist: 297, office_manager: 497, coo: 997, growth_engine: 1497,
+  }
+  const monthly_subscription = TIER_PRICING[org?.tier ?? 'answering_service'] ?? 297
 
   const oios_roi = calculateOIOSROI({
     totalRevenue: total_revenue,

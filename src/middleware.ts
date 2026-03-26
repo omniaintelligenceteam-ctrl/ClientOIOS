@@ -36,8 +36,14 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Command Center: skip auth for now (internal dev)
+  // Command Center: require auth
   if (pathname.startsWith('/command-center')) {
+    const { data: { user: ccUser } } = await supabase.auth.getUser()
+    if (!ccUser) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
     return supabaseResponse
   }
 

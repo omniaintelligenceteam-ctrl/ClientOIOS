@@ -11,7 +11,7 @@ interface SkeletonProps {
 /**
  * Base shimmer skeleton element
  */
-export function Skeleton({ className }: { className?: string }) {
+export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <div
       className={cn(
@@ -21,6 +21,7 @@ export function Skeleton({ className }: { className?: string }) {
         '[animation:shimmer_1.8s_ease-in-out_infinite]',
         className
       )}
+      style={style}
     />
   )
 }

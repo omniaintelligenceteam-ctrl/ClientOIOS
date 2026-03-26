@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 
 export interface CommandCenterTask {
@@ -60,6 +60,8 @@ export function useCommandCenterRealtime(
   const [tasks, setTasks] = useState<CommandCenterTask[]>([])
   const [connected, setConnected] = useState(false)
   const { organizationId } = options
+  const optionsRef = useRef(options)
+  optionsRef.current = options
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -86,12 +88,12 @@ export function useCommandCenterRealtime(
       ? `cc-tasks-${organizationId}`
       : 'cc-tasks-all'
 
-    let insertConfig: Record<string, string> = {
+    const insertConfig: Record<string, string> = {
       event: 'INSERT',
       schema: 'public',
       table: 'command_center_tasks',
     }
-    let updateConfig: Record<string, string> = {
+    const updateConfig: Record<string, string> = {
       event: 'UPDATE',
       schema: 'public',
       table: 'command_center_tasks',
@@ -105,24 +107,23 @@ export function useCommandCenterRealtime(
     const channel = supabase
       .channel(channelName)
       .on(
-        'postgres_changes' as any,
+        'postgres_changes',
         insertConfig,
         (payload: { new: Record<string, unknown> }) => {
-          setTasks((prev) =>
-            [payload.new as unknown as CommandCenterTask, ...prev].slice(0, 50)
-          )
-          options.onTaskInsert?.()
+          const inserted = payload.new as unknown as CommandCenterTask
+          setTasks((prev) => [inserted, ...prev].slice(0, 50))
+          optionsRef.current.onTaskInsert?.()
         }
       )
       .on(
-        'postgres_changes' as any,
+        'postgres_changes',
         updateConfig,
         (payload: { new: Record<string, unknown> }) => {
           const updated = payload.new as unknown as CommandCenterTask
           setTasks((prev) =>
             prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t))
           )
-          options.onTaskUpdate?.()
+          optionsRef.current.onTaskUpdate?.()
         }
       )
       .subscribe((status: string) => {
@@ -133,7 +134,7 @@ export function useCommandCenterRealtime(
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organizationId])
+  }, [organizationId, fetchTasks])
 
   const taskCounts = computeCounts(tasks)
 

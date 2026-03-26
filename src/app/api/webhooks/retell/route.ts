@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const DISCORD_WEBHOOK =
-  'https://discord.com/api/webhooks/1486106951061344386/KP7rwhexB-MfIyikmAUNVSfAD73r_9rI2S_-QtHRWSg8HNTr_XcbdxrctNSATRqeWg-J'
+  process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1486106951061344386/KP7rwhexB-MfIyikmAUNVSfAD73r_9rI2S_-QtHRWSg8HNTr_XcbdxrctNSATRqeWg-J'
 
 function getSupabase() {
   return createClient(
@@ -36,7 +36,21 @@ function mapSentiment(analysis?: { user_sentiment?: string }): string {
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabase()
-    const payload = await request.json()
+
+    // Verify webhook signature if secret is configured
+    const signature = request.headers.get('x-retell-signature')
+    const body = await request.text()
+
+    const webhookSecret = process.env.RETELL_WEBHOOK_SECRET
+    if (webhookSecret && signature) {
+      const crypto = await import('crypto')
+      const expectedSig = crypto.createHmac('sha256', webhookSecret).update(body).digest('hex')
+      if (signature !== expectedSig) {
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      }
+    }
+
+    const payload = JSON.parse(body)
 
     // Retell webhook sends the full call object on call_ended
     const {

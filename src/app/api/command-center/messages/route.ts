@@ -19,10 +19,13 @@ function authorizeBearer(request: NextRequest): boolean {
  * GET /api/command-center/messages
  * Returns agent messages with optional filters: org_id, task_id, to_platform, status.
  * Ordered by created_at DESC, limit 50.
- * Internal only — no auth required.
  */
 export async function GET(request: NextRequest) {
   try {
+    if (!authorizeBearer(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = getServiceSupabase()
     const { searchParams } = new URL(request.url)
 

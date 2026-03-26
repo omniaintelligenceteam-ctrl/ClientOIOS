@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -140,7 +141,8 @@ interface Metrics {
 // ---------------------------------------------------------------------------
 
 export default function CommandCenterPage() {
-  const { profile } = useAuth()
+  const router = useRouter()
+  const { profile, isLoading } = useAuth()
   const orgId = profile?.organization_id || ''
 
   const [metrics, setMetrics] = useState<Metrics>({
@@ -292,6 +294,37 @@ export default function CommandCenterPage() {
 
     load()
   }, [orgId])
+
+  // Show loading skeleton while auth is resolving
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        <div className="h-10 w-72 bg-slate-800 rounded" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-32 bg-slate-800 rounded-2xl" />
+          ))}
+        </div>
+        <div className="h-64 bg-slate-800 rounded-2xl" />
+      </div>
+    )
+  }
+
+  // If auth loaded but no org, prompt setup
+  if (!orgId) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <h2 className="text-xl font-semibold text-slate-200 mb-2">Organization Not Found</h2>
+        <p className="text-sm text-slate-400 mb-6">Your account is not linked to an organization yet. Please complete setup or contact support.</p>
+        <button
+          onClick={() => router.push('/dashboard/settings')}
+          className="rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-teal-500 transition-colors cursor-pointer"
+        >
+          Go to Settings
+        </button>
+      </div>
+    )
+  }
 
   const firstName = profile?.full_name?.split(' ')[0] || 'there'
   const hour = new Date().getHours()
@@ -485,16 +518,16 @@ export default function CommandCenterPage() {
           <div className={cardClass}>
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/leads')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <Plus className="h-4 w-4" />Add Lead
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/schedule')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <CalendarPlus className="h-4 w-4" />Schedule
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/leads')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <Mail className="h-4 w-4" />Follow-Up
               </button>
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/reports')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
                 <FileBarChart className="h-4 w-4" />Report
               </button>
             </div>

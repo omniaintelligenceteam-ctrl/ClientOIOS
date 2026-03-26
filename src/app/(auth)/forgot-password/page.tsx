@@ -3,20 +3,30 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Mail, Send, CheckCircle } from 'lucide-react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Demo — no real email sent
-    setTimeout(() => {
-      setIsLoading(false)
+    setError('')
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      if (error) throw error
       setSubmitted(true)
-    }, 1500)
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -108,6 +118,10 @@ export default function ForgotPasswordPage() {
                     </>
                   )}
                 </button>
+
+                {error && (
+                  <p className="text-sm text-red-400 text-center">{error}</p>
+                )}
               </form>
 
               {/* Back to login */}

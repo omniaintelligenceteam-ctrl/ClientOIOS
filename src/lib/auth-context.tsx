@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import type { Organization, User } from '@/lib/types'
 
 interface AuthContext {
@@ -11,6 +11,7 @@ interface AuthContext {
   organization: Organization | null
   isLoading: boolean
   isSuperAdmin: boolean
+  error: string | null
   signOut: () => Promise<void>
 }
 
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContext>({
   organization: null,
   isLoading: true,
   isSuperAdmin: false,
+  error: null,
   signOut: async () => {},
 })
 
@@ -28,50 +30,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<User | null>(null)
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
+    async function loadUserData(authUser: SupabaseUser) {
+      setIsLoading(true)
+      setError(null)
       setUser(authUser)
 
-      if (authUser) {
+      try {
         // Fetch user profile
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)
           .single()
 
-        if (profileData) {
-          setProfile(profileData as unknown as User)
+        if (profileError || !profileData) {
+          setError('Failed to load user profile')
+          setIsLoading(false)
+          return
+        }
 
-          // Fetch organization
-          const orgId = (profileData as any).organization_id
-          if (orgId) {
-            const { data: orgData } = await supabase
-              .from('organizations')
-              .select('*')
-              .eq('id', orgId)
-              .single()
+        // The Supabase client is typed with Database, so .from('users').select('*').single()
+        // returns the Row type. We narrow by checking profileData is truthy above.
+        const typedProfile = profileData as User
+        setProfile(typedProfile)
 
-            setOrganization(orgData as unknown as Organization)
+        // Fetch organization
+        const orgId = typedProfile.organization_id
+        if (orgId) {
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', orgId)
+            .single()
+
+          if (orgError) {
+            setError('Failed to load organization')
+          } else if (orgData) {
+            setOrganization(orgData as Organization)
           }
         }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error loading user data'
+        setError(message)
       }
 
       setIsLoading(false)
     }
 
+    const getSession = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+
+      if (authUser) {
+        await loadUserData(authUser)
+      } else {
+        setUser(null)
+        setIsLoading(false)
+      }
+    }
+
     getSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event: any, session: any) => {
-        setUser(session?.user ?? null)
-        if (!session?.user) {
+      async (event: AuthChangeEvent, session: Session | null) => {
+        if (
+          (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
+          session?.user
+        ) {
+          await loadUserData(session.user)
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null)
           setProfile(null)
           setOrganization(null)
+          setIsLoading(false)
         }
       }
     )
@@ -90,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = profile?.is_super_admin === true
 
   return (
-    <AuthContext.Provider value={{ user, profile, organization, isLoading, isSuperAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, profile, organization, isLoading, isSuperAdmin, error, signOut }}>
       {children}
     </AuthContext.Provider>
   )

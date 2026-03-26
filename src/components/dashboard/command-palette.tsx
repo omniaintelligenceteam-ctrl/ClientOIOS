@@ -40,7 +40,7 @@ const NAV_COMMANDS: Omit<Command, 'section'>[] = [
   { id: 'nav-reviews', label: 'Reviews', description: 'Customer reviews', icon: Star, path: '/dashboard/reviews', keywords: ['ratings', 'feedback'] },
   { id: 'nav-analytics', label: 'Analytics', description: 'Business insights', icon: BarChart3, path: '/dashboard/analytics', keywords: ['reports', 'metrics'] },
   { id: 'nav-marketing', label: 'Marketing', description: 'Campaigns & outreach', icon: Zap, path: '/dashboard/marketing', keywords: ['campaigns', 'email'] },
-  { id: 'nav-chat', label: 'AI Chat', description: 'AI assistant', icon: MessageSquare, path: '/dashboard/chat', keywords: ['ai', 'assistant', 'bot'] },
+  { id: 'nav-ai', label: 'AI Assistant', description: 'AI business copilot', icon: MessageSquare, path: '/dashboard/ai', keywords: ['ai', 'assistant', 'bot', 'chat'] },
   { id: 'nav-settings', label: 'Settings', description: 'Account & configuration', icon: Settings, path: '/dashboard/settings', keywords: ['config', 'preferences', 'account'] },
 ]
 

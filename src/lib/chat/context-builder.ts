@@ -1,8 +1,15 @@
-import type { Organization } from '@/lib/types'
+import type { SupabaseClient as BaseSupabaseClient } from '@supabase/supabase-js'
+import type { Organization, Database } from '@/lib/types'
 
-// Use a generic client type to avoid complex Supabase generic mismatches
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClient = any
+type SupabaseClient = BaseSupabaseClient<Database>
+
+/** Wraps a promise with a timeout — resolves with fallback if the promise takes too long */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ])
+}
 
 interface AggregateStats {
   totalCustomers: number
@@ -22,14 +29,25 @@ async function fetchAggregateStats(
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-  const [customers, leads, appointments, invoices, reviews, calls] = await Promise.all([
-    supabase.from('customers').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
-    supabase.from('leads').select('status').eq('organization_id', orgId).not('status', 'in', '("won","lost")'),
-    supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).gte('scheduled_date', now.toISOString().split('T')[0]).lte('scheduled_date', weekFromNow),
-    supabase.from('invoices').select('amount,amount_paid').eq('organization_id', orgId).eq('status', 'overdue'),
-    supabase.from('reviews').select('rating').eq('organization_id', orgId),
-    supabase.from('calls').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).gte('started_at', weekAgo),
-  ])
+  const [customers, leads, appointments, invoices, reviews, calls] = await withTimeout(
+    Promise.all([
+      supabase.from('customers').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
+      supabase.from('leads').select('status').eq('organization_id', orgId).not('status', 'in', '("won","lost")'),
+      supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).gte('scheduled_date', now.toISOString().split('T')[0]).lte('scheduled_date', weekFromNow),
+      supabase.from('invoices').select('amount,amount_paid').eq('organization_id', orgId).eq('status', 'overdue'),
+      supabase.from('reviews').select('rating').eq('organization_id', orgId),
+      supabase.from('calls').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).gte('started_at', weekAgo),
+    ]),
+    10_000,
+    [
+      { count: 0, data: null, error: null },
+      { count: null, data: null, error: null },
+      { count: 0, data: null, error: null },
+      { count: null, data: null, error: null },
+      { count: null, data: null, error: null },
+      { count: 0, data: null, error: null },
+    ] as any
+  )
 
   const leadCounts: Record<string, number> = {}
   if (leads.data) {
@@ -124,7 +142,7 @@ async function fetchConditionalContext(
   intents: DetectedIntents
 ): Promise<string> {
   const sections: string[] = []
-  const fetches: Promise<void>[] = []
+  const fetches: PromiseLike<void>[] = []
 
   if (intents.calls) {
     fetches.push(
@@ -279,7 +297,7 @@ async function fetchConditionalContext(
     )
   }
 
-  await Promise.all(fetches)
+  await withTimeout(Promise.all(fetches), 10_000, [])
   return sections.join('\n\n')
 }
 
@@ -298,10 +316,24 @@ export async function buildContext(
     ? `Team: ${team.map((t: { name: string; role: string }) => `${t.name} (${t.role})`).join(', ')}`
     : 'Team: No members configured'
 
-  const [stats, conditionalContext] = await Promise.all([
-    fetchAggregateStats(supabase, org.id),
-    fetchConditionalContext(supabase, org.id, detectIntents(message)),
-  ])
+  const defaultStats: AggregateStats = {
+    totalCustomers: 0,
+    activeLeads: {},
+    upcomingAppointments: 0,
+    overdueInvoices: { count: 0, total: 0 },
+    avgReviewRating: 0,
+    reviewCount: 0,
+    callsThisWeek: 0,
+  }
+
+  const [stats, conditionalContext] = await withTimeout(
+    Promise.all([
+      fetchAggregateStats(supabase, org.id),
+      fetchConditionalContext(supabase, org.id, detectIntents(message)),
+    ]),
+    10_000,
+    [defaultStats, ''] as [AggregateStats, string]
+  )
 
   const parts = [
     formatOrg(org),

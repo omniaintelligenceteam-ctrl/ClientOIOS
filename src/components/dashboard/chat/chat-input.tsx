@@ -65,6 +65,7 @@ export function ChatInput({ onSend, disabled, placeholder }: ChatInputProps) {
           <Send size={16} />
         </button>
       </div>
+      <p className="text-[10px] text-slate-600 mt-1 px-1">Shift+Enter for new line</p>
     </div>
   )
 }

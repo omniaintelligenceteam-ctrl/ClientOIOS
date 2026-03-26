@@ -33,7 +33,7 @@ export function useNotifications(organizationId: string, userId: string): UseNot
         .limit(50)
 
       if (!error && data) {
-        setNotifications(data as unknown as AppNotification[])
+        setNotifications(data as AppNotification[])
       }
       setLoading(false)
     }
@@ -100,36 +100,61 @@ export function useNotifications(organizationId: string, userId: string): UseNot
     setNotifications((prev) =>
       prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
     )
-    const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
-    await supabase.from('notifications').update({ read: true }).in('id', ids)
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .in('id', ids)
+      if (error) console.error('markAsRead error:', error)
+    } catch (err) {
+      console.error('markAsRead failed:', err)
+    }
   }, [])
 
   const markAllAsRead = useCallback(async () => {
     if (!organizationId) return
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-    const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
-    await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('organization_id', organizationId)
-      .eq('read', false)
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('organization_id', organizationId)
+        .eq('read', false)
+      if (error) console.error('markAllAsRead error:', error)
+    } catch (err) {
+      console.error('markAllAsRead failed:', err)
+    }
   }, [organizationId])
 
   const deleteNotification = useCallback(async (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id))
-    const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
-    await supabase.from('notifications').delete().eq('id', id)
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+      if (error) console.error('deleteNotification error:', error)
+    } catch (err) {
+      console.error('deleteNotification failed:', err)
+    }
   }, [])
 
   const clearAll = useCallback(async () => {
     if (!organizationId) return
     setNotifications([])
-    const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
-    await supabase.from('notifications').delete().eq('organization_id', organizationId)
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('organization_id', organizationId)
+      if (error) console.error('clearAll error:', error)
+    } catch (err) {
+      console.error('clearAll failed:', err)
+    }
   }, [organizationId])
 
   const unreadCount = notifications.filter((n) => !n.read).length
