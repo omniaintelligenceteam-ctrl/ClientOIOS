@@ -14,6 +14,14 @@
     {
       "path": "/api/cron/metrics-snapshot",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/client-health-check",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/process-client-crons",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

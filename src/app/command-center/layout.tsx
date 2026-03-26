@@ -14,6 +14,7 @@ import {
   Settings,
   ShieldAlert,
   Activity,
+  BarChart3,
   Menu,
   X,
   LogOut,
@@ -33,6 +34,8 @@ interface OrgListItem {
 interface OrgWithHealth extends OrgListItem {
   healthScore: number
   activeTaskCount: number
+  alertCount: number
+  lastHealthCheck: string | null
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,7 +189,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
 
   // Extract current orgId from pathname
   const pathSegments = pathname.split('/')
-  const currentOrgId = pathSegments.length >= 3 && pathSegments[1] === 'command-center' && pathSegments[2] && !['tasks', 'agents', 'settings'].includes(pathSegments[2])
+  const currentOrgId = pathSegments.length >= 3 && pathSegments[1] === 'command-center' && pathSegments[2] && !['tasks', 'agents', 'settings', 'pipeline'].includes(pathSegments[2])
     ? pathSegments[2]
     : null
 
@@ -197,6 +200,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
 
   const bottomLinks = [
     { label: 'All Tasks', href: '/command-center', icon: ListTodo, exact: true },
+    { label: 'Pipeline', href: '/command-center/pipeline', icon: BarChart3 },
     { label: 'Agents', href: '/command-center/agents', icon: Bot },
     { label: 'Settings', href: '/command-center/settings', icon: Settings },
   ]
@@ -283,6 +287,13 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
                       <span className={`text-[10px] font-semibold ${getHealthColor(org.healthScore)}`}>
                         {org.healthScore}
                       </span>
+
+                      {/* Alert badge */}
+                      {org.alertCount > 0 && (
+                        <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500/20 px-1 text-[10px] font-bold text-red-400">
+                          {org.alertCount}
+                        </span>
+                      )}
 
                       {/* Active task count */}
                       {org.activeTaskCount > 0 && (

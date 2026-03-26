@@ -19,7 +19,7 @@ export async function GET() {
 
     const { data: orgData, error: orgError } = await supabase
       .from('organizations')
-      .select('id, name, tier, onboarding_status')
+      .select('id, name, tier, onboarding_status, health_score, last_health_check_at, active_task_count, alert_count')
       .order('name')
 
     if (orgError || !orgData) {
@@ -43,18 +43,23 @@ export async function GET() {
     }
 
     // Build enriched org list with health scores
-    const orgs = orgData.map((org: { id: string; name: string; tier: string; onboarding_status: string }) => {
-      let healthScore = 75
-      if (org.onboarding_status === 'live') healthScore = 90
-      else if (org.onboarding_status === 'testing') healthScore = 70
-      else if (org.onboarding_status === 'configuring') healthScore = 50
-      else if (org.onboarding_status === 'paused') healthScore = 30
-      else if (org.onboarding_status === 'pending') healthScore = 40
+    const orgs = orgData.map((org: { id: string; name: string; tier: string; onboarding_status: string; health_score: number | null; last_health_check_at: string | null; alert_count: number | null }) => {
+      // Use DB health_score if available, otherwise fallback to onboarding-based estimate
+      let healthScore = org.health_score ?? 75
+      if (org.health_score === null || org.health_score === 100) {
+        if (org.onboarding_status === 'live') healthScore = 90
+        else if (org.onboarding_status === 'testing') healthScore = 70
+        else if (org.onboarding_status === 'configuring') healthScore = 50
+        else if (org.onboarding_status === 'paused') healthScore = 30
+        else if (org.onboarding_status === 'pending') healthScore = 40
+      }
 
       return {
         ...org,
         healthScore,
         activeTaskCount: taskCountMap[org.id] || 0,
+        alertCount: org.alert_count || 0,
+        lastHealthCheck: org.last_health_check_at,
       }
     })
 

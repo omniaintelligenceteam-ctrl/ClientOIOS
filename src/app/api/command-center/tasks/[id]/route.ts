@@ -149,6 +149,70 @@ export async function PATCH(
       )
     }
 
+    // Task chaining: if completed and has chain_next in metadata, create follow-up
+    if (status === 'completed' && task.metadata?.chain_next) {
+      const chain = task.metadata.chain_next as Record<string, unknown>
+      await supabase
+        .from('command_center_tasks')
+        .insert({
+          organization_id: task.organization_id,
+          title: chain.title || 'Chained follow-up task',
+          description: chain.description || null,
+          task_type: chain.task_type || task.task_type,
+          priority: chain.priority || task.priority,
+          status: 'pending',
+          assigned_platform: chain.assigned_platform || null,
+          assigned_agent: chain.assigned_agent || null,
+          created_by_platform: 'system',
+          trigger_type: 'chain',
+          trigger_ref: task.id,
+          parent_task_id: task.id,
+          metadata: chain.metadata || {},
+        })
+    }
+
+    // Auto-retry: if failed and retry_count < max_retries, re-queue
+    if (status === 'failed') {
+      const retryCount = (task.metadata?.retry_count as number) || 0
+      const maxRetries = (task.metadata?.max_retries as number) || 1
+      if (retryCount < maxRetries) {
+        await supabase
+          .from('command_center_tasks')
+          .insert({
+            organization_id: task.organization_id,
+            title: task.title,
+            description: task.description,
+            task_type: task.task_type,
+            priority: task.priority,
+            status: 'pending',
+            assigned_platform: task.assigned_platform,
+            assigned_agent: task.assigned_agent,
+            created_by_platform: 'system',
+            trigger_type: 'retry',
+            trigger_ref: task.id,
+            parent_task_id: task.id,
+            metadata: { ...((task.metadata as Record<string, unknown>) || {}), retry_count: retryCount + 1 },
+          })
+      } else {
+        // Escalate to Wes after max retries
+        await supabase
+          .from('command_center_tasks')
+          .insert({
+            organization_id: task.organization_id,
+            title: `Escalation: "${task.title}" failed after ${maxRetries} retries`,
+            description: `Original error: ${task.error_message || 'Unknown'}`,
+            task_type: 'escalation',
+            priority: 'urgent',
+            status: 'pending',
+            assigned_platform: 'wes',
+            created_by_platform: 'system',
+            trigger_type: 'escalation',
+            trigger_ref: task.id,
+            parent_task_id: task.id,
+          })
+      }
+    }
+
     return NextResponse.json({ task }, { status: 200 })
   } catch (err) {
     console.error('PATCH /api/command-center/tasks/[id] error:', err)
