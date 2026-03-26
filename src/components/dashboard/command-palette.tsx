@@ -10,7 +10,6 @@ const ACTIONS = [
   { id: 'leads', label: 'Go to Leads', icon: Users, path: '/dashboard' },
   { id: 'calendar', label: 'Go to Calendar', icon: Calendar, path: '/dashboard/calendar' },
   { id: 'ai', label: 'Open AI Assistant', icon: Zap, path: '/dashboard/ai' },
-  { id: 'chat', label: 'Open Chat', icon: MessageSquare, path: '/dashboard' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard' },
 ]
 

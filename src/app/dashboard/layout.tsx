@@ -85,7 +85,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Marketing', href: '/dashboard/marketing', icon: Megaphone, minTier: 'growth_engine' },
   { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, minTier: 'growth_engine' },
   { label: 'Team', href: '/dashboard/team', icon: HardHat, minTier: 'growth_engine' },
-  { label: 'Chat', href: '/dashboard/chat', icon: MessageSquare, minTier: 'office_manager' },
   { label: 'AI Assistant', href: '/dashboard/ai', icon: Bot, minTier: 'office_manager' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp, minTier: 'office_manager' },
   { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },

@@ -21,7 +21,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
         <span className="text-sm font-semibold text-[#F8FAFC]">AI Assistant</span>
         <div className="flex items-center gap-1">
           <Link
-            href="/dashboard/chat"
+            href="/dashboard/ai"
             className="rounded-lg p-1.5 text-[#64748B] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
             title="Open full chat"
           >

@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Target,
   Calendar,
-  MessageSquare,
+  Bot,
   Settings,
 } from 'lucide-react'
 
@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Leads', href: '/dashboard/leads', icon: Target },
   { label: 'Calendar', href: '/dashboard/schedule', icon: Calendar },
-  { label: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
+  { label: 'AI', href: '/dashboard/ai', icon: Bot },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 

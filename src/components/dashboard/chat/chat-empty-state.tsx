@@ -1,13 +1,16 @@
 'use client'
 
-import { Bot, Phone, Target, Receipt, Star, Calendar } from 'lucide-react'
+import { Sparkles, Phone, Target, Receipt, Star, Calendar, TrendingUp, AlertTriangle } from 'lucide-react'
 
 const SUGGESTIONS = [
+  { icon: TrendingUp, text: 'Give me a pipeline summary with counts by stage and total value' },
   { icon: Phone, text: 'How many calls did I get this week?' },
-  { icon: Target, text: 'Show me my active leads' },
+  { icon: Target, text: 'Show me my top 5 hottest leads ranked by score' },
+  { icon: AlertTriangle, text: 'What leads need follow-up this week?' },
   { icon: Receipt, text: 'Any overdue invoices?' },
   { icon: Star, text: 'What are my recent reviews?' },
   { icon: Calendar, text: "What's on the schedule today?" },
+  { icon: TrendingUp, text: "What's our 30/60/90 day revenue forecast?" },
 ]
 
 interface ChatEmptyStateProps {
@@ -20,14 +23,16 @@ export function ChatEmptyState({ compact, onSuggestionClick }: ChatEmptyStatePro
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#6366F1]/10 text-[#818CF8]">
-        <Bot size={28} />
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600/20 border border-teal-500/30">
+        <Sparkles size={28} className="text-teal-400" />
       </div>
       <h3 className={`mt-4 font-semibold text-[#F8FAFC] ${compact ? 'text-base' : 'text-lg'}`}>
-        Your Business Brain
+        AI Assistant
       </h3>
       <p className="mt-1.5 text-center text-sm text-[#94A3B8]">
-        Ask anything about your calls, leads, customers, invoices, or team.
+        {compact
+          ? 'Ask anything about your business.'
+          : 'Your business intelligence copilot — powered by Claude with live data access.'}
       </p>
 
       <div className={`mt-6 flex w-full flex-col gap-2 ${compact ? 'max-w-[320px]' : 'max-w-md'}`}>
