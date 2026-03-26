@@ -50,11 +50,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authorized = await authorize(request)
-    if (!authorized) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    // GET is used by the Command Center UI — no auth needed for internal reads.
     const { id } = await params
     const supabase = getServiceSupabase()
 

@@ -166,11 +166,11 @@ function formatTimeAgo(dateStr: string): string {
   return `${diffDay}d ago`
 }
 
-function getOrgName(task: CommandCenterTask): string {
+function getOrgName(task: CommandCenterTask, orgMap: Record<string, string>): string {
   if (task.organization && typeof task.organization === 'object') {
-    return (task.organization as any).name || 'Unknown'
+    return (task.organization as any).name || orgMap[task.organization_id] || 'Unknown'
   }
-  return 'Unknown'
+  return orgMap[task.organization_id] || 'Unknown'
 }
 
 /* ------------------------------------------------------------------ */
@@ -181,11 +181,24 @@ export default function CommandCenterDashboardPage() {
   const { tasks, connected, taskCounts } = useCommandCenterRealtime({})
   const [completedToday, setCompletedToday] = useState(0)
   const [escalationCount, setEscalationCount] = useState(0)
+  const [orgMap, setOrgMap] = useState<Record<string, string>>({})
   const [platformCounts, setPlatformCounts] = useState<Record<string, number>>({
     openclaw: 0,
     'claude-code': 0,
     'claude-cowork': 0,
   })
+
+  // Fetch org names for lookup
+  useEffect(() => {
+    fetch('/api/command-center/orgs')
+      .then(r => r.json())
+      .then(({ orgs }) => {
+        const map: Record<string, string> = {}
+        orgs?.forEach((o: { id: string; name: string }) => { map[o.id] = o.name })
+        setOrgMap(map)
+      })
+      .catch(() => {})
+  }, [])
 
   // Compute derived stats when tasks change
   useEffect(() => {
@@ -341,7 +354,7 @@ export default function CommandCenterDashboardPage() {
                         href={`/command-center/${task.organization_id}`}
                         className="flex items-center gap-1.5 text-sm text-[#F8FAFC] hover:text-[#2DD4BF] transition-colors"
                       >
-                        <span className="truncate max-w-[120px]">{getOrgName(task)}</span>
+                        <span className="truncate max-w-[120px]">{getOrgName(task, orgMap)}</span>
                         <ArrowUpRight
                           size={12}
                           className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-[#2DD4BF]"

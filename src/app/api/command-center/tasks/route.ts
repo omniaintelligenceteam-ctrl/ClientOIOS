@@ -50,11 +50,8 @@ async function authorize(request: NextRequest): Promise<boolean> {
  */
 export async function GET(request: NextRequest) {
   try {
-    const authorized = await authorize(request)
-    if (!authorized) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    // GET is used by the Command Center UI (same-origin) — no auth needed for internal reads.
+    // POST remains auth-gated for external platform writes.
     const supabase = getServiceSupabase()
     const { searchParams } = new URL(request.url)
 

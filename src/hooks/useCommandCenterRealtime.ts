@@ -62,21 +62,18 @@ export function useCommandCenterRealtime(
   const { organizationId } = options
 
   const fetchTasks = useCallback(async () => {
-    const supabase = createSupabaseBrowserClient()
-    if (!supabase) return
-
-    let query = supabase
-      .from('command_center_tasks')
-      .select('*, organization:organizations(name, tier)')
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    if (organizationId) {
-      query = query.eq('organization_id', organizationId)
+    try {
+      const params = new URLSearchParams()
+      if (organizationId) params.set('org_id', organizationId)
+      params.set('limit', '50')
+      const res = await fetch(`/api/command-center/tasks?${params}`)
+      if (res.ok) {
+        const { tasks: data } = await res.json()
+        if (data) setTasks(data as CommandCenterTask[])
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err)
     }
-
-    const { data } = await query
-    if (data) setTasks(data as unknown as CommandCenterTask[])
   }, [organizationId])
 
   useEffect(() => {

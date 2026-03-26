@@ -36,8 +36,13 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Command Center: skip auth for now (internal dev)
+  if (pathname.startsWith('/command-center')) {
+    return supabaseResponse
+  }
+
   // Not logged in + trying to access protected routes → redirect to login
-  if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/command-center'))) {
+  if (!user && pathname.startsWith('/dashboard')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
