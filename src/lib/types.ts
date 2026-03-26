@@ -374,6 +374,98 @@ export interface BusinessMetricsDaily {
   automations_executed: number
 }
 
+// ============================================
+// Command Center Types
+// ============================================
+
+export type TaskType =
+  | 'health_check' | 'prompt_update' | 'prompt_deploy' | 'report' | 'weekly_report'
+  | 'outreach' | 'onboarding_step' | 'monitoring' | 'content' | 'client_comms'
+  | 'escalation' | 'invoice' | 'follow_up' | 'research' | 'call_analysis'
+
+export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
+
+export type TaskStatus = 'pending' | 'assigned' | 'in_progress' | 'awaiting_approval' | 'completed' | 'failed' | 'cancelled'
+
+export type PlatformId = 'openclaw' | 'claude-code' | 'claude-cowork' | 'wes'
+
+export type MessageType = 'request' | 'response' | 'notification' | 'escalation' | 'handoff' | 'status_update'
+
+export type MessageStatus = 'sent' | 'received' | 'processing' | 'resolved' | 'failed'
+
+export interface CommandCenterTask {
+  id: string
+  organization_id: string | null
+  title: string
+  description: string | null
+  task_type: TaskType
+  priority: TaskPriority
+  status: TaskStatus
+  assigned_platform: PlatformId | null
+  assigned_agent: string | null
+  routed_by: string
+  created_by_platform: PlatformId
+  trigger_type: string | null
+  trigger_ref: string | null
+  started_at: string | null
+  completed_at: string | null
+  result: Record<string, unknown> | null
+  result_summary: string | null
+  error_message: string | null
+  requires_approval: boolean
+  approved_by: string | null
+  parent_task_id: string | null
+  metadata: Record<string, unknown>
+  due_at: string | null
+  created_at: string
+  updated_at: string
+  // Joined fields
+  organization?: Organization
+}
+
+export interface TaskRoutingRule {
+  id: string
+  rule_name: string
+  task_type: string
+  conditions: Record<string, unknown>
+  target_platform: PlatformId
+  target_agent: string | null
+  priority: number
+  enabled: boolean
+  requires_approval: boolean
+  created_at: string
+}
+
+export interface AgentMessage {
+  id: string
+  organization_id: string | null
+  task_id: string | null
+  from_platform: PlatformId | 'system'
+  from_agent: string | null
+  to_platform: PlatformId
+  to_agent: string | null
+  message_type: MessageType
+  subject: string
+  body: string
+  in_reply_to: string | null
+  status: MessageStatus
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export interface ClientHealthScore {
+  id: string
+  organization_id: string
+  score_date: string
+  overall_score: number
+  call_volume_score: number | null
+  response_quality_score: number | null
+  prompt_health_score: number | null
+  alerts: Array<{ type: string; severity: string; message: string }>
+  recommendations: Array<{ action: string; reason: string }>
+  created_at: string
+}
+
 // Supabase Database type (simplified for direct use)
 export interface Database {
   public: {

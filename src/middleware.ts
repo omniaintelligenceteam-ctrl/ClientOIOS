@@ -36,8 +36,8 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Not logged in + trying to access dashboard → redirect to login
-  if (!user && pathname.startsWith('/dashboard')) {
+  // Not logged in + trying to access protected routes → redirect to login
+  if (!user && (pathname.startsWith('/dashboard') || pathname.startsWith('/command-center'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -54,5 +54,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/signup', '/forgot-password'],
+  matcher: ['/dashboard/:path*', '/command-center/:path*', '/login', '/signup', '/forgot-password'],
 }
