@@ -25,7 +25,7 @@ export function RevenueSparkline({ organizationId }: RevenueSparklineProps) {
         .order('metric_date', { ascending: true })
 
       if (rows && rows.length > 0) {
-        setData(rows.map((r) => ({ value: r.revenue ?? 0 })))
+        setData(rows.map((r: any) => ({ value: r.revenue ?? 0 })))
       } else {
         // Demo data so sparkline always renders
         setData(

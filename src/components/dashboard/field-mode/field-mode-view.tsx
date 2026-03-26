@@ -83,15 +83,15 @@ export function FieldModeView({ onExit }: FieldModeViewProps) {
 
       if (!appts?.length) { setJobs([]); setLoading(false); return }
 
-      const customerIds = [...new Set(appts.map(a => a.customer_id))]
+      const customerIds = [...new Set(appts.map((a: any) => a.customer_id))]
       const { data: customers } = await supabase
         .from('customers')
         .select('*')
         .in('id', customerIds)
 
-      const cMap = new Map((customers ?? []).map(c => [c.id, c]))
+      const cMap = new Map((customers ?? []).map((c: any) => [c.id, c]))
 
-      const withChecklist: JobData[] = appts.map(a => ({
+      const withChecklist: JobData[] = appts.map((a: any) => ({
         ...a,
         customer: cMap.get(a.customer_id),
         checklist: DEFAULT_CHECKLIST.map((label, i) => ({

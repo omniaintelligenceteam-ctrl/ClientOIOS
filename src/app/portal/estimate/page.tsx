@@ -48,7 +48,7 @@ function EstimateContent() {
       .select('*')
       .eq('id', estimateId)
       .single()
-      .then(({ data, error: err }) => {
+      .then(({ data, error: err }: { data: any; error: any }) => {
         if (err || !data) {
           setError('Estimate not found')
         } else {

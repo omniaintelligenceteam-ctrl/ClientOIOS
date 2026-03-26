@@ -86,7 +86,7 @@ export function TeamLeaderboard({ organizationId }: TeamLeaderboardProps) {
       const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString()
 
       const stats: TeamMemberStats[] = await Promise.all(
-        users.map(async (u) => {
+        users.map(async (u: any) => {
           // Jobs completed (appointments with status=completed)
           const { count: jobsTotal } = await supabase
             .from('appointments')
@@ -128,7 +128,7 @@ export function TeamLeaderboard({ organizationId }: TeamLeaderboardProps) {
 
           let avgResponseMinutes = 0
           if (leads && leads.length > 0) {
-            const total = leads.reduce((sum, l) => {
+            const total = leads.reduce((sum: number, l: any) => {
               const diff =
                 new Date(l.last_contact_at!).getTime() - new Date(l.created_at).getTime()
               return sum + diff / 60000

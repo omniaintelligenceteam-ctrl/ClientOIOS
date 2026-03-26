@@ -114,7 +114,7 @@ export function GoalProgressRings({ organizationId, goals }: GoalProgressRingsPr
         .gte('created_at', monthStart)
         .lt('created_at', monthEnd)
 
-      const rev = (invRows ?? []).reduce((sum, r) => sum + (r.total_amount ?? 0), 0)
+      const rev = (invRows ?? []).reduce((sum: number, r: any) => sum + (r.total_amount ?? 0), 0)
       setRevenue(rev)
 
       // Conversion rate (won / total leads this month)

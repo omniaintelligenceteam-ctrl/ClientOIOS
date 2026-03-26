@@ -68,7 +68,7 @@ export function JobMap() {
       .order('scheduled_time_start')
 
     if (!error && data) {
-      const dots: JobDot[] = data.map((a, i) => {
+      const dots: JobDot[] = data.map((a: any, i: number) => {
         const { x, y } = hashAddress(a.address || '', i)
         return {
           id: a.id,
@@ -99,7 +99,7 @@ export function JobMap() {
         schema: 'public',
         table: 'appointments',
         filter: `organization_id=eq.${organization.id}`,
-      }, (payload) => {
+      }, (payload: any) => {
         const updated = payload.new as Appointment
         if (updated?.scheduled_date === today) fetchJobs()
       })

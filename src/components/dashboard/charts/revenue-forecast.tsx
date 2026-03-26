@@ -97,7 +97,7 @@ export function RevenueForecast({ organizationId }: RevenueForecastProps) {
       const dailyAvg = recentRevenue / recentDays
 
       // Pipeline upside: total pipeline * estimated 20% close rate spread over 90 days
-      const totalPipeline = (openLeads ?? []).reduce((s, l) => s + (l.estimated_value ?? 0), 0)
+      const totalPipeline = (openLeads ?? []).reduce((s: number, l: any) => s + (l.estimated_value ?? 0), 0)
       const pipelineDailyContrib = (totalPipeline * 0.2) / 90
 
       const projectedDaily = dailyAvg + pipelineDailyContrib
