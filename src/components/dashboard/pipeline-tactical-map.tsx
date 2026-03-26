@@ -36,7 +36,7 @@ export function PipelineTacticalMap({ organizationId }: PipelineTacticalMapProps
       .from('leads')
       .select('id, first_name, last_name, status, score, estimated_value')
       .eq('organization_id', organizationId)
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) {
           setLeads(data.map((l: any) => ({
             id: l.id,
