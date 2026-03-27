@@ -47,6 +47,7 @@ import { NewLeadModal } from '@/components/dashboard/modals/new-lead-modal'
 import { LogCallModal } from '@/components/dashboard/modals/log-call-modal'
 import { BookJobModal } from '@/components/dashboard/modals/book-job-modal'
 import { Breadcrumbs } from '@/components/dashboard/breadcrumbs'
+import { DemoBanner } from '@/components/dashboard/demo-banner'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useFieldMode } from '@/components/dashboard/field-mode/field-mode-toggle'
 import { FieldModeView } from '@/components/dashboard/field-mode/field-mode-view'
@@ -545,7 +546,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { profile, organization, isLoading, isSuperAdmin, signOut } = useAuth()
+  const { profile, organization, isLoading, isSuperAdmin, isDemoMode, signOut } = useAuth()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
@@ -833,6 +834,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             <Plus size={18} strokeWidth={2.5} />
           </button>
         </header>
+
+        {/* Demo banner */}
+        {isDemoMode && <DemoBanner />}
 
         {/* Page content */}
         <MobileHeader onMenuClick={toggleMobileMenu} onFieldModeToggle={setFieldMode} />

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { User as SupabaseUser, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import type { Organization, User } from '@/lib/types'
+import { DEMO_ORG_SLUG } from '@/lib/demo-constants'
 
 interface AuthContext {
   user: SupabaseUser | null
@@ -11,6 +12,7 @@ interface AuthContext {
   organization: Organization | null
   isLoading: boolean
   isSuperAdmin: boolean
+  isDemoMode: boolean
   error: string | null
   signOut: () => Promise<void>
 }
@@ -21,6 +23,7 @@ const AuthContext = createContext<AuthContext>({
   organization: null,
   isLoading: true,
   isSuperAdmin: false,
+  isDemoMode: false,
   error: null,
   signOut: async () => {},
 })
@@ -123,9 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const isSuperAdmin = profile?.is_super_admin === true
+  const isDemoMode = organization?.slug === DEMO_ORG_SLUG
 
   return (
-    <AuthContext.Provider value={{ user, profile, organization, isLoading, isSuperAdmin, error, signOut }}>
+    <AuthContext.Provider value={{ user, profile, organization, isLoading, isSuperAdmin, isDemoMode, error, signOut }}>
       {children}
     </AuthContext.Provider>
   )

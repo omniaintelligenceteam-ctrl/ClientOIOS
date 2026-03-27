@@ -89,7 +89,13 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-8 text-center text-xs text-slate-500">
+        <div className="mt-6 text-center">
+          <a href="/demo" className="text-sm text-teal-400 transition-colors hover:text-teal-300">
+            Want to see OIOS in action? Try the demo &rarr;
+          </a>
+        </div>
+
+        <p className="mt-4 text-center text-xs text-slate-500">
           Powered by{' '}
           <span className="bg-gradient-to-r from-teal-400 to-teal-300 bg-clip-text font-semibold text-transparent">OIOS</span>
         </p>
