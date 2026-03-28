@@ -110,13 +110,13 @@ export function MidDayPulse({ organizationId, isDemoMode }: MidDayPulseProps) {
     if (isDemoMode) {
       setMetrics({
         callsSoFar:   demoMetrics.callsToday,
-        callsGoal:    20,
+        callsGoal:    22,
         leadsSoFar:   demoMetrics.leadsToday,
-        leadsGoal:    8,
+        leadsGoal:    7,
         jobsSoFar:    demoMetrics.jobsBookedToday,
-        jobsGoal:     5,
+        jobsGoal:     8,
         revenueSoFar: demoMetrics.revenueThisMonth,
-        revenueGoal:  15000,
+        revenueGoal:  85000,
       })
       setLoading(false)
       return
