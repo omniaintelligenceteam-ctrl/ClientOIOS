@@ -564,7 +564,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     setCollapsedSections(loadCollapsedSections())
   }, [])
 
-  const CURRENT_TIER: OrgTier = (organization?.tier as OrgTier) || 'office_manager'
+  const CURRENT_TIER: OrgTier = isDemoMode ? 'growth_engine' : ((organization?.tier as OrgTier) || 'office_manager')
   const userName = profile?.full_name || 'User'
   const userInitials = userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
   const userRole = profile?.role || 'viewer'

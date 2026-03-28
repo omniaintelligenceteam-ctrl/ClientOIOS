@@ -48,6 +48,7 @@ import {
   insightForConversion,
   insightForPipeline,
 } from '@/lib/ai/insight-engine'
+import { demoMetrics } from '@/lib/demo-data'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -142,7 +143,7 @@ interface Metrics {
 
 export default function CommandCenterPage() {
   const router = useRouter()
-  const { profile, isLoading } = useAuth()
+  const { profile, isLoading, isDemoMode } = useAuth()
   const orgId = profile?.organization_id || ''
 
   const [metrics, setMetrics] = useState<Metrics>({
@@ -166,6 +167,25 @@ export default function CommandCenterPage() {
 
   useEffect(() => {
     if (!orgId) return
+
+    // In demo mode, use static demo metrics instead of querying DB
+    if (isDemoMode) {
+      setMetrics({
+        callsToday: demoMetrics.callsToday,
+        callsYesterday: demoMetrics.callsYesterday,
+        leadsToday: demoMetrics.leadsToday,
+        leadsYesterday: 3,
+        conversionRate: demoMetrics.conversionRate,
+        jobsBookedToday: demoMetrics.jobsBookedToday,
+        jobsBookedYesterday: 2,
+        pipelineValue: demoMetrics.pipelineValue,
+        revenueThisMonth: demoMetrics.revenueThisMonth,
+        revenueLastMonth: demoMetrics.revenueLastMonth,
+        projectedNextMonth: Math.round(demoMetrics.revenueThisMonth * 1.15),
+      })
+      return
+    }
+
     const supabase = createSupabaseBrowserClient()
 
     const load = async () => {
@@ -293,7 +313,7 @@ export default function CommandCenterPage() {
     }
 
     load()
-  }, [orgId])
+  }, [orgId, isDemoMode])
 
   // Show loading skeleton while auth is resolving
   if (isLoading) {
@@ -388,7 +408,7 @@ export default function CommandCenterPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Mid-Day Pulse (shows after 12pm)                                    */}
       {/* ------------------------------------------------------------------ */}
-      <MidDayPulse organizationId={orgId} />
+      <MidDayPulse organizationId={orgId} isDemoMode={isDemoMode} />
 
       {/* ------------------------------------------------------------------ */}
       {/* Stat Cards                                                           */}

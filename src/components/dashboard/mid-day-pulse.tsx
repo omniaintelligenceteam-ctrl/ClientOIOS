@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Activity, Phone, Target, CalendarCheck, DollarSign, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { generateStatInsight } from '@/lib/ai/insight-engine'
+import { demoMetrics } from '@/lib/demo-data'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,6 +23,7 @@ interface PulseMetrics {
 
 interface MidDayPulseProps {
   organizationId: string
+  isDemoMode?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -94,16 +96,32 @@ function TrendIcon({ pct }: { pct: number }) {
 // Main component — only renders after 12pm
 // ---------------------------------------------------------------------------
 
-export function MidDayPulse({ organizationId }: MidDayPulseProps) {
+export function MidDayPulse({ organizationId, isDemoMode }: MidDayPulseProps) {
   const [metrics, setMetrics] = useState<PulseMetrics | null>(null)
   const [loading, setLoading] = useState(true)
 
   const hour = new Date().getHours()
-  // Only show after 12pm
-  if (hour < 12) return null
+  // Only show after 12pm (always show in demo mode)
+  if (hour < 12 && !isDemoMode) return null
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
+    // In demo mode, use static demo metrics instead of querying DB
+    if (isDemoMode) {
+      setMetrics({
+        callsSoFar:   demoMetrics.callsToday,
+        callsGoal:    20,
+        leadsSoFar:   demoMetrics.leadsToday,
+        leadsGoal:    8,
+        jobsSoFar:    demoMetrics.jobsBookedToday,
+        jobsGoal:     5,
+        revenueSoFar: demoMetrics.revenueThisMonth,
+        revenueGoal:  15000,
+      })
+      setLoading(false)
+      return
+    }
+
     if (!organizationId) {
       setLoading(false)
       return
@@ -180,7 +198,7 @@ export function MidDayPulse({ organizationId }: MidDayPulseProps) {
     }
 
     load()
-  }, [organizationId])
+  }, [organizationId, isDemoMode])
 
   if (loading) {
     return (
