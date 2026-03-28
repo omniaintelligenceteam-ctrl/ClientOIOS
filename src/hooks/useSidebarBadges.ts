@@ -14,13 +14,29 @@ export interface SidebarBadges {
 const EMPTY: SidebarBadges = { counts: {}, urgent: {} }
 
 export function useSidebarBadges(): SidebarBadges {
-  const { organization, profile } = useAuth()
+  const { organization, profile, isDemoMode } = useAuth()
   const [badges, setBadges] = useState<SidebarBadges>(EMPTY)
 
   useEffect(() => {
     const orgId = organization?.id
     const userId = profile?.id
     if (!orgId) return
+
+    // In demo mode, return realistic static badges — skip DB queries
+    if (isDemoMode) {
+      setBadges({
+        counts: {
+          '/dashboard/calls': 2,
+          '/dashboard/leads': 5,
+          '/dashboard/invoicing': 4,
+        },
+        urgent: {
+          '/dashboard/calls': true,
+          '/dashboard/invoicing': true,
+        },
+      })
+      return
+    }
 
     const supabase = createSupabaseBrowserClient()
     if (!supabase) return

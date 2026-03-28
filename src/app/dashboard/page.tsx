@@ -167,6 +167,7 @@ export default function CommandCenterPage() {
 
   useEffect(() => {
     if (!orgId) return
+    let cancelled = false
 
     // In demo mode, use static demo metrics instead of querying DB
     if (isDemoMode) {
@@ -183,7 +184,7 @@ export default function CommandCenterPage() {
         revenueLastMonth: demoMetrics.revenueLastMonth,
         projectedNextMonth: Math.round(demoMetrics.revenueThisMonth * 1.15),
       })
-      return
+      return () => { cancelled = true }
     }
 
     const supabase = createSupabaseBrowserClient()
@@ -297,6 +298,8 @@ export default function CommandCenterPage() {
       const projectedNextMonth =
         dayOfMonth > 0 ? Math.round((revenueThisMonth / dayOfMonth) * daysInMonth) : 0
 
+      if (cancelled) return
+
       setMetrics({
         callsToday: callsRes.count || 0,
         callsYesterday: yesterdayCallsRes.count || 0,
@@ -313,6 +316,7 @@ export default function CommandCenterPage() {
     }
 
     load()
+    return () => { cancelled = true }
   }, [orgId, isDemoMode])
 
   // Show loading skeleton while auth is resolving
