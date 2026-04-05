@@ -566,7 +566,17 @@ export async function POST(request: Request) {
 
       if (!deduped.length) continue
 
-      // 5. Insert queue entries in batch
+      // 5. Stagger scheduled_for for auto-mode cold outreach (1 min apart)
+      //    This prevents sending all emails at once — the drip-sender cron
+      //    picks up 1 item per minute based on scheduled_for.
+      if (isAutoMode(rule)) {
+        const batchStart = Date.now()
+        for (let i = 0; i < deduped.length; i++) {
+          deduped[i].scheduled_for = new Date(batchStart + i * 60_000).toISOString()
+        }
+      }
+
+      // 6. Insert queue entries in batch
       const { data: inserted, error: insertError } = await svc
         .from('automation_queue')
         .insert(deduped)
@@ -583,11 +593,11 @@ export async function POST(request: Request) {
       const insertedItems: Array<{ id: string; status: string }> = inserted ?? []
       triggered += insertedItems.length
 
-      // 4. Fire execute for auto-mode items
+      // Count by status — auto-mode items are 'approved' but NOT fired here.
+      // The drip-sender cron picks them up 1/minute based on scheduled_for.
       for (const item of insertedItems) {
         if (item.status === 'approved') {
           autoExecuted++
-          fireExecute(item.id)
         } else {
           pendingApproval++
         }
