@@ -13,6 +13,7 @@ import {
   invoice_reminder,
   lead_nurture,
   appointment_reminder,
+  prospect_outreach,
   type AutomationContext,
 } from '@/lib/automation-templates'
 
@@ -43,6 +44,8 @@ function getTemplate(actionType: string, context: AutomationContext) {
       return lead_nurture(context)
     case 'appointment_reminder':
       return appointment_reminder(context)
+    case 'prospect_outreach':
+      return prospect_outreach(context)
     default:
       return null
   }

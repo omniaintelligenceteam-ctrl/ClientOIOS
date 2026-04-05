@@ -146,6 +146,41 @@ Keep it concise (2–3 short paragraphs). Use a simple HTML layout with inline s
   }
 }
 
+// ── prospect_outreach ────────────────────────────────────────
+// Cold outreach to OIOS prospects — pain-question framing
+export function prospect_outreach(context: AutomationContext): AutomationTemplate {
+  const { customerName, metadata } = context
+  const company = (metadata.company as string) || ''
+  const notes = (metadata.notes as string) || ''
+  const source = (metadata.source as string) || ''
+
+  const companyRef = company ? ` at ${company}` : ''
+  const contextLine = notes
+    ? `Additional context about this prospect: ${notes}`
+    : source
+      ? `They were found via ${source}.`
+      : ''
+
+  return {
+    subject: `Quick question for you${companyRef}`,
+    bodyPrompt: `Write a short, personalized cold outreach email in clean HTML from OIOS (an AI operations company for small businesses) to a prospect named ${customerName}${companyRef}.
+
+TONE: Conversational, direct, zero corporate jargon. Like a smart friend who runs a tech company reaching out — not a SaaS marketing email. Short sentences. Plain English.
+
+The email MUST:
+- Open with a single provocative question: "What's the one thing you do every day that you wish you didn't have to?"
+- Briefly explain that OIOS finds repetitive tasks in small businesses and automates them with AI — phones, follow-ups, scheduling, pipeline, whatever eats their time
+- Mention that most small business owners are doing the job of 4 people and OIOS fills the roles they can't afford to hire
+- NOT mention pricing, tiers, or specific features
+- End with a simple CTA: "Want to see what it sounds like when AI answers your phone? I can set up a 2-minute demo call — just reply."
+- Be signed by "Wes Overstreet, OIOS" with no title
+
+${contextLine}
+
+Keep it under 150 words. Use a simple HTML layout with inline styles — white background, dark text, readable font. No images, no logos, no fancy formatting. This should feel like a personal email, not a marketing blast. Do not include a subject line in the HTML.`,
+  }
+}
+
 // ============================================================
 // Campaign & Review Response Templates (Phase 6)
 // ============================================================

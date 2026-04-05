@@ -116,6 +116,19 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'Queue item not found' }, { status: 404 })
     }
 
+    // Fire execution immediately on approval
+    if (action === 'approve' && item) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      fetch(`${baseUrl}/api/automations/execute`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_SECRET}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ queue_item_id: item.id }),
+      }).catch(() => {}) // fire-and-forget
+    }
+
     return Response.json(item)
   } catch (err) {
     console.error('[automations/queue] PATCH unexpected error:', err)

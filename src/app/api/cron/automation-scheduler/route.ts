@@ -478,11 +478,26 @@ export async function POST(request: Request) {
     }
   }
 
+  // Safety net: execute any approved items that weren't fired (e.g. fire-and-forget failed)
+  const { data: stuckApproved } = await svc
+    .from('automation_queue')
+    .select('id')
+    .eq('status', 'approved')
+    .is('executed_at', null)
+    .lte('scheduled_for', nowIso())
+    .limit(10)
+
+  let retried = 0
+  for (const item of (stuckApproved ?? []) as Array<{ id: string }>) {
+    retried++
+    fireExecute(item.id)
+  }
+
   console.log(
-    `[automation-scheduler] Done — triggered: ${triggered}, auto_executed: ${autoExecuted}, pending_approval: ${pendingApproval}`,
+    `[automation-scheduler] Done — triggered: ${triggered}, auto_executed: ${autoExecuted}, pending_approval: ${pendingApproval}, retried_stuck: ${retried}`,
   )
 
-  return Response.json({ triggered, auto_executed: autoExecuted, pending_approval: pendingApproval })
+  return Response.json({ triggered, auto_executed: autoExecuted, pending_approval: pendingApproval, retried_stuck: retried })
 }
 
 // Allow GET — Vercel cron can use either verb

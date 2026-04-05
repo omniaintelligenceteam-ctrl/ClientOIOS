@@ -56,7 +56,7 @@ import { FieldModeView } from '@/components/dashboard/field-mode/field-mode-view
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type OrgTier = 'answering_service' | 'office_manager' | 'growth_engine'
+type OrgTier = 'answering_service' | 'receptionist' | 'office_manager' | 'coo' | 'ai_coo' | 'growth_engine'
 
 interface NavItem {
   label: string
@@ -78,13 +78,19 @@ interface NavSection {
 
 const TIER_RANK: Record<OrgTier, number> = {
   answering_service: 1,
+  receptionist: 1,
   office_manager: 2,
+  coo: 3,
+  ai_coo: 3,
   growth_engine: 3,
 }
 
 const TIER_LABELS: Record<OrgTier, string> = {
   answering_service: 'Tier 1',
+  receptionist: 'Tier 1',
   office_manager: 'Tier 2',
+  coo: 'Tier 3',
+  ai_coo: 'Tier 3',
   growth_engine: 'Tier 3',
 }
 
