@@ -164,6 +164,9 @@ interface QueueItemCardProps {
 
 function QueueItemCard({ item, onApprove, onReject, isActing }: QueueItemCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [preview, setPreview] = useState<{ subject: string; html: string; to: string } | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
   const config = ACTION_CONFIGS[item.action_type] ?? DEFAULT_CONFIG
   const Icon = config.icon
   const p = item.payload ?? {}
@@ -238,8 +241,59 @@ function QueueItemCard({ item, onApprove, onReject, isActing }: QueueItemCardPro
             Queued {relativeTime(item.created_at)}
           </div>
 
+          {/* Email preview panel */}
+          {preview && (
+            <div className="mt-4 rounded-xl border border-teal-500/20 bg-[#0B1120] overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2 bg-teal-500/5 border-b border-teal-500/10">
+                <div className="min-w-0">
+                  <p className="text-xs text-slate-500">To: <span className="text-slate-300">{preview.to}</span></p>
+                  <p className="text-xs text-slate-500">Subject: <span className="text-slate-200 font-medium">{preview.subject}</span></p>
+                </div>
+                <button onClick={() => setPreview(null)} className="text-slate-500 hover:text-slate-300 p-1"><X size={14} /></button>
+              </div>
+              <div
+                className="p-4 max-h-[400px] overflow-y-auto bg-white rounded-b-xl"
+                dangerouslySetInnerHTML={{ __html: preview.html }}
+              />
+            </div>
+          )}
+
+          {previewError && (
+            <p className="mt-3 text-xs text-red-400">{previewError}</p>
+          )}
+
           {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-4">
+          <div className="flex items-center gap-2 mt-4 flex-wrap">
+            {hasEmail && (
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  if (preview) { setPreview(null); return }
+                  setPreviewLoading(true)
+                  setPreviewError(null)
+                  try {
+                    const res = await fetch('/api/automations/preview', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ queue_item_id: item.id }),
+                    })
+                    if (!res.ok) throw new Error('Preview failed')
+                    const data = await res.json()
+                    setPreview({ subject: data.subject, html: data.html, to: data.to })
+                  } catch {
+                    setPreviewError('Could not generate preview. Try again.')
+                  } finally {
+                    setPreviewLoading(false)
+                  }
+                }}
+                disabled={previewLoading}
+                className="flex items-center gap-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-4 py-2 text-sm font-medium text-teal-400 transition-colors hover:bg-teal-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Mail size={14} />
+                {previewLoading ? 'Generating...' : preview ? 'Hide Preview' : 'Preview Email'}
+              </button>
+            )}
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onApprove(item.id) }}
