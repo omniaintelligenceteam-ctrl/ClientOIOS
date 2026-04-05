@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
-/*  Types                                                               */
+/*  Types — aligned to actual DB schema                                */
 /* ------------------------------------------------------------------ */
 
 type ActionType =
@@ -24,17 +24,32 @@ type ActionType =
   | 'invoice_reminder'
   | 'lead_nurture'
   | 'appointment_reminder'
+  | 'send_email'
+  | 'send_notification'
 
-type Mode = 'auto' | 'approve'
+type Mode = 'auto' | 'approval'
 
 interface AutomationRule {
   id: string
   organization_id: string
-  action_type: ActionType
-  enabled: boolean
-  mode: Mode
+  name: string
+  action_type: string
+  trigger_type: string
+  trigger_config: { mode?: Mode; delay_minutes?: number; conditions?: Record<string, unknown> } | null
+  action_config: { template?: string; description?: string } | null
+  active: boolean
   created_at: string
   updated_at: string
+}
+
+/** Get the effective template key for matching to UI cards */
+function ruleTemplate(rule: AutomationRule): string {
+  return rule.action_config?.template || rule.action_type
+}
+
+/** Get the mode from trigger_config */
+function ruleMode(rule: AutomationRule): Mode {
+  return rule.trigger_config?.mode || 'approval'
 }
 
 /* ------------------------------------------------------------------ */
@@ -47,7 +62,17 @@ interface ActionConfig {
   icon: React.ElementType
 }
 
-const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
+const CARD_TYPES = [
+  'follow_up_email',
+  'review_request',
+  'invoice_reminder',
+  'lead_nurture',
+  'appointment_reminder',
+] as const
+
+type CardType = typeof CARD_TYPES[number]
+
+const ACTION_CONFIGS: Record<CardType, ActionConfig> = {
   follow_up_email: {
     label: 'Follow-Up Emails',
     description: 'Send thank-you emails after service completion',
@@ -74,14 +99,6 @@ const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
     icon: Calendar,
   },
 }
-
-const ALL_ACTION_TYPES: ActionType[] = [
-  'follow_up_email',
-  'review_request',
-  'invoice_reminder',
-  'lead_nurture',
-  'appointment_reminder',
-]
 
 /* ------------------------------------------------------------------ */
 /*  Toggle component                                                    */
@@ -118,28 +135,28 @@ function ToggleSwitch({
 /* ------------------------------------------------------------------ */
 
 interface AutomationCardProps {
-  actionType: ActionType
+  cardType: CardType
   rule: AutomationRule | null
-  onToggle: (id: string, enabled: boolean) => Promise<void>
+  onToggle: (id: string, active: boolean) => Promise<void>
   onModeChange: (id: string, mode: Mode) => Promise<void>
-  onSetUp: (actionType: ActionType) => Promise<void>
+  onSetUp: (cardType: CardType) => Promise<void>
   isLoading: boolean
 }
 
 function AutomationCard({
-  actionType,
+  cardType,
   rule,
   onToggle,
   onModeChange,
   onSetUp,
   isLoading,
 }: AutomationCardProps) {
-  const config = ACTION_CONFIGS[actionType]
+  const config = ACTION_CONFIGS[cardType]
   const Icon = config.icon
 
   const hasRule = rule !== null
-  const isEnabled = hasRule && rule.enabled
-  const mode: Mode = hasRule ? rule.mode : 'auto'
+  const isActive = hasRule && rule.active
+  const mode: Mode = hasRule ? ruleMode(rule) : 'auto'
 
   return (
     <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-5">
@@ -147,7 +164,7 @@ function AutomationCard({
       <div className="flex items-start gap-4">
         <div
           className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl transition-colors ${
-            isEnabled
+            isActive
               ? 'bg-teal-500/15 text-teal-400'
               : 'bg-slate-700/50 text-slate-500'
           }`}
@@ -162,7 +179,7 @@ function AutomationCard({
             </h3>
             {hasRule && (
               <ToggleSwitch
-                checked={rule.enabled}
+                checked={rule.active}
                 onChange={(val) => onToggle(rule.id, val)}
               />
             )}
@@ -181,7 +198,7 @@ function AutomationCard({
             <button
               type="button"
               onClick={() => onModeChange(rule.id, 'auto')}
-              disabled={!isEnabled || isLoading}
+              disabled={!isActive || isLoading}
               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                 mode === 'auto'
                   ? 'border-teal-500/50 bg-teal-500/10 text-teal-400'
@@ -192,10 +209,10 @@ function AutomationCard({
             </button>
             <button
               type="button"
-              onClick={() => onModeChange(rule.id, 'approve')}
-              disabled={!isEnabled || isLoading}
+              onClick={() => onModeChange(rule.id, 'approval')}
+              disabled={!isActive || isLoading}
               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                mode === 'approve'
+                mode === 'approval'
                   ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
                   : 'border-slate-700 bg-transparent text-slate-400 hover:border-slate-600 hover:text-slate-300'
               }`}
@@ -205,7 +222,7 @@ function AutomationCard({
           </div>
 
           {/* Status badge */}
-          {isEnabled ? (
+          {isActive ? (
             mode === 'auto' ? (
               <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-teal-500/10 px-3 py-1 text-xs font-medium text-teal-400">
                 <CheckCircle size={12} />
@@ -227,7 +244,7 @@ function AutomationCard({
         /* No rule yet — show Set Up button */
         <button
           type="button"
-          onClick={() => onSetUp(actionType)}
+          onClick={() => onSetUp(cardType)}
           disabled={isLoading}
           className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-600 bg-transparent px-4 py-3 text-sm font-medium text-slate-400 transition-colors hover:border-teal-500/50 hover:text-teal-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
@@ -268,7 +285,7 @@ export default function AutomationsSettingsPage() {
 
   /* Helper: patch a rule */
   const patchRule = useCallback(
-    async (payload: { id: string; enabled?: boolean; mode?: Mode }) => {
+    async (payload: { id: string; active?: boolean; mode?: Mode }) => {
       setActionLoading(true)
       try {
         const res = await fetch('/api/automations/rules', {
@@ -291,7 +308,7 @@ export default function AutomationsSettingsPage() {
   )
 
   const handleToggle = useCallback(
-    (id: string, enabled: boolean) => patchRule({ id, enabled }),
+    (id: string, active: boolean) => patchRule({ id, active }),
     [patchRule]
   )
 
@@ -300,14 +317,21 @@ export default function AutomationsSettingsPage() {
     [patchRule]
   )
 
-  /* Create a new rule for an action_type */
-  const handleSetUp = useCallback(async (actionType: ActionType) => {
+  /* Create a new rule for a card type */
+  const handleSetUp = useCallback(async (cardType: CardType) => {
     setActionLoading(true)
     try {
       const res = await fetch('/api/automations/rules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action_type: actionType }),
+        body: JSON.stringify({
+          name: ACTION_CONFIGS[cardType].label,
+          action_type: 'send_email',
+          trigger_type: cardType,
+          mode: 'approval',
+          active: false,
+          action_config: { template: cardType, description: ACTION_CONFIGS[cardType].description },
+        }),
       })
       if (!res.ok) throw new Error('Failed to create rule')
       const created: AutomationRule = await res.json()
@@ -319,10 +343,16 @@ export default function AutomationsSettingsPage() {
     }
   }, [])
 
-  /* Build a lookup map for quick access */
-  const ruleByType: Record<string, AutomationRule> = {}
+  /* Build a lookup map: match rules to cards by template or trigger_type */
+  const ruleByCardType: Record<string, AutomationRule> = {}
   for (const rule of rules) {
-    ruleByType[rule.action_type] = rule
+    const template = ruleTemplate(rule)
+    // Match by template first, then trigger_type, then action_type
+    for (const ct of CARD_TYPES) {
+      if (template === ct || rule.trigger_type === ct || rule.action_type === ct) {
+        if (!ruleByCardType[ct]) ruleByCardType[ct] = rule
+      }
+    }
   }
 
   return (
@@ -357,7 +387,7 @@ export default function AutomationsSettingsPage() {
       {/* Loading skeleton */}
       {loading ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {ALL_ACTION_TYPES.map((type) => (
+          {CARD_TYPES.map((type) => (
             <div
               key={type}
               className="h-52 animate-pulse rounded-2xl bg-white/[0.03]"
@@ -367,11 +397,11 @@ export default function AutomationsSettingsPage() {
       ) : (
         /* Automation cards grid */
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {ALL_ACTION_TYPES.map((actionType) => (
+          {CARD_TYPES.map((cardType) => (
             <AutomationCard
-              key={actionType}
-              actionType={actionType}
-              rule={ruleByType[actionType] ?? null}
+              key={cardType}
+              cardType={cardType}
+              rule={ruleByCardType[cardType] ?? null}
               onToggle={handleToggle}
               onModeChange={handleModeChange}
               onSetUp={handleSetUp}

@@ -41,8 +41,8 @@ export async function GET() {
 
 // ============================================================
 // POST /api/automations/rules
-// Upsert a rule (action_type + organization_id is unique)
-// Body: { action_type, mode, enabled, config }
+// Create a new rule
+// Body: { name, action_type, trigger_type, mode?, active?, trigger_config?, action_config? }
 // ============================================================
 
 export async function POST(request: Request) {
@@ -59,42 +59,54 @@ export async function POST(request: Request) {
     if (!profile) return Response.json({ error: 'Profile not found' }, { status: 401 })
 
     const orgId = profile.organization_id
+    const body = await request.json()
 
-    const body = await request.json() as {
+    const {
+      name,
+      action_type,
+      trigger_type,
+      mode,
+      active,
+      trigger_config,
+      action_config,
+    } = body as {
+      name?: string
       action_type: string
-      mode: 'auto' | 'approve'
-      enabled: boolean
-      config: Record<string, unknown>
+      trigger_type?: string
+      mode?: 'auto' | 'approval'
+      active?: boolean
+      trigger_config?: Record<string, unknown>
+      action_config?: Record<string, unknown>
     }
-
-    const { action_type, mode, enabled, config } = body
 
     if (!action_type) {
       return Response.json({ error: 'action_type is required' }, { status: 400 })
     }
-    if (mode && mode !== 'auto' && mode !== 'approve') {
-      return Response.json({ error: 'mode must be "auto" or "approve"' }, { status: 400 })
+
+    // Build trigger_config with mode embedded
+    const finalTriggerConfig = {
+      ...(trigger_config || {}),
+      ...(mode ? { mode } : {}),
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: rule, error } = await (supabase as any)
       .from('automation_rules')
-      .upsert(
-        {
-          organization_id: orgId,
-          action_type,
-          mode: mode ?? 'approve',
-          enabled: enabled ?? false,
-          config: config ?? {},
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'organization_id,action_type' }
-      )
+      .insert({
+        organization_id: orgId,
+        name: name || action_type,
+        action_type,
+        trigger_type: trigger_type || action_type,
+        active: active ?? false,
+        trigger_config: finalTriggerConfig,
+        action_config: action_config || {},
+        updated_at: new Date().toISOString(),
+      })
       .select()
       .single()
 
     if (error) {
-      console.error('[automations/rules] POST upsert error:', error)
+      console.error('[automations/rules] POST error:', error)
       return Response.json({ error: 'Failed to save automation rule' }, { status: 500 })
     }
 
@@ -107,8 +119,8 @@ export async function POST(request: Request) {
 
 // ============================================================
 // PATCH /api/automations/rules
-// Toggle enabled/mode for a rule
-// Body: { id, enabled?, mode? }
+// Toggle active/mode for a rule
+// Body: { id, active?, mode? }
 // ============================================================
 
 export async function PATCH(request: Request) {
@@ -125,28 +137,40 @@ export async function PATCH(request: Request) {
     if (!profile) return Response.json({ error: 'Profile not found' }, { status: 401 })
 
     const orgId = profile.organization_id
-
     const body = await request.json() as {
       id: string
-      enabled?: boolean
-      mode?: 'auto' | 'approve'
+      active?: boolean
+      mode?: 'auto' | 'approval'
     }
 
-    const { id, enabled, mode } = body
+    const { id, active, mode } = body
 
     if (!id) {
       return Response.json({ error: 'id is required' }, { status: 400 })
     }
-    if (mode !== undefined && mode !== 'auto' && mode !== 'approve') {
-      return Response.json({ error: 'mode must be "auto" or "approve"' }, { status: 400 })
-    }
-    if (enabled === undefined && mode === undefined) {
-      return Response.json({ error: 'At least one of enabled or mode must be provided' }, { status: 400 })
+    if (active === undefined && mode === undefined) {
+      return Response.json({ error: 'At least one of active or mode must be provided' }, { status: 400 })
     }
 
+    // If toggling mode, we need to update trigger_config.mode
+    // First fetch the current rule to preserve existing trigger_config
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
-    if (enabled !== undefined) updates.enabled = enabled
-    if (mode !== undefined) updates.mode = mode
+    if (active !== undefined) updates.active = active
+
+    if (mode !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: current } = await (supabase as any)
+        .from('automation_rules')
+        .select('trigger_config')
+        .eq('id', id)
+        .eq('organization_id', orgId)
+        .single()
+
+      updates.trigger_config = {
+        ...(current?.trigger_config || {}),
+        mode,
+      }
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: rule, error } = await (supabase as any)
