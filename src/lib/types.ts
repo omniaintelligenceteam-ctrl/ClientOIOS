@@ -92,10 +92,13 @@ export interface Lead {
   priority: LeadPriority
   score: number
   score_reasons: string[] | null
+  name: string | null
   first_name: string
   last_name: string
   phone: string
   email: string | null
+  company: string | null
+  lead_type: string | null
   address: string | null
   service_needed: string
   estimated_value: number

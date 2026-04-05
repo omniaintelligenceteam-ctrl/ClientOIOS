@@ -45,12 +45,17 @@ function PipelineCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
       className="w-full text-left bg-[#0B1120] hover:bg-[rgba(45,212,191,0.04)] border border-[rgba(148,163,184,0.08)] hover:border-[rgba(45,212,191,0.25)] rounded-xl p-3 transition-all space-y-2 min-h-[44px]"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-slate-100 leading-tight">{lead.first_name} {lead.last_name}</p>
+        <p className="text-sm font-semibold text-slate-100 leading-tight truncate">{lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown'}</p>
         <span className="text-base leading-none flex-shrink-0">{SOURCE_EMOJI[lead.source] || '📋'}</span>
       </div>
-      <p className="text-xs text-slate-500 truncate">{lead.service_needed}</p>
+      {lead.company && <p className="text-xs text-slate-400 truncate">{lead.company}</p>}
+      {(lead.email || lead.phone) && <p className="text-[11px] text-slate-500 truncate">{lead.email || lead.phone}</p>}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-green-400">{fmt(lead.estimated_value)}</span>
+        {lead.estimated_value > 0 ? (
+          <span className="text-xs font-semibold text-green-400">{fmt(lead.estimated_value)}</span>
+        ) : (
+          <span className="text-xs text-slate-600">Score: {lead.score}</span>
+        )}
         <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${PRIORITY_COLORS[lead.priority] || 'bg-slate-500/15 text-slate-400'}`}>
           {lead.priority.toUpperCase()}
         </span>

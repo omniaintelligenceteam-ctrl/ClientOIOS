@@ -153,7 +153,7 @@ function LeadCard({
       label: 'Copy Name',
       icon: Copy,
       onClick: () => {
-        navigator.clipboard?.writeText(`${lead.first_name} ${lead.last_name}`)
+        navigator.clipboard?.writeText(lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown')
       },
     },
     { id: 'div1', label: '', onClick: () => {}, divider: true },
@@ -182,10 +182,9 @@ function LeadCard({
           selected ? 'border-[#2DD4BF]/40 ring-1 ring-[#2DD4BF]/20' : 'border-[rgba(148,163,184,0.1)]'
         }`}
       >
-        {/* Top row */}
-        <div className="mb-2 flex items-start justify-between gap-2">
+        {/* Top row: name + priority */}
+        <div className="mb-1 flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {/* Checkbox */}
             <div
               role="checkbox"
               aria-checked={selected}
@@ -204,8 +203,8 @@ function LeadCard({
                 </svg>
               )}
             </div>
-            <h4 className="truncate text-sm font-semibold text-[#F8FAFC]" title={`${lead.first_name} ${lead.last_name}`}>
-              {lead.first_name} {lead.last_name}
+            <h4 className="truncate text-sm font-semibold text-[#F8FAFC]" title={lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown'}>
+              {lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown'}
             </h4>
           </div>
           <div className="flex flex-shrink-0 items-center gap-1.5" title={`Priority: ${priorityLabel}`}>
@@ -214,32 +213,31 @@ function LeadCard({
           </div>
         </div>
 
-        {/* Service (inline editable) */}
-        <div className="mb-3" onClick={e => e.stopPropagation()}>
-          <InlineEdit
-            value={lead.service_needed}
-            type="text"
-            onSave={handleSaveService}
-            className="text-sm leading-relaxed text-slate-400 hover:text-slate-300"
-          />
-        </div>
+        {/* Company */}
+        {lead.company && (
+          <p className="mb-2 truncate text-xs text-slate-400" title={lead.company}>{lead.company}</p>
+        )}
 
+        {/* Contact info */}
+        {(lead.email || lead.phone) && (
+          <p className="mb-2 truncate text-[11px] text-slate-500">
+            {lead.email || lead.phone}
+          </p>
+        )}
+
+        {/* Score + value badges */}
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {/* Value (inline editable) */}
-          <div onClick={e => e.stopPropagation()}>
-            <InlineEdit
-              value={lead.estimated_value}
-              type="currency"
-              onSave={handleSaveValue}
-              formatDisplay={v => formatCurrency(Number(v))}
-              className="inline-flex items-center rounded-md bg-[#2DD4BF]/10 px-2 py-0.5 text-xs font-semibold text-[#2DD4BF]"
-            />
-          </div>
           <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${scoreColor}`}>
             Score: {lead.score}
           </span>
+          {lead.estimated_value > 0 && (
+            <span className="inline-flex items-center rounded-md bg-[#2DD4BF]/10 px-2 py-0.5 text-xs font-semibold text-[#2DD4BF]">
+              {formatCurrency(lead.estimated_value)}
+            </span>
+          )}
         </div>
 
+        {/* Source + assigned */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-slate-500">
             <SourceIcon size={13} />
@@ -247,7 +245,7 @@ function LeadCard({
           </div>
           <span className="text-xs text-slate-500">
             {assignedName ? (
-              <><span className="text-slate-600">→ </span><span className="text-slate-300">{assignedName}</span></>
+              <><span className="text-slate-600">{'\u2192'} </span><span className="text-slate-300">{assignedName}</span></>
             ) : (
               <span className="italic text-slate-600">Unassigned</span>
             )}
