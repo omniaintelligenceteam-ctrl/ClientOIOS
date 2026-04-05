@@ -468,21 +468,58 @@ export async function POST(request: Request) {
     return Response.json({ triggered: 0, auto_executed: 0, pending_approval: 0 })
   }
 
+  // 2. Build global set of emails we've already contacted (any status except rejected)
+  const { data: queuedEmails } = await svc
+    .from('automation_queue')
+    .select('payload')
+    .eq('organization_id', rules[0].organization_id)
+    .neq('status', 'rejected')
+
+  const { data: sentEmails } = await svc
+    .from('automation_log')
+    .select('metadata')
+    .eq('status', 'sent')
+
+  const contactedEmails = new Set<string>()
+  for (const q of (queuedEmails ?? []) as Array<{ payload: Record<string, unknown> }>) {
+    const email = q.payload?.customer_email as string
+    if (email) contactedEmails.add(email.toLowerCase())
+  }
+  for (const s of (sentEmails ?? []) as Array<{ metadata: Record<string, unknown> | null }>) {
+    const email = (s.metadata?.target_contact as string) ?? ''
+    if (email) contactedEmails.add(email.toLowerCase())
+  }
+
   let triggered = 0
   let autoExecuted = 0
   let pendingApproval = 0
+  let skippedDupes = 0
 
-  // 2. Process each rule
+  // 3. Process each rule
   for (const rule of rules) {
     try {
       const items = await getTriggeredItems(svc, rule)
 
       if (!items.length) continue
 
-      // 3. Insert queue entries in batch
+      // 4. Filter out emails we've already contacted
+      const deduped = items.filter((item) => {
+        const email = (item.payload.customer_email as string)?.toLowerCase()
+        if (!email || contactedEmails.has(email)) {
+          skippedDupes++
+          return false
+        }
+        // Add to set so subsequent rules in this batch don't duplicate
+        contactedEmails.add(email)
+        return true
+      })
+
+      if (!deduped.length) continue
+
+      // 5. Insert queue entries in batch
       const { data: inserted, error: insertError } = await svc
         .from('automation_queue')
-        .insert(items)
+        .insert(deduped)
         .select('id, status')
 
       if (insertError) {
@@ -529,10 +566,10 @@ export async function POST(request: Request) {
   }
 
   console.log(
-    `[automation-scheduler] Done — triggered: ${triggered}, auto_executed: ${autoExecuted}, pending_approval: ${pendingApproval}, retried_stuck: ${retried}`,
+    `[automation-scheduler] Done — triggered: ${triggered}, auto_executed: ${autoExecuted}, pending_approval: ${pendingApproval}, skipped_dupes: ${skippedDupes}, retried_stuck: ${retried}`,
   )
 
-  return Response.json({ triggered, auto_executed: autoExecuted, pending_approval: pendingApproval, retried_stuck: retried })
+  return Response.json({ triggered, auto_executed: autoExecuted, pending_approval: pendingApproval, skipped_dupes: skippedDupes, retried_stuck: retried })
 }
 
 // Allow GET — Vercel cron can use either verb

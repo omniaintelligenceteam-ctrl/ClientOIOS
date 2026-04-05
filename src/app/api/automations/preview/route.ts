@@ -1,7 +1,7 @@
 // ============================================================
 // POST /api/automations/preview
-// Generates the email via Claude Haiku but returns it instead
-// of sending. Used by the approval queue to preview emails.
+// Returns the rendered email (subject + HTML) for a queue item.
+// No external AI calls — templates render directly.
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js'
@@ -34,27 +34,7 @@ function getTemplate(actionType: string, context: AutomationContext) {
   }
 }
 
-async function generateEmailHtml(bodyPrompt: string): Promise<string> {
-  const Anthropic = (await import('@anthropic-ai/sdk')).default
-  const client = new Anthropic()
-
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 500,
-    messages: [{ role: 'user', content: bodyPrompt }],
-  })
-
-  const block = response.content[0]
-  if (block.type !== 'text') throw new Error('Non-text response')
-  return block.text
-}
-
 export async function POST(request: Request) {
-  // Require auth — either user session or cron secret
-  const cronSecret = process.env.CRON_SECRET
-  const authHeader = request.headers.get('authorization')
-  const isDev = process.env.NODE_ENV === 'development'
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svc = getSupabase() as any
 
@@ -94,17 +74,11 @@ export async function POST(request: Request) {
     return Response.json({ error: `Unknown action_type: ${queueItem.action_type}` }, { status: 400 })
   }
 
-  try {
-    const html = await generateEmailHtml(template.bodyPrompt)
-    return Response.json({
-      subject: template.subject,
-      html,
-      to: context.customerEmail,
-      from: 'noreply@getoios.com',
-      customer_name: context.customerName,
-    })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return Response.json({ error: `Failed to generate preview: ${msg}` }, { status: 500 })
-  }
+  return Response.json({
+    subject: template.subject,
+    html: template.html,
+    to: context.customerEmail,
+    from: 'team@oioscoo.com',
+    customer_name: context.customerName,
+  })
 }

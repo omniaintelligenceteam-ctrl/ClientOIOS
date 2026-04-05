@@ -1,12 +1,13 @@
 // ============================================================
 // POST /api/automations/execute
 // Internal endpoint — secured by CRON_SECRET Bearer token.
-// Fetches a queue item, generates email via Claude Haiku,
+// Fetches a queue item, renders the email template directly,
 // sends via Resend, logs to automation_log, updates queue
 // status, and creates a notification.
 // ============================================================
 
 import { createClient } from '@supabase/supabase-js'
+import nodemailer from 'nodemailer'
 import {
   follow_up_email,
   review_request,
@@ -52,33 +53,6 @@ function getTemplate(actionType: string, context: AutomationContext) {
 }
 
 // ---------------------------------------------------------------------------
-// Generate email HTML using Claude Haiku
-// ---------------------------------------------------------------------------
-
-async function generateEmailHtml(bodyPrompt: string): Promise<string> {
-  const Anthropic = (await import('@anthropic-ai/sdk')).default
-  const client = new Anthropic()
-
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 500,
-    messages: [
-      {
-        role: 'user',
-        content: bodyPrompt,
-      },
-    ],
-  })
-
-  const block = response.content[0]
-  if (block.type !== 'text') {
-    throw new Error('Claude returned a non-text response block')
-  }
-
-  return block.text
-}
-
-// ---------------------------------------------------------------------------
 // Send email via Resend
 // ---------------------------------------------------------------------------
 
@@ -87,27 +61,26 @@ async function sendEmail(params: {
   subject: string
   html: string
 }): Promise<{ id?: string; error?: string }> {
-  const resp = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
-      'Content-Type': 'application/json',
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
     },
-    body: JSON.stringify({
-      from: 'noreply@getoios.com',
+  })
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"OIOS Team" <team@oioscoo.com>`,
       to: params.to,
       subject: params.subject,
       html: params.html,
-    }),
-  })
-
-  if (!resp.ok) {
-    const body = await resp.json().catch(() => ({}))
-    return { error: body?.message || `Resend error ${resp.status}` }
+    })
+    return { id: info.messageId }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { error: msg }
   }
-
-  const body = await resp.json()
-  return { id: body?.id }
 }
 
 // ---------------------------------------------------------------------------
@@ -188,18 +161,18 @@ export async function POST(request: Request) {
 
       await svc.from('automation_log').insert({
         organization_id: queueItem.organization_id,
-        queue_item_id: queueItemId,
-        action_type: queueItem.action_type,
+        queue_id: queueItemId,
+        rule_id: queueItem.rule_id ?? null,
+        action: queueItem.action_type,
         status: 'failed',
-        target_name: targetName,
-        target_contact: '',
-        details: errMsg,
+        detail: errMsg,
+        metadata: { target_name: targetName, target_contact: '' },
       })
 
       return Response.json({ error: errMsg }, { status: 422 })
     }
 
-    // ── 4. Get email template ───────────────────────────────────────────
+    // ── 4. Render email template ───────────────────────────────────────
     const template = getTemplate(queueItem.action_type, context)
     if (!template) {
       const errMsg = `Unknown action_type: ${queueItem.action_type}`
@@ -211,48 +184,22 @@ export async function POST(request: Request) {
 
       await svc.from('automation_log').insert({
         organization_id: queueItem.organization_id,
-        queue_item_id: queueItemId,
-        action_type: queueItem.action_type,
+        queue_id: queueItemId,
+        rule_id: queueItem.rule_id ?? null,
+        action: queueItem.action_type,
         status: 'failed',
-        target_name: targetName,
-        target_contact: targetContact,
-        details: errMsg,
+        detail: errMsg,
+        metadata: { target_name: targetName, target_contact: targetContact },
       })
 
       return Response.json({ error: errMsg }, { status: 400 })
     }
 
-    // ── 5. Generate email HTML via Claude Haiku ─────────────────────────
-    let emailHtml: string
-    try {
-      emailHtml = await generateEmailHtml(template.bodyPrompt)
-    } catch (claudeErr) {
-      const errMsg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
-      console.error('[automations/execute] Claude generation failed:', claudeErr)
-
-      await svc
-        .from('automation_queue')
-        .update({ status: 'failed', error: `Claude error: ${errMsg}`, executed_at: new Date().toISOString() })
-        .eq('id', queueItemId)
-
-      await svc.from('automation_log').insert({
-        organization_id: queueItem.organization_id,
-        queue_item_id: queueItemId,
-        action_type: queueItem.action_type,
-        status: 'failed',
-        target_name: targetName,
-        target_contact: targetContact,
-        details: `Claude generation failed: ${errMsg}`,
-      })
-
-      return Response.json({ error: 'Email generation failed', detail: errMsg }, { status: 500 })
-    }
-
-    // ── 6. Send email via Resend ─────────────────────────────────────────
+    // ── 5. Send email via Resend ─────────────────────────────────────────
     const sendResult = await sendEmail({
       to: targetContact,
       subject: template.subject,
-      html: emailHtml,
+      html: template.html,
     })
 
     const now = new Date().toISOString()
@@ -271,12 +218,12 @@ export async function POST(request: Request) {
 
       await svc.from('automation_log').insert({
         organization_id: queueItem.organization_id,
-        queue_item_id: queueItemId,
-        action_type: queueItem.action_type,
+        queue_id: queueItemId,
+        rule_id: queueItem.rule_id ?? null,
+        action: queueItem.action_type,
         status: 'failed',
-        target_name: targetName,
-        target_contact: targetContact,
-        details: `Resend error: ${sendResult.error}`,
+        detail: `Send error: ${sendResult.error}`,
+        metadata: { target_name: targetName, target_contact: targetContact },
       })
 
       // Notify org about failure
@@ -293,7 +240,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Email delivery failed', detail: sendResult.error }, { status: 502 })
     }
 
-    // ── 7. Success: update queue item, log, notify ───────────────────────
+    // ── 6. Success: update queue item, log, notify ───────────────────────
     await svc
       .from('automation_queue')
       .update({ status: 'executed', executed_at: now })
@@ -301,12 +248,12 @@ export async function POST(request: Request) {
 
     await svc.from('automation_log').insert({
       organization_id: queueItem.organization_id,
-      queue_item_id: queueItemId,
-      action_type: queueItem.action_type,
+      queue_id: queueItemId,
+      rule_id: queueItem.rule_id ?? null,
+      action: queueItem.action_type,
       status: 'sent',
-      target_name: targetName,
-      target_contact: targetContact,
-      details: `Email sent via Resend${sendResult.id ? ` (id: ${sendResult.id})` : ''}`,
+      detail: `Email sent via Gmail${sendResult.id ? ` (id: ${sendResult.id})` : ''}`,
+      metadata: { target_name: targetName, target_contact: targetContact },
     })
 
     await svc.from('notifications').insert({

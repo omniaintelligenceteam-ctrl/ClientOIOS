@@ -1,6 +1,6 @@
 // ============================================================
 // OIOS Client Dashboard — Automation Email Templates
-// Returns subject + bodyPrompt for Claude Haiku to render
+// Returns subject + ready-to-send HTML (no AI generation needed)
 // ============================================================
 
 export interface AutomationContext {
@@ -12,55 +12,91 @@ export interface AutomationContext {
 
 export interface AutomationTemplate {
   subject: string
-  bodyPrompt: string
+  html: string
+}
+
+// ---------------------------------------------------------------------------
+// Shared email wrapper — clean, inline-styled HTML that works everywhere
+// ---------------------------------------------------------------------------
+
+function emailWrap(businessName: string, body: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:8px;overflow:hidden;">
+<tr><td style="padding:32px 28px 24px;">
+${body}
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+}
+
+function p(text: string): string {
+  return `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#27272a;">${text}</p>`
+}
+
+function greeting(name: string): string {
+  return p(`Hi ${name},`)
+}
+
+function signoff(name: string): string {
+  return `<p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#27272a;">Best,<br><strong>${name}</strong></p>`
+}
+
+function wesSignoff(): string {
+  return `<p style="margin:24px 0 0;font-size:15px;line-height:1.6;color:#27272a;"><strong>Wes Overstreet</strong><br>CEO, OIOS<br><a href="https://getoios.com" style="color:#0d9488;text-decoration:none;">getoios.com</a></p>`
+}
+
+function button(text: string, url: string): string {
+  return `<table cellpadding="0" cellspacing="0" style="margin:20px 0;"><tr><td style="background:#0d9488;border-radius:6px;padding:12px 24px;"><a href="${url}" style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">${text}</a></td></tr></table>`
 }
 
 // ── follow_up_email ──────────────────────────────────────────
-// Thank-you email sent after service completion
-export function follow_up_email(context: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = context
+export function follow_up_email(ctx: AutomationContext): AutomationTemplate {
+  const { businessName, customerName, metadata } = ctx
   const serviceType = (metadata.service_type as string) || 'your recent service'
   const techName = (metadata.tech_name as string) || ''
 
+  const techLine = techName ? ` ${techName} and the` : ' The'
+
   return {
     subject: `Thank you for choosing ${businessName}!`,
-    bodyPrompt: `Write a warm, professional thank-you email in clean HTML for a customer named ${customerName} who just had "${serviceType}" completed by ${businessName}${techName ? ` (technician: ${techName})` : ''}.
-
-The email should:
-- Open with a genuine thank-you
-- Briefly mention the service performed
-- Invite them to reach out if anything needs attention
-- Close warmly with the business name
-
-Keep it concise (3–4 short paragraphs). Use a simple HTML layout with inline styles — white background, dark text, readable font. No images. Include a soft footer with the business name. Do not include a subject line in the HTML.`,
+    html: emailWrap(businessName, [
+      greeting(customerName),
+      p(`Thank you for trusting ${businessName} with ${serviceType}.${techLine} team enjoyed working with you, and we hope everything exceeded your expectations.`),
+      p(`If anything needs attention or you have questions about the work, don't hesitate to reach out — we're always happy to help.`),
+      p(`We appreciate your business and look forward to serving you again.`),
+      signoff(businessName),
+    ].join('')),
   }
 }
 
 // ── review_request ───────────────────────────────────────────
-// Ask customer to leave a Google review
-export function review_request(context: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = context
+export function review_request(ctx: AutomationContext): AutomationTemplate {
+  const { businessName, customerName, metadata } = ctx
   const reviewUrl = (metadata.review_url as string) || 'https://g.page/r/review'
-  const serviceType = (metadata.service_type as string) || 'your recent service'
 
   return {
     subject: `Quick favor — share your experience with ${businessName}?`,
-    bodyPrompt: `Write a friendly, brief review-request email in clean HTML for a customer named ${customerName} who used ${businessName} for "${serviceType}".
-
-The email should:
-- Open by expressing hope that they were happy with the work
-- Politely ask them to leave a Google review using this link: ${reviewUrl}
-- Explain it only takes 1 minute and helps the small business
-- Thank them in advance
-
-Keep it short (2–3 paragraphs). Use a simple HTML layout with inline styles — white background, dark text, readable font. Make the review link a clearly visible button or bolded anchor. No images. Include a soft footer with the business name. Do not include a subject line in the HTML.`,
+    html: emailWrap(businessName, [
+      greeting(customerName),
+      p(`We hope you were happy with your recent experience! If you have a minute, we'd really appreciate a quick Google review. It only takes about 30 seconds and makes a huge difference for a small business like ours.`),
+      button('Leave a Review', reviewUrl),
+      p(`Thank you so much — it means the world to us.`),
+      signoff(businessName),
+    ].join('')),
   }
 }
 
 // ── invoice_reminder ─────────────────────────────────────────
-// Payment reminder for an outstanding invoice
-export function invoice_reminder(context: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = context
+export function invoice_reminder(ctx: AutomationContext): AutomationTemplate {
+  const { businessName, customerName, metadata } = ctx
   const invoiceNumber = (metadata.invoice_number as string) || ''
   const amount = (metadata.amount as number) ?? null
   const dueDate = (metadata.due_date as string) || ''
@@ -68,55 +104,49 @@ export function invoice_reminder(context: AutomationContext): AutomationTemplate
 
   const amountStr = amount !== null ? `$${Number(amount).toFixed(2)}` : 'the outstanding balance'
   const invoiceRef = invoiceNumber ? ` (Invoice #${invoiceNumber})` : ''
-  const dueDateStr = dueDate ? ` due on ${dueDate}` : ''
-  const paymentLine = paymentUrl
-    ? `Payment can be made here: ${paymentUrl}`
-    : 'Please contact us to arrange payment.'
+  const dueLine = dueDate ? ` This was due on <strong>${dueDate}</strong>.` : ''
 
   return {
     subject: `Payment reminder from ${businessName}${invoiceRef}`,
-    bodyPrompt: `Write a polite but clear invoice reminder email in clean HTML for a customer named ${customerName} with a payment of ${amountStr}${dueDateStr} owed to ${businessName}${invoiceRef}.
-
-The email should:
-- Politely remind them of the outstanding balance
-- Include the amount and due date clearly
-- Provide the payment instruction: ${paymentLine}
-- Offer to answer any questions and provide a contact email or phone if appropriate
-- Stay professional and friendly — not aggressive
-
-Keep it concise (2–3 paragraphs). Use a simple HTML layout with inline styles. If a payment URL was provided, render it as a prominent button or bold link. No images. Include a soft footer with the business name. Do not include a subject line in the HTML.`,
+    html: emailWrap(businessName, [
+      greeting(customerName),
+      p(`This is a friendly reminder that <strong>${amountStr}</strong> is outstanding with ${businessName}${invoiceRef}.${dueLine}`),
+      paymentUrl ? button('Make a Payment', paymentUrl) : '',
+      p(paymentUrl
+        ? `If you've already sent payment, please disregard this message. Questions? Just reply to this email.`
+        : `Please contact us to arrange payment at your earliest convenience. If you've already sent payment, please disregard this message.`),
+      signoff(businessName),
+    ].join('')),
   }
 }
 
 // ── lead_nurture ─────────────────────────────────────────────
-// Follow up with a lead who hasn't converted
-export function lead_nurture(context: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = context
-  const serviceInterest = (metadata.service_interest as string) || 'our services'
-  const lastContactDays = (metadata.last_contact_days as number) ?? null
-  const offerText = (metadata.offer as string) || ''
+export function lead_nurture(ctx: AutomationContext): AutomationTemplate {
+  const { customerName, metadata } = ctx
+  const company = (metadata.company as string) || ''
 
-  const timeRef = lastContactDays ? ` about ${lastContactDays} days ago` : ' recently'
+  const companyRef = company ? ` at ${company}` : ''
+  const name = customerName === 'Valued Customer' ? '' : customerName
+  const greetName = name || (company ? company : '')
+  const greetLine = greetName ? p(`Hey ${greetName},`) : p(`Hey there,`)
+  const companyMention = company || 'your business'
 
   return {
-    subject: `Still thinking it over? ${businessName} is here to help`,
-    bodyPrompt: `Write a gentle, non-pushy lead nurture email in clean HTML for a prospect named ${customerName} who inquired about "${serviceInterest}" from ${businessName}${timeRef} but hasn't moved forward yet.
-
-The email should:
-- Open by checking in and acknowledging they may still be deciding
-- Briefly remind them what ${businessName} offers and why customers choose them
-${offerText ? `- Mention this special offer or value: ${offerText}` : '- Highlight reliability, quality, or a key differentiator'}
-- Include a soft call-to-action inviting them to reply or book a free estimate
-- Close warmly, with no pressure
-
-Keep it concise (3 paragraphs). Use a simple HTML layout with inline styles — approachable, warm tone. No images. Include a soft footer with the business name. Do not include a subject line in the HTML.`,
+    subject: `AI COO for ${companyMention}`,
+    html: emailWrap('OIOS', [
+      greetLine,
+      p(`I wanted to thank you for your time and personally introduce you to OIOS — the AI COO for small businesses like yours, at the cost of a part-time employee.`),
+      p(`We designed it to be user-friendly, even for someone with zero AI knowledge. Our goal is to show companies where AI business automation is today and work alongside you to implement new capabilities as they come.`),
+      p(`Our products are designed to pay for themselves — and give you and your employees time and money back to focus on growing the business. We can answer the phone 24/7, automate back-office operations, help with content, keep finances organized, handle client onboarding and follow-ups, invoicing and payment reminders, and more. We're expanding our portfolio every day.`),
+      p(`We offer a risk-free 30-day trial to show you how we can take ${companyMention} to the next level. We build it custom for you. If you like it, it's all yours. If not, no hard feelings.`),
+      wesSignoff(),
+    ].join('')),
   }
 }
 
 // ── appointment_reminder ─────────────────────────────────────
-// Remind customer their appointment is tomorrow
-export function appointment_reminder(context: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = context
+export function appointment_reminder(ctx: AutomationContext): AutomationTemplate {
+  const { businessName, customerName, metadata } = ctx
   const serviceType = (metadata.service_type as string) || 'your appointment'
   const appointmentDate = (metadata.appointment_date as string) || 'tomorrow'
   const appointmentTime = (metadata.appointment_time as string) || ''
@@ -124,60 +154,47 @@ export function appointment_reminder(context: AutomationContext): AutomationTemp
   const techName = (metadata.tech_name as string) || ''
   const contactPhone = (metadata.contact_phone as string) || ''
 
-  const timeStr = appointmentTime ? ` at ${appointmentTime}` : ''
+  const timeStr = appointmentTime ? ` at <strong>${appointmentTime}</strong>` : ''
   const addressStr = address ? ` at ${address}` : ''
-  const techStr = techName ? ` Your technician will be ${techName}.` : ''
+  const techStr = techName ? ` Your technician will be <strong>${techName}</strong>.` : ''
   const rescheduleStr = contactPhone
-    ? ` If you need to reschedule, call us at ${contactPhone}.`
-    : ' If you need to reschedule, please reply to this email.'
+    ? `Need to reschedule? Call us at <strong>${contactPhone}</strong>.`
+    : 'Need to reschedule? Just reply to this email.'
 
   return {
     subject: `Reminder: Your ${businessName} appointment is ${appointmentDate}`,
-    bodyPrompt: `Write a friendly appointment reminder email in clean HTML for a customer named ${customerName} who has "${serviceType}" scheduled ${appointmentDate}${timeStr}${addressStr} with ${businessName}.${techStr}
-
-The email should:
-- Open with a friendly reminder about the upcoming appointment
-- Clearly state the date, time, and location details
-- Let them know what to expect (brief arrival window, any prep needed if relevant)
-- Include reschedule instructions: ${rescheduleStr}
-- Close warmly
-
-Keep it concise (2–3 short paragraphs). Use a simple HTML layout with inline styles. Highlight the date/time in bold. No images. Include a soft footer with the business name. Do not include a subject line in the HTML.`,
+    html: emailWrap(businessName, [
+      greeting(customerName),
+      p(`Just a friendly reminder that your <strong>${serviceType}</strong> with ${businessName} is coming up on <strong>${appointmentDate}</strong>${timeStr}${addressStr}.${techStr}`),
+      p(`We'll make sure everything goes smoothly. ${rescheduleStr}`),
+      p(`See you soon!`),
+      signoff(businessName),
+    ].join('')),
   }
 }
 
 // ── prospect_outreach ────────────────────────────────────────
-// Cold outreach to OIOS prospects — pain-question framing
-export function prospect_outreach(context: AutomationContext): AutomationTemplate {
-  const { customerName, metadata } = context
+export function prospect_outreach(ctx: AutomationContext): AutomationTemplate {
+  const { customerName, metadata } = ctx
   const company = (metadata.company as string) || ''
-  const notes = (metadata.notes as string) || ''
-  const source = (metadata.source as string) || ''
 
   const companyRef = company ? ` at ${company}` : ''
-  const contextLine = notes
-    ? `Additional context about this prospect: ${notes}`
-    : source
-      ? `They were found via ${source}.`
-      : ''
+  const name = customerName === 'Valued Customer' ? '' : customerName
+  // Prefer name, fall back to company, fall back to generic
+  const greetName = name || (company ? company : '')
+  const greetLine = greetName ? p(`Hey ${greetName},`) : p(`Hey there,`)
+  const companyMention = company || 'your business'
 
   return {
-    subject: `Quick question for you${companyRef}`,
-    bodyPrompt: `Write a short, personalized cold outreach email in clean HTML from OIOS (an AI operations company for small businesses) to a prospect named ${customerName}${companyRef}.
-
-TONE: Conversational, direct, zero corporate jargon. Like a smart friend who runs a tech company reaching out — not a SaaS marketing email. Short sentences. Plain English.
-
-The email MUST:
-- Open with a single provocative question: "What's the one thing you do every day that you wish you didn't have to?"
-- Briefly explain that OIOS finds repetitive tasks in small businesses and automates them with AI — phones, follow-ups, scheduling, pipeline, whatever eats their time
-- Mention that most small business owners are doing the job of 4 people and OIOS fills the roles they can't afford to hire
-- NOT mention pricing, tiers, or specific features
-- End with a simple CTA: "Want to see what it sounds like when AI answers your phone? I can set up a 2-minute demo call — just reply."
-- Be signed by "Wes Overstreet, OIOS" with no title
-
-${contextLine}
-
-Keep it under 150 words. Use a simple HTML layout with inline styles — white background, dark text, readable font. No images, no logos, no fancy formatting. This should feel like a personal email, not a marketing blast. Do not include a subject line in the HTML.`,
+    subject: `AI COO for ${companyMention}`,
+    html: emailWrap('OIOS', [
+      greetLine,
+      p(`I wanted to thank you for your time and personally introduce you to OIOS — the AI COO for small businesses like yours, at the cost of a part-time employee.`),
+      p(`We designed it to be user-friendly, even for someone with zero AI knowledge. Our goal is to show companies where AI business automation is today and work alongside you to implement new capabilities as they come.`),
+      p(`Our products are designed to pay for themselves — and give you and your employees time and money back to focus on growing the business. We can answer the phone 24/7, automate back-office operations, help with content, keep finances organized, handle client onboarding and follow-ups, invoicing and payment reminders, and more. We're expanding our portfolio every day.`),
+      p(`We offer a risk-free 30-day trial to show you how we can take ${companyMention} to the next level. We build it custom for you. If you like it, it's all yours. If not, no hard feelings.`),
+      wesSignoff(),
+    ].join('')),
   }
 }
 
