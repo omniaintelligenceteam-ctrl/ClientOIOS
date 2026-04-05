@@ -376,6 +376,55 @@ async function triggerAppointmentReminder(
 }
 
 // ---------------------------------------------------------------------------
+// Trigger: prospect_outreach
+// Any new lead with an email that hasn't been contacted yet — fires immediately
+// ---------------------------------------------------------------------------
+
+async function triggerProspectOutreach(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  svc: any,
+  rule: AutomationRule,
+): Promise<QueueInsert[]> {
+  const { data: leads, error } = await svc
+    .from('leads')
+    .select('id, name, first_name, last_name, email, phone, company, source, notes, created_at')
+    .eq('organization_id', rule.organization_id)
+    .eq('status', 'new')
+    .not('email', 'is', null)
+    .neq('email', '')
+
+  if (error || !leads?.length) return []
+
+  const { data: existing } = await svc
+    .from('automation_queue')
+    .select('target_entity_id')
+    .eq('organization_id', rule.organization_id)
+    .eq('rule_id', rule.id)
+    .eq('target_entity_type', 'lead')
+
+  const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
+  const sf = scheduledFor(rule)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return leads.filter((l: any) => !existingIds.has(l.id)).map((lead: any) => ({
+    organization_id: rule.organization_id,
+    rule_id: rule.id,
+    action_type: 'prospect_outreach',
+    status: isAutoMode(rule) ? 'approved' as const : 'pending' as const,
+    target_entity_type: 'lead',
+    target_entity_id: lead.id,
+    payload: {
+      customer_name: leadDisplayName(lead),
+      customer_email: lead.email,
+      customer_phone: lead.phone,
+      company: lead.company || null,
+      source: lead.source,
+    },
+    scheduled_for: sf,
+  }))
+}
+
+// ---------------------------------------------------------------------------
 // Dispatch to the right trigger function by action_type
 // ---------------------------------------------------------------------------
 
@@ -390,6 +439,7 @@ async function getTriggeredItems(
       const template = rule.action_config?.template
       switch (template) {
         case 'prospect_outreach':
+          return triggerProspectOutreach(svc, rule)
         case 'follow_up_email':
           return triggerFollowUpEmail(svc, rule)
         case 'review_request':
