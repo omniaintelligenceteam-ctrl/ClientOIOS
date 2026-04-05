@@ -94,9 +94,9 @@ function todayDate(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
-/** Build a display name from lead fields */
-function leadDisplayName(lead: { name?: string | null; first_name?: string; last_name?: string }): string {
-  return lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Unknown'
+/** Build a display name from lead fields — falls back to company */
+function leadDisplayName(lead: { name?: string | null; first_name?: string; last_name?: string; company?: string | null }): string {
+  return lead.name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || lead.company || 'Unknown'
 }
 
 /** Compute scheduled_for from rule delay */
@@ -117,7 +117,7 @@ async function triggerFollowUpEmail(
 ): Promise<QueueInsert[]> {
   const { data: leads, error } = await svc
     .from('leads')
-    .select('id, name, first_name, last_name, email, phone, status, priority, follow_up_date, notes')
+    .select('id, name, first_name, last_name, email, phone, company, status, priority, follow_up_date, notes')
     .eq('organization_id', rule.organization_id)
     .in('status', ['new', 'contacted', 'qualified'])
     .lte('follow_up_date', todayDate())
@@ -148,6 +148,7 @@ async function triggerFollowUpEmail(
       customer_name: leadDisplayName(lead),
       customer_email: lead.email,
       customer_phone: lead.phone,
+      company: lead.company || null,
       lead_status: lead.status,
       lead_priority: lead.priority,
       follow_up_date: lead.follow_up_date,
@@ -281,7 +282,7 @@ async function triggerLeadNurture(
 ): Promise<QueueInsert[]> {
   const { data: leads, error } = await svc
     .from('leads')
-    .select('id, name, first_name, last_name, email, phone, source, notes, created_at')
+    .select('id, name, first_name, last_name, email, phone, company, source, notes, created_at')
     .eq('organization_id', rule.organization_id)
     .eq('status', 'new')
     .lte('created_at', daysAgo(3))
@@ -310,6 +311,7 @@ async function triggerLeadNurture(
       customer_name: leadDisplayName(lead),
       customer_email: lead.email,
       customer_phone: lead.phone,
+      company: lead.company || null,
       source: lead.source,
       notes: lead.notes,
       created_at: lead.created_at,

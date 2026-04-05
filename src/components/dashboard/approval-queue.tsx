@@ -12,6 +12,13 @@ import {
   X,
   Bot,
   Clock,
+  ChevronDown,
+  ChevronUp,
+  Building2,
+  Phone,
+  FileText,
+  Tag,
+  Send,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -24,17 +31,32 @@ type ActionType =
   | 'invoice_reminder'
   | 'lead_nurture'
   | 'appointment_reminder'
+  | 'prospect_outreach'
 
 interface QueueItemPayload {
   customer_name?: string
   customer_email?: string
+  customer_phone?: string
+  company?: string
+  notes?: string
+  source?: string
+  lead_status?: string
+  lead_priority?: string
+  total?: number
+  due_date?: string
+  invoice_status?: string
+  scheduled_date?: string
+  scheduled_time?: string
+  appointment_status?: string
+  follow_up_date?: string
+  created_at?: string
   [key: string]: unknown
 }
 
 interface QueueItem {
   id: string
   organization_id: string
-  action_type: ActionType
+  action_type: string
   payload: QueueItemPayload
   status: 'pending' | 'approved' | 'rejected' | 'sent'
   created_at: string
@@ -48,34 +70,53 @@ interface ActionConfig {
   label: string
   description: string
   icon: React.ElementType
+  color: string
 }
 
-const ACTION_CONFIGS: Record<ActionType, ActionConfig> = {
+const ACTION_CONFIGS: Record<string, ActionConfig> = {
   follow_up_email: {
     label: 'Follow-Up Email',
-    description: 'Send thank-you email after service completion',
+    description: 'Thank-you email after service',
     icon: Mail,
+    color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
   },
   review_request: {
     label: 'Review Request',
-    description: 'Ask satisfied customer for a Google review',
+    description: 'Ask for a Google review',
     icon: Star,
+    color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   },
   invoice_reminder: {
     label: 'Invoice Reminder',
-    description: 'Remind customer about overdue payment',
+    description: 'Overdue payment reminder',
     icon: Receipt,
+    color: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
   },
   lead_nurture: {
     label: 'Lead Nurture',
-    description: 'Follow up with lead that hasn\'t converted',
+    description: 'Re-engage dormant lead',
     icon: Target,
+    color: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
   },
   appointment_reminder: {
     label: 'Appointment Reminder',
-    description: 'Remind customer about upcoming appointment',
+    description: 'Upcoming appointment notice',
     icon: Calendar,
+    color: 'text-green-400 bg-green-500/10 border-green-500/20',
   },
+  prospect_outreach: {
+    label: 'Prospect Outreach',
+    description: 'Cold email to new prospect',
+    icon: Send,
+    color: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
+  },
+}
+
+const DEFAULT_CONFIG: ActionConfig = {
+  label: 'Automation',
+  description: '',
+  icon: Mail,
+  color: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
 }
 
 /* ------------------------------------------------------------------ */
@@ -94,70 +135,133 @@ function relativeTime(iso: string): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Queue item row                                                      */
+/*  Detail row                                                          */
 /* ------------------------------------------------------------------ */
 
-interface QueueItemRowProps {
+function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  if (!value) return null
+  return (
+    <div className="flex items-start gap-2.5 py-1.5">
+      <Icon size={13} className="text-slate-500 mt-0.5 flex-shrink-0" />
+      <div className="min-w-0">
+        <span className="text-[11px] uppercase tracking-wider text-slate-600 block">{label}</span>
+        <span className="text-sm text-slate-300 break-words">{value}</span>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Queue item card                                                     */
+/* ------------------------------------------------------------------ */
+
+interface QueueItemCardProps {
   item: QueueItem
   onApprove: (id: string) => void
   onReject: (id: string) => void
   isActing: boolean
 }
 
-function QueueItemRow({ item, onApprove, onReject, isActing }: QueueItemRowProps) {
-  const config = ACTION_CONFIGS[item.action_type] ?? {
-    label: item.action_type,
-    description: '',
-    icon: Mail,
-  }
+function QueueItemCard({ item, onApprove, onReject, isActing }: QueueItemCardProps) {
+  const [expanded, setExpanded] = useState(false)
+  const config = ACTION_CONFIGS[item.action_type] ?? DEFAULT_CONFIG
   const Icon = config.icon
-  const customerName = item.payload?.customer_name ?? 'Unknown Customer'
-  const customerEmail = item.payload?.customer_email ?? ''
+  const p = item.payload ?? {}
+  const customerName = p.customer_name ?? 'Unknown'
+  const customerEmail = p.customer_email ?? ''
+  const hasEmail = !!customerEmail
 
   return (
-    <div className="flex items-center gap-4 py-4 border-b border-[rgba(148,163,184,0.07)] last:border-0">
-      {/* Icon */}
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400">
-        <Icon size={18} />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="font-medium text-slate-200 text-sm">{customerName}</span>
-          <span className="text-xs text-slate-500 truncate max-w-[100px] sm:max-w-none">{customerEmail}</span>
+    <div className={`border rounded-xl transition-all mb-2 ${expanded ? 'border-[rgba(148,163,184,0.15)] bg-white/[0.02]' : 'border-[rgba(148,163,184,0.07)] hover:border-[rgba(148,163,184,0.12)]'}`}>
+      {/* Clickable header row */}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-3 p-3 sm:p-4 text-left"
+      >
+        {/* Type badge */}
+        <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border ${config.color}`}>
+          <Icon size={18} />
         </div>
-        <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">
-          <span className="font-medium text-teal-400">{config.label}</span>
-          {config.description ? ` — ${config.description}` : ''}
-        </p>
-        <span className="mt-1 inline-flex items-center gap-1 text-xs text-slate-500">
-          <Clock size={11} />
-          {relativeTime(item.created_at)}
-        </span>
-      </div>
 
-      {/* Action buttons */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <button
-          type="button"
-          title="Approve"
-          onClick={() => onApprove(item.id)}
-          disabled={isActing}
-          className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 transition-colors hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Check size={15} />
-        </button>
-        <button
-          type="button"
-          title="Reject"
-          onClick={() => onReject(item.id)}
-          disabled={isActing}
-          className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <X size={15} />
-        </button>
-      </div>
+        {/* Main info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="font-semibold text-slate-200 text-sm">{customerName}</span>
+            {p.company && <span className="text-xs text-slate-500">({p.company})</span>}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+            <span className={`text-xs font-medium ${config.color.split(' ')[0]}`}>{config.label}</span>
+            {customerEmail && <span className="text-xs text-slate-500 truncate">{customerEmail}</span>}
+            {!hasEmail && <span className="text-xs text-red-400/70">No email</span>}
+          </div>
+        </div>
+
+        {/* Time + expand icon */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs text-slate-600 hidden sm:inline">{relativeTime(item.created_at)}</span>
+          {expanded ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+        </div>
+      </button>
+
+      {/* Expanded detail panel */}
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-[rgba(148,163,184,0.07)]">
+          {/* Payload details */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 mt-3">
+            <DetailRow icon={Mail} label="Email" value={customerEmail} />
+            <DetailRow icon={Phone} label="Phone" value={p.customer_phone || ''} />
+            <DetailRow icon={Building2} label="Company" value={p.company || ''} />
+            <DetailRow icon={Tag} label="Source" value={p.source || ''} />
+            <DetailRow icon={Tag} label="Priority" value={p.lead_priority || ''} />
+            <DetailRow icon={Tag} label="Status" value={p.lead_status || p.invoice_status || p.appointment_status || ''} />
+            {p.total != null && <DetailRow icon={Receipt} label="Amount" value={`$${Number(p.total).toLocaleString()}`} />}
+            {p.due_date && <DetailRow icon={Calendar} label="Due Date" value={p.due_date} />}
+            {p.scheduled_date && <DetailRow icon={Calendar} label="Scheduled" value={`${p.scheduled_date}${p.scheduled_time ? ' at ' + p.scheduled_time : ''}`} />}
+            {p.follow_up_date && <DetailRow icon={Calendar} label="Follow-up" value={p.follow_up_date} />}
+          </div>
+
+          {/* Notes — full width */}
+          {p.notes && (
+            <div className="mt-3 p-3 rounded-lg bg-white/[0.03] border border-[rgba(148,163,184,0.06)]">
+              <div className="flex items-center gap-1.5 mb-1">
+                <FileText size={12} className="text-slate-500" />
+                <span className="text-[11px] uppercase tracking-wider text-slate-600">Notes / Intel</span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{p.notes}</p>
+            </div>
+          )}
+
+          {/* Timestamp */}
+          <div className="flex items-center gap-1 mt-3 text-xs text-slate-600">
+            <Clock size={11} />
+            Queued {relativeTime(item.created_at)}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 mt-4">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onApprove(item.id) }}
+              disabled={isActing || !hasEmail}
+              title={!hasEmail ? 'No email address — cannot send' : 'Approve and send'}
+              className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-2 text-sm font-medium text-green-400 transition-colors hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Check size={14} />
+              {hasEmail ? 'Approve & Send' : 'No Email'}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onReject(item.id) }}
+              disabled={isActing}
+              className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <X size={14} />
+              Reject
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -196,6 +300,7 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
   useEffect(() => {
     const supabase = createSupabaseBrowserClient()
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const channel = (supabase as any)
       .channel(`approval-queue-${organizationId}`)
       .on(
@@ -216,6 +321,7 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
       .subscribe()
 
     return () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(supabase as any).removeChannel(channel)
     }
   }, [organizationId])
@@ -266,6 +372,10 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
     [handleAction]
   )
 
+  /* Count items with emails vs without */
+  const withEmail = items.filter((i) => !!i.payload?.customer_email).length
+  const withoutEmail = items.length - withEmail
+
   return (
     <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 sm:p-6">
       {/* Header */}
@@ -278,6 +388,12 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
             </span>
           )}
         </h2>
+        {items.length > 0 && (
+          <div className="flex items-center gap-3 text-xs text-slate-500">
+            <span className="text-green-400">{withEmail} sendable</span>
+            {withoutEmail > 0 && <span className="text-slate-600">{withoutEmail} no email</span>}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -301,7 +417,7 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
       ) : (
         <div>
           {items.map((item) => (
-            <QueueItemRow
+            <QueueItemCard
               key={item.id}
               item={item}
               onApprove={handleApprove}
