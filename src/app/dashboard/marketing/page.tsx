@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/lib/auth-context'
+import { EmptyState } from '@/components/dashboard/empty-state'
 import {
   Megaphone,
   Mail,
@@ -136,8 +138,54 @@ const DAY_HEADERS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // ---------------------------------------------------------------------------
 
 export default function MarketingPage() {
-  useAuth() // Ensure user is authenticated
+  const { organization, profile, isDemoMode } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
+  const supabase = createSupabaseBrowserClient()
   const now = new Date()
+
+  const [liveCampaigns, setLiveCampaigns] = useState<Campaign[]>([])
+  const [liveStats, setLiveStats] = useState(stats)
+  const [dataLoaded, setDataLoaded] = useState(false)
+
+  // Fetch real campaign data for non-demo mode
+  useEffect(() => {
+    if (isDemoMode || !orgId) { setDataLoaded(true); return }
+    async function load() {
+      const { data } = await supabase
+        .from('automation_queue')
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('target_entity_type', 'campaign')
+        .order('created_at', { ascending: false })
+      if (data && data.length > 0) {
+        setLiveCampaigns(data.map((d: any, i: number) => ({
+          id: d.id,
+          name: (d.payload as any)?.campaign_name || 'Campaign',
+          channel: (d.payload as any)?.channel || 'Email',
+          sent: (d.payload as any)?.sent || 0,
+          metric1Label: 'Open Rate',
+          metric1Value: `${(d.payload as any)?.open_rate || 0}%`,
+          metric2Label: 'Click Rate',
+          metric2Value: `${(d.payload as any)?.click_rate || 0}%`,
+          status: d.status === 'executed' ? 'completed' : d.status === 'pending' ? 'scheduled' : 'active',
+          color: ['#2DD4BF', '#f97316', '#a78bfa'][i % 3],
+        })))
+        const totalSent = data.reduce((s: number, d: any) => s + ((d.payload as any)?.sent || 0), 0)
+        setLiveStats([
+          { label: 'Total Sent', value: String(totalSent), icon: Send, color: '#2DD4BF' },
+          { label: 'Open Rate', value: `${Math.round(data.reduce((s: number, d: any) => s + ((d.payload as any)?.open_rate || 0), 0) / data.length)}%`, icon: Eye, color: '#60a5fa' },
+          { label: 'Campaigns', value: String(data.length), icon: MousePointerClick, color: '#f97316' },
+          { label: 'Revenue', value: '$0', icon: DollarSign, color: '#34d399' },
+        ])
+      }
+      setDataLoaded(true)
+    }
+    load()
+  }, [orgId, isDemoMode])
+
+  const activeCampaigns = isDemoMode ? campaigns : liveCampaigns
+  const activeStats = isDemoMode ? stats : liveStats
+  const hasCampaigns = activeCampaigns.length > 0
   const [calMonth, setCalMonth] = useState(now.getMonth())
   const [calYear, setCalYear] = useState(now.getFullYear())
 
@@ -176,13 +224,15 @@ export default function MarketingPage() {
       </div>
 
       {/* ── Demo Data Banner ─────────────────────────────────────────── */}
-      <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-400">
-        Showing sample data. Live campaign tracking will replace this once your first campaign is created in the Campaigns page.
-      </div>
+      {isDemoMode && (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-400">
+          Showing sample data. Live campaign tracking will replace this once your first campaign is created in the Campaigns page.
+        </div>
+      )}
 
       {/* ── Campaign Stats ──────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => {
+        {activeStats.map((s) => {
           const Icon = s.icon
           return (
             <div key={s.label} className={cardClass}>
@@ -207,8 +257,15 @@ export default function MarketingPage() {
           <TrendingUp className="h-5 w-5 text-[#2DD4BF]" />
           Active Campaigns
         </h2>
+        {!hasCampaigns && !isDemoMode ? (
+          <EmptyState
+            icon={Megaphone}
+            title="No campaigns yet"
+            description="Head to the Campaigns page to create your first outreach campaign."
+          />
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {campaigns.map((c) => {
+          {activeCampaigns.map((c) => {
             const ChannelIcon = channelIcon(c.channel)
             return (
               <div key={c.id} className={`${cardClass} relative overflow-hidden`}>
@@ -273,6 +330,7 @@ export default function MarketingPage() {
             )
           })}
         </div>
+        )}
       </div>
 
       {/* ── Content Calendar ────────────────────────────────────────── */}

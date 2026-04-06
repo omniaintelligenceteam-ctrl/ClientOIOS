@@ -49,9 +49,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  useEffect(() => {
-    loadConversations()
-  }, [loadConversations])
+  // Conversations are loaded on-demand when the chat panel opens,
+  // not eagerly on every page load (perf: saves 1 API call per navigation)
 
   const loadConversation = useCallback(async (id: string) => {
     setActiveConversationId(id)

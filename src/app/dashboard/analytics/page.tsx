@@ -108,7 +108,7 @@ function EmptyState({ message }: { message?: string }) {
 // ---------------------------------------------------------------------------
 
 export default function AnalyticsPage() {
-  const { profile } = useAuth()
+  const { profile, isDemoMode } = useAuth()
   const orgId = profile?.organization_id || ''
 
   const [period, setPeriod] = useState(30)
@@ -119,11 +119,49 @@ export default function AnalyticsPage() {
   )
   const [loading, setLoading] = useState(true)
   const [heatmapLoading, setHeatmapLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Fetch ROI + trends together when period/org changes
   const loadAnalytics = useCallback(async () => {
     if (!orgId) return
     setLoading(true)
+    setError(null)
+
+    // Demo mode fallback
+    if (isDemoMode) {
+      setRoi({
+        roi_percentage: 312,
+        total_revenue: 28500,
+        revenue_per_call: 142,
+        net_value: 24200,
+        conversion_rate: 38.5,
+        total_calls: 201,
+        total_leads: 87,
+        lead_funnel: [
+          { stage: 'New', count: 87, rate: 100 },
+          { stage: 'Contacted', count: 62, rate: 71 },
+          { stage: 'Qualified', count: 41, rate: 66 },
+          { stage: 'Proposal', count: 24, rate: 59 },
+          { stage: 'Won', count: 18, rate: 75 },
+        ],
+        revenue_by_source: [
+          { source: 'Phone', revenue: 14200 },
+          { source: 'Web', revenue: 8300 },
+          { source: 'Referral', revenue: 4500 },
+          { source: 'Email', revenue: 1500 },
+        ],
+      })
+      const base = Date.now()
+      setTrends(
+        Array.from({ length: period }, (_, i) => ({
+          metric_date: new Date(base - (period - i) * 86400000).toISOString().split('T')[0],
+          revenue: Math.round(600 + Math.random() * 400 + i * 15),
+        }))
+      )
+      setLoading(false)
+      return
+    }
+
     try {
       const [roiRes, trendRes] = await Promise.all([
         fetch(`/api/analytics/roi?period=${period}&orgId=${orgId}`),
@@ -135,16 +173,25 @@ export default function AnalyticsPage() {
         setTrends(Array.isArray(json) ? json : json.data ?? [])
       }
     } catch {
-      // silently fail
+      setError('Failed to load analytics data. Please try again.')
     } finally {
       setLoading(false)
     }
-  }, [orgId, period])
+  }, [orgId, period, isDemoMode])
 
   // Fetch heatmap call data (always 30 days)
   const loadHeatmap = useCallback(async () => {
     if (!orgId) return
     setHeatmapLoading(true)
+
+    if (isDemoMode) {
+      const grid: number[][] = Array.from({ length: 7 }, () => new Array(24).fill(0))
+      for (let d = 0; d < 7; d++) for (let h = 8; h < 18; h++) grid[d][h] = Math.floor(Math.random() * 8)
+      setHeatmap(grid)
+      setHeatmapLoading(false)
+      return
+    }
+
     try {
       const supabase = createSupabaseBrowserClient()
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -155,11 +202,11 @@ export default function AnalyticsPage() {
         .gte('started_at', thirtyDaysAgo)
       if (data) setHeatmap(buildHeatmap(data))
     } catch {
-      // silently fail
+      // Heatmap is non-critical — degrade gracefully
     } finally {
       setHeatmapLoading(false)
     }
-  }, [orgId])
+  }, [orgId, isDemoMode])
 
   useEffect(() => {
     loadAnalytics()
@@ -175,8 +222,22 @@ export default function AnalyticsPage() {
   const hasRevBySource = roi?.revenue_by_source && roi.revenue_by_source.length > 0
   const hasHeatmapData = heatmap.some((row) => row.some((v) => v > 0))
 
+  if (error) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-4">
+        <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={() => { loadAnalytics(); loadHeatmap() }}
+          className="rounded-xl bg-[#2DD4BF] px-4 py-2 text-sm font-semibold text-[#0B1120] transition-all hover:bg-[#5EEAD4] active:scale-95"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="animate-page-enter space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-100">Business Intelligence</h1>

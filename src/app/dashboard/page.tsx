@@ -146,6 +146,7 @@ export default function CommandCenterPage() {
   const { profile, isLoading, isDemoMode } = useAuth()
   const orgId = profile?.organization_id || ''
 
+  const [metricsLoaded, setMetricsLoaded] = useState(false)
   const [metrics, setMetrics] = useState<Metrics>({
     callsToday: 0,
     callsYesterday: 0,
@@ -184,6 +185,7 @@ export default function CommandCenterPage() {
         revenueLastMonth: demoMetrics.revenueLastMonth,
         projectedNextMonth: Math.round(demoMetrics.revenueThisMonth * 1.15),
       })
+      setMetricsLoaded(true)
       return () => { cancelled = true }
     }
 
@@ -208,7 +210,9 @@ export default function CommandCenterPage() {
         yesterdayCallsRes,
         leadsRes,
         leadsYesterdayRes,
-        leadsAllRes,
+        leadsWonRes,
+        leadsTotalRes,
+        leadsPipelineRes,
         appointmentsRes,
         appointmentsYesterdayRes,
         invoicesThisMonthRes,
@@ -240,10 +244,25 @@ export default function CommandCenterPage() {
           .gte('created_at', yesterday)
           .lt('created_at', today),
 
+        // Won leads count (server-side filter instead of full table scan)
         supabase
           .from('leads')
-          .select('id, status, estimated_value')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('status', 'won'),
+
+        // Total leads count (head-only, no row data transferred)
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
           .eq('organization_id', orgId),
+
+        // Pipeline value — only open leads (excludes won/lost)
+        supabase
+          .from('leads')
+          .select('estimated_value')
+          .eq('organization_id', orgId)
+          .not('status', 'in', '("won","lost")'),
 
         supabase
           .from('appointments')
@@ -277,11 +296,9 @@ export default function CommandCenterPage() {
           .lt('paid_at', lastMonthEnd),
       ])
 
-      const allLeads = (leadsAllRes.data as Array<{ status: string; estimated_value?: number }>) || []
-      const wonLeads = allLeads.filter((l) => l.status === 'won').length
-      const totalLeads = allLeads.length
-      const pipelineValue = allLeads
-        .filter((l) => !['won', 'lost'].includes(l.status))
+      const wonLeads = leadsWonRes.count || 0
+      const totalLeads = leadsTotalRes.count || 0
+      const pipelineValue = ((leadsPipelineRes.data as Array<{ estimated_value?: number }>) || [])
         .reduce((s, l) => s + (l.estimated_value || 0), 0)
 
       const revenueThisMonth = ((invoicesThisMonthRes.data as Array<{ amount: number }>) || []).reduce(
@@ -313,23 +330,28 @@ export default function CommandCenterPage() {
         revenueLastMonth,
         projectedNextMonth,
       })
+      setMetricsLoaded(true)
     }
 
     load()
     return () => { cancelled = true }
   }, [orgId, isDemoMode])
 
-  // Show loading skeleton while auth is resolving
-  if (isLoading) {
+  // Show loading skeleton while auth or metrics are loading
+  if (isLoading || (!metricsLoaded && orgId && !isDemoMode)) {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="h-10 w-72 bg-slate-800 rounded" />
+        <div className="h-24 bg-slate-800 rounded-2xl" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-32 bg-slate-800 rounded-2xl" />
           ))}
         </div>
-        <div className="h-64 bg-slate-800 rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-64 bg-slate-800 rounded-2xl" />
+          <div className="h-64 bg-slate-800 rounded-2xl" />
+        </div>
       </div>
     )
   }

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { MessageSquare, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { useChat } from './chat-provider'
 import { ChatPanel } from './chat-panel'
 
 const TIER_RANK: Record<string, number> = {
@@ -16,6 +17,12 @@ const TIER_RANK: Record<string, number> = {
 export function ChatFAB() {
   const [isOpen, setIsOpen] = useState(false)
   const { organization } = useAuth()
+  const { loadConversations } = useChat()
+
+  const handleToggle = useCallback(() => {
+    if (!isOpen) loadConversations()
+    setIsOpen(!isOpen)
+  }, [isOpen, loadConversations])
 
   // Tier gate — hide for answering_service / receptionist
   const tierRank = TIER_RANK[organization?.tier ?? 'answering_service'] ?? 0
@@ -27,7 +34,7 @@ export function ChatFAB() {
 
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="fixed bottom-20 right-4 z-50 md:bottom-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#2DD4BF] text-[#0B1120] shadow-lg shadow-[#2DD4BF]/25 transition-all hover:bg-[#5EEAD4] hover:shadow-[#2DD4BF]/35 active:scale-95 sm:right-6"
         aria-label={isOpen ? 'Close chat' : 'Open chat'}
       >

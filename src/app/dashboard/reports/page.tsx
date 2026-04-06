@@ -15,8 +15,15 @@ import {
   LineChart,
   Clock,
   Star,
+  X,
 } from 'lucide-react'
 import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
+import { WeeklyPerformance } from '@/components/dashboard/reports/weekly-performance'
+import { MonthlyReview } from '@/components/dashboard/reports/monthly-review'
+import { RevenueByService } from '@/components/dashboard/reports/revenue-by-service'
+import { CustomerAcquisition } from '@/components/dashboard/reports/customer-acquisition'
+import { LeadConversion } from '@/components/dashboard/reports/lead-conversion'
+import { RoiReport } from '@/components/dashboard/reports/roi-report'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -102,10 +109,20 @@ interface ReportMetrics {
 // Page
 // ---------------------------------------------------------------------------
 
+const REPORT_COMPONENTS: Record<string, React.ComponentType<{ organizationId: string; isDemoMode: boolean }>> = {
+  'Weekly Performance Summary': WeeklyPerformance,
+  'Monthly Business Review': MonthlyReview,
+  'Revenue by Service Type': RevenueByService,
+  'Customer Acquisition Report': CustomerAcquisition,
+  'Lead Conversion Funnel': LeadConversion,
+  'ROI Report': RoiReport,
+}
+
 export default function ReportsPage() {
-  const { organization, profile } = useAuth()
+  const { organization, profile, isDemoMode } = useAuth()
   const orgId = organization?.id || profile?.organization_id || ''
   const supabase = createSupabaseBrowserClient()
+  const [activeReport, setActiveReport] = useState<string | null>(null)
 
   const [metrics, setMetrics] = useState<ReportMetrics>({
     answerRate: 0,
@@ -281,7 +298,7 @@ export default function ReportsPage() {
             return (
               <button
                 key={report.title}
-                onClick={() => alert(`${report.title} — detailed reports coming soon.`)}
+                onClick={() => setActiveReport(report.title)}
                 className={`${cardClass} text-left group hover:border-[rgba(148,163,184,0.2)] transition-all duration-200 hover:shadow-lg hover:shadow-black/10`}
               >
                 <div className="flex items-start gap-4 mb-3">
@@ -307,6 +324,26 @@ export default function ReportsPage() {
           })}
         </div>
       </div>
+
+      {/* ── Active Report View ──────────────────────────────────────── */}
+      {activeReport && REPORT_COMPONENTS[activeReport] && (() => {
+        const ReportComponent = REPORT_COMPONENTS[activeReport]
+        return (
+          <div className={cardClass}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-slate-100">{activeReport}</h2>
+              <button
+                onClick={() => setActiveReport(null)}
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+                aria-label="Close report"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <ReportComponent organizationId={orgId} isDemoMode={isDemoMode} />
+          </div>
+        )
+      })()}
     </div>
   )
 }

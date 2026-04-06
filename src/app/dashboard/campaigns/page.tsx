@@ -17,6 +17,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/lib/auth-context'
 import { CampaignBuilderModal } from '@/components/dashboard/campaigns/campaign-builder-modal'
 import { CampaignStats } from '@/components/dashboard/campaigns/campaign-stats'
+import { EmptyState } from '@/components/dashboard/empty-state'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -189,7 +190,7 @@ function CampaignCard({
 // ---------------------------------------------------------------------------
 
 export default function CampaignsPage() {
-  const { profile, organization } = useAuth()
+  const { profile, organization, isDemoMode } = useAuth()
   const orgId = organization?.id || profile?.organization_id || ''
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -198,6 +199,14 @@ export default function CampaignsPage() {
 
   async function loadCampaigns() {
     if (!orgId) return
+
+    // Demo mode: use mock data
+    if (isDemoMode) {
+      setCampaigns(MOCK_CAMPAIGNS)
+      setLoading(false)
+      return
+    }
+
     const { data } = await supabase
       .from('automation_queue')
       .select('*')
@@ -217,7 +226,7 @@ export default function CampaignsPage() {
         }))
       )
     } else {
-      setCampaigns(MOCK_CAMPAIGNS)
+      setCampaigns([])
     }
     setLoading(false)
   }
@@ -309,6 +318,14 @@ export default function CampaignsPage() {
               </div>
             ))}
           </div>
+        ) : campaigns.length === 0 ? (
+          <EmptyState
+            icon={Megaphone}
+            title="No campaigns yet"
+            description="Create your first campaign to start reaching customers with automated outreach."
+            actionLabel="Create Campaign"
+            onAction={() => setShowModal(true)}
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {campaigns.map((c) => (

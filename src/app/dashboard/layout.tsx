@@ -51,6 +51,7 @@ import { DemoBanner } from '@/components/dashboard/demo-banner'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useFieldMode } from '@/components/dashboard/field-mode/field-mode-toggle'
 import { FieldModeView } from '@/components/dashboard/field-mode/field-mode-view'
+import { ToastProvider } from '@/components/ui/toast'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -542,9 +543,11 @@ function NavSections({
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <ChatProvider>
-        <DashboardShell>{children}</DashboardShell>
-      </ChatProvider>
+      <ToastProvider>
+        <ChatProvider>
+          <DashboardShell>{children}</DashboardShell>
+        </ChatProvider>
+      </ToastProvider>
     </AuthProvider>
   )
 }

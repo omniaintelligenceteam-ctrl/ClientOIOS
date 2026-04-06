@@ -41,18 +41,25 @@ export default function AutomationsPage() {
 
   const organizationId = profile?.organization_id ?? ''
 
-  const handleSaveRule = useCallback((rule: AutomationRuleDraft) => {
-    const stored = JSON.parse(localStorage.getItem('automation_rules') ?? '[]') as AutomationRuleDraft[]
-    const idx = stored.findIndex((r) => r.id === rule.id)
-    if (idx >= 0) {
-      stored[idx] = rule
-    } else {
-      stored.push(rule)
+  const [saving, setSaving] = useState(false)
+
+  const handleSaveRule = useCallback(async (rule: AutomationRuleDraft) => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/automations/rules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...rule, organization_id: organizationId }),
+      })
+      if (!res.ok) throw new Error('Failed to save rule')
+      setShowBuilder(false)
+      setActiveTab('my_rules')
+    } catch (err) {
+      console.error('Failed to save automation rule:', err)
+    } finally {
+      setSaving(false)
     }
-    localStorage.setItem('automation_rules', JSON.stringify(stored))
-    setShowBuilder(false)
-    setActiveTab('my_rules')
-  }, [])
+  }, [organizationId])
 
   return (
     <div className="min-h-screen bg-[#0B1120]">

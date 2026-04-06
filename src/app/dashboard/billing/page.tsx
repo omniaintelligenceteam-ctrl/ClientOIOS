@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   CreditCard,
   TrendingUp,
@@ -11,6 +12,7 @@ import {
   CheckCircle2,
   Phone,
   Mail,
+  FileText,
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -45,10 +47,31 @@ const TIER_DESCRIPTIONS: Record<string, string> = {
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+interface InvoiceRow {
+  id: string
+  invoice_number: string | null
+  amount_due: number
+  amount_paid: number
+  status: string
+  created_at: string
+}
+
+const INVOICE_STATUS_STYLE: Record<string, { text: string; bg: string }> = {
+  paid: { text: 'text-green-400', bg: 'bg-green-400/10' },
+  overdue: { text: 'text-red-400', bg: 'bg-red-400/10' },
+  sent: { text: 'text-blue-400', bg: 'bg-blue-400/10' },
+  draft: { text: 'text-slate-400', bg: 'bg-slate-400/10' },
+  partially_paid: { text: 'text-amber-400', bg: 'bg-amber-400/10' },
+}
+
 export default function BillingPage() {
-  const { organization, isLoading: authLoading } = useAuth()
+  const { organization, profile, isLoading: authLoading, isDemoMode } = useAuth()
+  const orgId = organization?.id || profile?.organization_id || ''
+  const supabase = createSupabaseBrowserClient()
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [usageLoading, setUsageLoading] = useState(true)
+  const [invoices, setInvoices] = useState<InvoiceRow[]>([])
+  const [invoicesLoading, setInvoicesLoading] = useState(true)
 
   const tier = organization?.tier || 'office_manager'
   const planName = TIER_LABELS[tier] || tier
@@ -72,6 +95,31 @@ export default function BillingPage() {
     if (!authLoading) fetchUsage()
     return () => { cancelled = true }
   }, [authLoading])
+
+  // Fetch invoices
+  useEffect(() => {
+    if (authLoading || !orgId) return
+    async function loadInvoices() {
+      if (isDemoMode) {
+        setInvoices([
+          { id: 'd1', invoice_number: 'INV-001', amount_due: 499, amount_paid: 499, status: 'paid', created_at: new Date(Date.now() - 30 * 86400000).toISOString() },
+          { id: 'd2', invoice_number: 'INV-002', amount_due: 499, amount_paid: 499, status: 'paid', created_at: new Date(Date.now() - 60 * 86400000).toISOString() },
+          { id: 'd3', invoice_number: 'INV-003', amount_due: 499, amount_paid: 0, status: 'sent', created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
+        ])
+        setInvoicesLoading(false)
+        return
+      }
+      const { data } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, amount_due, amount_paid, status, created_at')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (data) setInvoices(data as unknown as InvoiceRow[])
+      setInvoicesLoading(false)
+    }
+    loadInvoices()
+  }, [authLoading, orgId, isDemoMode])
 
   const minutesUsed = usage?.total_minutes ?? organization?.monthly_minutes_used ?? 0
   const minutesIncluded = usage?.minutes_included ?? organization?.monthly_minutes_included ?? 0
@@ -199,15 +247,60 @@ export default function BillingPage() {
 
       {/* Billing History */}
       <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center gap-2">
+          <FileText size={18} className="text-slate-400" />
           <h3 className="text-base font-semibold text-slate-200">Billing History</h3>
-          <span className="rounded-full bg-[#f97316]/10 px-3 py-1 text-xs font-medium text-[#f97316]">Coming soon</span>
         </div>
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <CreditCard size={32} className="mb-3 text-slate-600" />
-          <p className="text-sm text-slate-400">Billing history will appear here once payment processing is connected.</p>
-          <p className="mt-1 text-xs text-slate-500">Contact team@getoios.com for current invoices.</p>
-        </div>
+
+        {invoicesLoading ? (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-[rgba(148,163,184,0.06)]" />
+            ))}
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <CreditCard size={32} className="mb-3 text-slate-600" />
+            <p className="text-sm text-slate-400">No invoices yet.</p>
+            <p className="mt-1 text-xs text-slate-500">Contact team@getoios.com for billing questions.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[rgba(148,163,184,0.1)]">
+                  <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Date</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Invoice</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Amount</th>
+                  <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoices.map((inv) => {
+                  const style = INVOICE_STATUS_STYLE[inv.status] || INVOICE_STATUS_STYLE.draft
+                  return (
+                    <tr key={inv.id} className="border-b border-[rgba(148,163,184,0.05)] hover:bg-white/[0.02]">
+                      <td className="px-3 py-3 text-sm text-slate-400">
+                        {new Date(inv.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="px-3 py-3 text-sm font-medium text-slate-200">
+                        {inv.invoice_number || `#${inv.id.slice(0, 8)}`}
+                      </td>
+                      <td className="px-3 py-3 text-sm font-semibold text-slate-200">
+                        ${(inv.amount_due || 0).toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${style.bg} ${style.text}`}>
+                          {inv.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Support */}

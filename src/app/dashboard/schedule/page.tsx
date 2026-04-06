@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { EmptyState } from '@/components/dashboard/empty-state'
+import { CalendarGrid } from '@/components/dashboard/calendar/calendar-grid'
 import type { Appointment, AppointmentStatus, Customer, User as UserType } from '@/lib/types'
 
 /* ------------------------------------------------------------------ */
@@ -399,6 +400,8 @@ export default function SchedulePage() {
   const [users, setUsers] = useState<UserType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedDay, setSelectedDay] = useState(new Date())
+  const [calendarDate, setCalendarDate] = useState(new Date())
 
   const supabase = createSupabaseBrowserClient()
 
@@ -556,23 +559,15 @@ export default function SchedulePage() {
         </>
       )}
 
-      {/* ---- Calendar View (placeholder) ---- */}
+      {/* ---- Calendar View ---- */}
       {viewMode === 'calendar' && (
-        <div className="flex flex-1 items-center justify-center backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-12">
-          <div className="text-center">
-            <Calendar
-              size={48}
-              className="mx-auto mb-4 text-slate-600"
-            />
-            <h3 className="text-lg font-semibold text-[#F8FAFC]">
-              Calendar View
-            </h3>
-            <p className="mt-2 text-sm text-slate-500">
-              Full calendar integration coming soon. Use the list view to
-              manage your schedule.
-            </p>
-          </div>
-        </div>
+        <CalendarGrid
+          viewMode="month"
+          currentDate={calendarDate}
+          appointments={appointments}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
+        />
       )}
     </div>
   )
