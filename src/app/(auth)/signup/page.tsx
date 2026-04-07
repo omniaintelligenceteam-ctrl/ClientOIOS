@@ -36,8 +36,20 @@ export default function SignupPage() {
     setError('')
     try {
       const supabase = createSupabaseBrowserClient()
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      })
       if (error) throw error
+
+      // Send confirmation email via Resend (fire-and-forget, non-blocking)
+      fetch('/api/auth/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, fullName }),
+      }).catch((err) => console.error('Confirmation email failed:', err))
+
       router.push('/dashboard/onboarding')
     } catch (err: any) {
       setError(err.message || 'Failed to create account')
