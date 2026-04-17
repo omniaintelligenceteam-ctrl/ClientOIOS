@@ -7,17 +7,10 @@ import { AuthProvider, useAuth } from '@/lib/auth-context'
 import {
   LayoutDashboard,
   Phone,
-  Target,
   Calendar,
   CalendarDays,
   Users,
-  Receipt,
   Star,
-  Megaphone,
-  HardHat,
-  BarChart3,
-  TrendingUp,
-  CreditCard,
   Settings,
   Shield,
   Search,
@@ -29,11 +22,19 @@ import {
   Menu,
   X,
   Bot,
-  GitFork,
   UserPlus,
-  Activity,
   Zap,
+  DollarSign,
+  MoreHorizontal,
+  Megaphone,
+  HardHat,
+  CreditCard,
+  BarChart3,
+  TrendingUp,
+  Activity,
+  GitFork,
   MapPin,
+  MessageSquare,
 } from 'lucide-react'
 import { ChatProvider } from '@/components/dashboard/chat/chat-provider'
 import { MobileHeader } from '@/components/dashboard/mobile-header'
@@ -67,11 +68,40 @@ interface NavItem {
   superAdminOnly?: boolean
 }
 
-interface NavSection {
-  id: string
-  label: string
-  items: NavItem[]
-}
+/* ------------------------------------------------------------------ */
+/*  Primary + secondary navigation (C-suite curated)                  */
+/* ------------------------------------------------------------------ */
+/*  Primary = 8 high-signal pages a CEO/owner actually needs.         */
+/*  Secondary = everything else, tucked under a "More" toggle.        */
+/* ------------------------------------------------------------------ */
+
+const PRIMARY_NAV: NavItem[] = [
+  { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Approvals', href: '/dashboard/automations', icon: Shield },
+  { label: 'Calls', href: '/dashboard/calls', icon: Phone },
+  { label: 'Leads', href: '/dashboard/leads', icon: Users, minTier: 'office_manager' },
+  { label: 'Schedule', href: '/dashboard/schedule', icon: Calendar, minTier: 'office_manager' },
+  { label: 'Revenue', href: '/dashboard/invoicing', icon: DollarSign, minTier: 'growth_engine' },
+  { label: 'Reviews', href: '/dashboard/reviews', icon: Star, minTier: 'office_manager' },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+]
+
+const SECONDARY_NAV: NavItem[] = [
+  { label: 'Customers', href: '/dashboard/customers', icon: Users, minTier: 'office_manager' },
+  { label: 'Pipeline', href: '/dashboard/pipeline', icon: GitFork, minTier: 'office_manager' },
+  { label: 'Calendar', href: '/dashboard/calendar', icon: CalendarDays, minTier: 'office_manager' },
+  { label: 'Map', href: '/dashboard/map', icon: MapPin, minTier: 'office_manager' },
+  { label: 'Marketing', href: '/dashboard/marketing', icon: Megaphone, minTier: 'growth_engine' },
+  { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, minTier: 'growth_engine' },
+  { label: 'AI Assistant', href: '/dashboard/ai', icon: Bot, minTier: 'office_manager' },
+  { label: 'Chat', href: '/dashboard/chat', icon: MessageSquare },
+  { label: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp, minTier: 'office_manager' },
+  { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+  { label: 'Activity', href: '/dashboard/activity', icon: Activity },
+  { label: 'Team', href: '/dashboard/team', icon: HardHat, minTier: 'growth_engine' },
+  { label: 'Billing', href: '/dashboard/billing', icon: CreditCard },
+  { label: 'Admin', href: '/dashboard/admin', icon: Shield, superAdminOnly: true },
+]
 
 /* ------------------------------------------------------------------ */
 /*  Static data                                                        */
@@ -95,68 +125,8 @@ const TIER_LABELS: Record<OrgTier, string> = {
   growth_engine: 'Tier 3',
 }
 
-const NAV_SECTIONS: NavSection[] = [
-  {
-    id: 'overview',
-    label: 'OVERVIEW',
-    items: [
-      { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-    ],
-  },
-  {
-    id: 'sales',
-    label: 'SALES',
-    items: [
-      { label: 'Leads', href: '/dashboard/leads', icon: Target, minTier: 'office_manager' },
-      { label: 'Pipeline', href: '/dashboard/pipeline', icon: GitFork, minTier: 'office_manager' },
-      { label: 'Customers', href: '/dashboard/customers', icon: Users, minTier: 'office_manager' },
-    ],
-  },
-  {
-    id: 'operations',
-    label: 'OPERATIONS',
-    items: [
-      { label: 'Calls', href: '/dashboard/calls', icon: Phone },
-      { label: 'Schedule', href: '/dashboard/schedule', icon: Calendar, minTier: 'office_manager' },
-      { label: 'Calendar', href: '/dashboard/calendar', icon: CalendarDays, minTier: 'office_manager' },
-      { label: 'Invoicing', href: '/dashboard/invoicing', icon: Receipt, minTier: 'growth_engine' },
-      { label: 'Map', href: '/dashboard/map', icon: MapPin, minTier: 'office_manager' },
-    ],
-  },
-  {
-    id: 'engagement',
-    label: 'ENGAGEMENT',
-    items: [
-      { label: 'Reviews', href: '/dashboard/reviews', icon: Star, minTier: 'office_manager' },
-      { label: 'Marketing', href: '/dashboard/marketing', icon: Megaphone, minTier: 'growth_engine' },
-      { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, minTier: 'growth_engine' },
-    ],
-  },
-  {
-    id: 'intelligence',
-    label: 'INTELLIGENCE',
-    items: [
-      { label: 'AI Assistant', href: '/dashboard/ai', icon: Bot, minTier: 'office_manager' },
-      { label: 'Analytics', href: '/dashboard/analytics', icon: TrendingUp, minTier: 'office_manager' },
-      { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
-      { label: 'Automations', href: '/dashboard/automations', icon: Zap },
-      { label: 'Activity', href: '/dashboard/activity', icon: Activity },
-    ],
-  },
-  {
-    id: 'account',
-    label: 'ACCOUNT',
-    items: [
-      { label: 'Team', href: '/dashboard/team', icon: HardHat, minTier: 'growth_engine' },
-      { label: 'Billing', href: '/dashboard/billing', icon: CreditCard },
-      { label: 'Settings', href: '/dashboard/settings', icon: Settings },
-      { label: 'Admin', href: '/dashboard/admin', icon: Shield, superAdminOnly: true },
-    ],
-  },
-]
-
-// Flat list for other uses (e.g. mobile nav)
-const NAV_ITEMS = NAV_SECTIONS.flatMap((s) => s.items)
+// Flat list for other uses (e.g. mobile nav / command palette)
+const NAV_ITEMS: NavItem[] = [...PRIMARY_NAV, ...SECONDARY_NAV]
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -461,6 +431,35 @@ function QuickActions({
 /*  Grouped Nav Sections                                               */
 /* ------------------------------------------------------------------ */
 
+const MORE_SECTION_ID = 'more'
+
+function renderNavItem(
+  item: NavItem,
+  opts: {
+    collapsed: boolean
+    pathname: string
+    currentTier: OrgTier
+    badges: ReturnType<typeof useSidebarBadges>
+  }
+) {
+  const unlocked = isTierUnlocked(item.minTier, opts.currentTier)
+  const active = isActiveLink(opts.pathname, item.href)
+  const badgeCount = opts.badges.counts[item.href]
+  const isUrgent = opts.badges.urgent[item.href] ?? false
+
+  return (
+    <SidebarNavItem
+      key={item.href}
+      item={item}
+      isActive={active}
+      isCollapsed={opts.collapsed}
+      isLocked={!unlocked}
+      badgeCount={badgeCount}
+      isUrgent={isUrgent}
+    />
+  )
+}
+
 function NavSections({
   collapsed,
   pathname,
@@ -478,60 +477,64 @@ function NavSections({
   collapsedSections: Set<string>
   onToggleSection: (id: string) => void
 }) {
+  const primaryVisible = PRIMARY_NAV.filter(
+    (item) => !item.superAdminOnly || isSuperAdmin
+  )
+  const secondaryVisible = SECONDARY_NAV.filter(
+    (item) => !item.superAdminOnly || isSuperAdmin
+  )
+
+  // Default to collapsed for "More". The Set tracks collapsed ids;
+  // we flip the meaning here so "not in set" = expanded.
+  const moreCollapsed = !collapsedSections.has(MORE_SECTION_ID + ':open')
+
   return (
     <>
-      {NAV_SECTIONS.map((section) => {
-        // Filter items for this section
-        const visibleItems = section.items.filter(
-          (item) => !item.superAdminOnly || isSuperAdmin
-        )
-        if (visibleItems.length === 0) return null
+      {/* Primary nav — flat, no section header */}
+      <div className="flex flex-col gap-0.5 mb-2">
+        {primaryVisible.map((item) =>
+          renderNavItem(item, { collapsed, pathname, currentTier, badges })
+        )}
+      </div>
 
-        const isSectionCollapsed = collapsedSections.has(section.id)
-
-        return (
-          <div key={section.id} className="mb-1">
-            {/* Section header — hidden when sidebar is icon-only */}
-            {!collapsed && (
+      {/* Secondary nav under "More" */}
+      {secondaryVisible.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-[rgba(148,163,184,0.08)]">
+          {!collapsed ? (
+            <>
               <button
                 type="button"
-                onClick={() => onToggleSection(section.id)}
+                onClick={() => onToggleSection(MORE_SECTION_ID + ':open')}
                 className="flex w-full items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#64748B] transition-colors hover:text-[#94A3B8]"
+                aria-expanded={!moreCollapsed}
               >
-                <span>{section.label}</span>
+                <span className="flex items-center gap-2">
+                  <MoreHorizontal size={12} />
+                  More
+                </span>
                 <ChevronDown
                   size={12}
-                  className={`transition-transform duration-200 ${isSectionCollapsed ? '-rotate-90' : ''}`}
+                  className={`transition-transform duration-200 ${moreCollapsed ? '-rotate-90' : ''}`}
                 />
               </button>
-            )}
-
-            {/* Items */}
-            {(!isSectionCollapsed || collapsed) && (
-              <div className="flex flex-col gap-0.5">
-                {visibleItems.map((item) => {
-                  const unlocked = isTierUnlocked(item.minTier, currentTier)
-                  const active = isActiveLink(pathname, item.href)
-                  const badgeCount = badges.counts[item.href]
-                  const isUrgent = badges.urgent[item.href] ?? false
-
-                  return (
-                    <SidebarNavItem
-                      key={item.href}
-                      item={item}
-                      isActive={active}
-                      isCollapsed={collapsed}
-                      isLocked={!unlocked}
-                      badgeCount={badgeCount}
-                      isUrgent={isUrgent}
-                    />
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })}
+              {!moreCollapsed && (
+                <div className="flex flex-col gap-0.5 mt-1">
+                  {secondaryVisible.map((item) =>
+                    renderNavItem(item, { collapsed, pathname, currentTier, badges })
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            /* When sidebar is icon-only, just render secondary icons below a faint divider */
+            <div className="flex flex-col gap-0.5 opacity-80">
+              {secondaryVisible.map((item) =>
+                renderNavItem(item, { collapsed, pathname, currentTier, badges })
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </>
   )
 }

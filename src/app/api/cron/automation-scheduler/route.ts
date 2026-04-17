@@ -6,6 +6,7 @@
 // ============================================================
 
 import { createSupabaseServiceClient } from '@/lib/supabase-server'
+import { isCronAuthorized, fetchDncEmails } from '@/lib/compliance'
 
 // ---------------------------------------------------------------------------
 // Types — aligned to actual DB schema
@@ -44,13 +45,7 @@ interface QueueInsert {
 // Auth check
 // ---------------------------------------------------------------------------
 
-function isAuthorized(request: Request): boolean {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return true // no secret configured — allow (dev)
-  const isDev = process.env.NODE_ENV === 'development'
-  if (isDev) return true
-  return request.headers.get('authorization') === `Bearer ${cronSecret}`
-}
+// auth is centralized in lib/compliance.ts::isCronAuthorized
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -493,7 +488,7 @@ function fireExecute(queueItemId: string): void {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -544,6 +539,17 @@ export async function POST(request: Request) {
   let autoExecuted = 0
   let pendingApproval = 0
   let skippedDupes = 0
+  let skippedDnc = 0
+
+  // Cache DNC sets per-org so we don't refetch for every rule
+  const dncCache = new Map<string, Set<string>>()
+  async function getDnc(orgId: string): Promise<Set<string>> {
+    const cached = dncCache.get(orgId)
+    if (cached) return cached
+    const fresh = await fetchDncEmails(svc, orgId)
+    dncCache.set(orgId, fresh)
+    return fresh
+  }
 
   // 3. Process each rule
   for (const rule of rules) {
@@ -552,14 +558,23 @@ export async function POST(request: Request) {
 
       if (!items.length) continue
 
-      // 4. Filter out emails we've already contacted
+      const dnc = await getDnc(rule.organization_id)
+
+      // 4. Filter: skip DNC, skip already-contacted
       const deduped = items.filter((item) => {
         const email = (item.payload.customer_email as string)?.toLowerCase()
-        if (!email || contactedEmails.has(email)) {
+        if (!email) {
           skippedDupes++
           return false
         }
-        // Add to set so subsequent rules in this batch don't duplicate
+        if (dnc.has(email)) {
+          skippedDnc++
+          return false
+        }
+        if (contactedEmails.has(email)) {
+          skippedDupes++
+          return false
+        }
         contactedEmails.add(email)
         return true
       })
@@ -626,10 +641,10 @@ export async function POST(request: Request) {
   }
 
   console.log(
-    `[automation-scheduler] Done — triggered: ${triggered}, auto_executed: ${autoExecuted}, pending_approval: ${pendingApproval}, skipped_dupes: ${skippedDupes}, retried_stuck: ${retried}`,
+    `[automation-scheduler] Done — triggered: ${triggered}, auto_executed: ${autoExecuted}, pending_approval: ${pendingApproval}, skipped_dupes: ${skippedDupes}, skipped_dnc: ${skippedDnc}, retried_stuck: ${retried}`,
   )
 
-  return Response.json({ triggered, auto_executed: autoExecuted, pending_approval: pendingApproval, skipped_dupes: skippedDupes, retried_stuck: retried })
+  return Response.json({ triggered, auto_executed: autoExecuted, pending_approval: pendingApproval, skipped_dupes: skippedDupes, skipped_dnc: skippedDnc, retried_stuck: retried })
 }
 
 // Allow GET — Vercel cron can use either verb

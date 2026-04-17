@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isCronAuthorized } from '@/lib/compliance'
 
 function getServiceSupabase() {
   return createClient(
@@ -15,11 +16,8 @@ function getServiceSupabase() {
  * creates tasks for them, and updates next_run_at.
  */
 export async function GET(request: Request) {
-  if (process.env.NODE_ENV === 'production') {
-    const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = getServiceSupabase()

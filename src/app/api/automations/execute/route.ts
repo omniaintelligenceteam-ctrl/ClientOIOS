@@ -17,6 +17,7 @@ import {
   prospect_outreach,
   type AutomationContext,
 } from '@/lib/automation-templates'
+import { isCronAuthorized } from '@/lib/compliance'
 
 // ---------------------------------------------------------------------------
 // Service-role Supabase client (bypasses RLS for internal execution)
@@ -60,6 +61,7 @@ async function sendEmail(params: {
   to: string
   subject: string
   html: string
+  unsubscribeUrl: string
 }): Promise<{ id?: string; error?: string }> {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.hostinger.com',
@@ -77,6 +79,10 @@ async function sendEmail(params: {
       to: params.to,
       subject: params.subject,
       html: params.html,
+      headers: {
+        'List-Unsubscribe': `<${params.unsubscribeUrl}>, <mailto:unsubscribe@oioscoo.com?subject=unsubscribe>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     })
     return { id: info.messageId }
   } catch (err) {
@@ -90,14 +96,8 @@ async function sendEmail(params: {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request) {
-  // ── Security: verify CRON_SECRET Bearer token ─────────────────────────
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization')
-    const isDev = process.env.NODE_ENV === 'development'
-    if (!isDev && authHeader !== `Bearer ${cronSecret}`) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!isCronAuthorized(request)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,6 +152,58 @@ export async function POST(request: Request) {
     const targetContact = context.customerEmail
     const targetName = context.customerName
 
+    // ── 3a. DNC / suppression check — never send to opted-out addresses ─
+    if (targetContact) {
+      const emailLower = targetContact.toLowerCase()
+
+      // Check leads table for do_not_contact flag on any matching row in this org
+      const { data: dncLead } = await svc
+        .from('leads')
+        .select('id')
+        .eq('organization_id', queueItem.organization_id)
+        .eq('email', emailLower)
+        .eq('do_not_contact', true)
+        .limit(1)
+        .maybeSingle()
+
+      // Check optional suppression_list table
+      let suppressed = false
+      try {
+        const { data: sup } = await svc
+          .from('suppression_list')
+          .select('email')
+          .eq('organization_id', queueItem.organization_id)
+          .eq('email', emailLower)
+          .limit(1)
+          .maybeSingle()
+        suppressed = !!sup
+      } catch {
+        // table optional
+      }
+
+      if (dncLead || suppressed) {
+        const errMsg = 'Recipient is on do_not_contact / suppression list'
+        console.warn(`[automations/execute] Blocked DNC send to ${emailLower}`)
+
+        await svc
+          .from('automation_queue')
+          .update({ status: 'suppressed', error: errMsg, executed_at: new Date().toISOString() })
+          .eq('id', queueItemId)
+
+        await svc.from('automation_log').insert({
+          organization_id: queueItem.organization_id,
+          queue_id: queueItemId,
+          rule_id: queueItem.rule_id ?? null,
+          action: queueItem.action_type,
+          status: 'suppressed',
+          detail: errMsg,
+          metadata: { target_name: targetName, target_contact: emailLower },
+        })
+
+        return Response.json({ suppressed: true, reason: errMsg }, { status: 200 })
+      }
+    }
+
     if (!targetContact) {
       const errMsg = 'No customer email found in queue item payload'
       console.error(`[automations/execute] ${errMsg} — queue item ${queueItemId}`)
@@ -197,11 +249,12 @@ export async function POST(request: Request) {
       return Response.json({ error: errMsg }, { status: 400 })
     }
 
-    // ── 5. Send email via Resend ─────────────────────────────────────────
+    // ── 5. Send email via SMTP ───────────────────────────────────────────
     const sendResult = await sendEmail({
       to: targetContact,
       subject: template.subject,
       html: template.html,
+      unsubscribeUrl: template.unsubscribeUrl,
     })
 
     const now = new Date().toISOString()

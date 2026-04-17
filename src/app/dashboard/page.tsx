@@ -29,6 +29,7 @@ import { LiveActivityFeed } from '@/components/dashboard/live-activity-feed'
 import { MorningBriefingCard } from '@/components/dashboard/morning-briefing-card'
 import { ApprovalQueue } from '@/components/dashboard/approval-queue'
 import { RoiSummaryCard } from '@/components/dashboard/roi-summary-card'
+import { AgentStatusPanel } from '@/components/dashboard/agent-status-panel'
 import { PipelineFunnel } from '@/components/dashboard/pipeline-funnel'
 import { LeadSourceChart } from '@/components/dashboard/lead-source-chart'
 import { AtRiskAlerts } from '@/components/dashboard/at-risk-alerts'
@@ -372,10 +373,6 @@ export default function CommandCenterPage() {
     )
   }
 
-  const firstName = profile?.full_name?.split(' ')[0] || 'there'
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-
   // Revenue trend comparison
   const revDiff = metrics.revenueThisMonth - metrics.revenueLastMonth
   const revTrend: 'up' | 'down' | undefined =
@@ -399,37 +396,47 @@ export default function CommandCenterPage() {
   return (
     <div className="space-y-8">
       {/* ------------------------------------------------------------------ */}
-      {/* Header                                                               */}
+      {/* Morning Briefing — Hero                                              */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
-          <p className="text-slate-400 mt-1">
-            {greeting}, {firstName}. Here&apos;s what&apos;s happening.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Revenue Sparkline */}
-          {orgId && <RevenueSparkline organizationId={orgId} />}
-          {/* Connection status */}
-          <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border ${
-            connected
-              ? 'bg-green-500/10 border-green-500/20 text-green-400'
-              : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
-          }`}>
-            {connected ? (
-              <><Wifi className="h-3.5 w-3.5" /> Live</>
-            ) : (
-              <><WifiOff className="h-3.5 w-3.5" /> Reconnecting</>
-            )}
+      <MorningBriefingCard organizationId={orgId} />
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Agent Status Panel — Sarah, G, Cowork, Claude Code                  */}
+      {/* ------------------------------------------------------------------ */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-widest font-semibold text-[#64748B]">
+              Your AI Team
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Revenue Sparkline */}
+            {orgId && <RevenueSparkline organizationId={orgId} />}
+            {/* Connection status */}
+            <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border ${
+              connected
+                ? 'bg-green-500/10 border-green-500/20 text-green-400'
+                : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+            }`}>
+              {connected ? (
+                <><Wifi className="h-3.5 w-3.5" /> Live</>
+              ) : (
+                <><WifiOff className="h-3.5 w-3.5" /> Reconnecting</>
+              )}
+            </div>
           </div>
         </div>
+        <AgentStatusPanel organizationId={orgId} />
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Morning Briefing                                                     */}
+      {/* ROI Summary | Live Activity Feed — 2-column                          */}
       {/* ------------------------------------------------------------------ */}
-      <MorningBriefingCard organizationId={orgId} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RoiSummaryCard organizationId={orgId} />
+        <LiveActivityFeed activities={activities} connected={connected} />
+      </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* Mid-Day Pulse (shows after 12pm)                                    */}
@@ -543,23 +550,16 @@ export default function CommandCenterPage() {
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* ROI Summary                                                          */}
-      {/* ------------------------------------------------------------------ */}
-      <RoiSummaryCard organizationId={orgId} />
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Main two-column layout                                               */}
+      {/* Approval Queue + Quick Actions                                       */}
       {/* ------------------------------------------------------------------ */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
         {/* Left Column */}
         <div className="space-y-6">
-          <LiveActivityFeed activities={activities} connected={connected} />
+          <ApprovalQueue organizationId={orgId} />
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
-          <ApprovalQueue organizationId={orgId} />
-
           {/* Quick Actions */}
           <div className={cardClass}>
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>

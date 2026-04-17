@@ -6,13 +6,7 @@
 // ============================================================
 
 import { createSupabaseServiceClient } from '@/lib/supabase-server'
-
-function isAuthorized(request: Request): boolean {
-  const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return true
-  if (process.env.NODE_ENV === 'development') return true
-  return request.headers.get('authorization') === `Bearer ${cronSecret}`
-}
+import { isCronAuthorized } from '@/lib/compliance'
 
 async function fireExecute(queueItemId: string): Promise<{ success: boolean; error?: string }> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -34,7 +28,7 @@ async function fireExecute(queueItemId: string): Promise<{ success: boolean; err
 }
 
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -42,31 +36,62 @@ export async function POST(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svc = supabase as any
 
-  // Pick the single oldest approved item that's past its scheduled time
-  const { data: item, error } = await svc
+  // Pick a small batch of approved items past their scheduled time. We walk
+  // through them, skipping any on DNC/suppression lists, and fire the first
+  // survivor. Batch of 5 avoids DNC-heavy orgs starving the sender.
+  const { data: candidates, error } = await svc
     .from('automation_queue')
-    .select('id, action_type, payload')
+    .select('id, action_type, payload, organization_id')
     .eq('status', 'approved')
     .is('executed_at', null)
     .lte('scheduled_for', new Date().toISOString())
     .order('scheduled_for', { ascending: true })
-    .limit(1)
-    .single()
+    .limit(5)
 
-  if (error || !item) {
+  if (error || !candidates?.length) {
     return Response.json({ sent: 0, message: 'No items ready to send' })
   }
 
-  const email = (item.payload as Record<string, unknown>)?.customer_email as string
-  const result = await fireExecute(item.id)
+  for (const item of candidates as Array<{ id: string; action_type: string; organization_id: string; payload: Record<string, unknown> }>) {
+    const email = (item.payload?.customer_email as string | undefined)?.toLowerCase()
 
-  if (result.success) {
-    console.log(`[drip-sender] Sent ${item.action_type} to ${email}`)
-    return Response.json({ sent: 1, action_type: item.action_type, to: email })
-  } else {
-    console.error(`[drip-sender] Failed ${item.action_type} to ${email}: ${result.error}`)
-    return Response.json({ sent: 0, error: result.error, action_type: item.action_type, to: email })
+    // DNC check before firing — defense-in-depth, execute route also checks
+    if (email) {
+      const { data: dncLead } = await svc
+        .from('leads')
+        .select('id')
+        .eq('organization_id', item.organization_id)
+        .eq('email', email)
+        .eq('do_not_contact', true)
+        .limit(1)
+        .maybeSingle()
+
+      if (dncLead) {
+        await svc
+          .from('automation_queue')
+          .update({
+            status: 'suppressed',
+            error: 'Recipient on do_not_contact list',
+            executed_at: new Date().toISOString(),
+          })
+          .eq('id', item.id)
+        console.log(`[drip-sender] Skipped DNC ${email}`)
+        continue
+      }
+    }
+
+    const result = await fireExecute(item.id)
+
+    if (result.success) {
+      console.log(`[drip-sender] Sent ${item.action_type} to ${email}`)
+      return Response.json({ sent: 1, action_type: item.action_type, to: email })
+    } else {
+      console.error(`[drip-sender] Failed ${item.action_type} to ${email}: ${result.error}`)
+      return Response.json({ sent: 0, error: result.error, action_type: item.action_type, to: email })
+    }
   }
+
+  return Response.json({ sent: 0, message: 'All candidates filtered by DNC' })
 }
 
 export async function GET(request: Request) {
