@@ -5,6 +5,7 @@
 // ============================================================
 
 import { createSupabaseServiceClient } from '@/lib/supabase-server'
+import { isCronAuthorized } from '@/lib/compliance'
 
 // ---------------------------------------------------------------------------
 // Date helpers
@@ -244,12 +245,8 @@ async function snapshotOrg(
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request) {
-  // Security: verify cron secret in production
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && process.env.NODE_ENV !== 'development') {
-    if (request.headers.get('authorization') !== `Bearer ${cronSecret}`) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!isCronAuthorized(request)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = await createSupabaseServiceClient()

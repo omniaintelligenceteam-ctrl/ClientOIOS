@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/types'
+import { isCronAuthorized } from '@/lib/compliance'
 
 // ---------------------------------------------------------------------------
 // Supabase service-role client (bypasses RLS)
@@ -289,14 +290,8 @@ function generateTemplatNarrative(metrics: BriefingMetrics, orgName: string): st
 // ---------------------------------------------------------------------------
 
 export async function POST(req: Request) {
-  // --- Security: verify Vercel Cron secret ---
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const authHeader = req.headers.get('authorization')
-    const isDev = process.env.NODE_ENV === 'development'
-    if (!isDev && authHeader !== `Bearer ${cronSecret}`) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!isCronAuthorized(req)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = getSupabase()

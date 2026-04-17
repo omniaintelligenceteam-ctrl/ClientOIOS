@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { verifyResendSignature } from '@/lib/compliance'
 
 function getSupabase() {
   return createClient(
@@ -139,9 +140,25 @@ function getLeadStatusUpdate(
  * Updates lead status based on classification.
  */
 export async function POST(request: NextRequest) {
+  // Read raw body first so we can verify the svix signature
+  const rawBody = await request.text()
+
+  const signatureValid = verifyResendSignature(
+    rawBody,
+    request.headers,
+    process.env.RESEND_WEBHOOK_SECRET,
+  )
+
+  if (!signatureValid) {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+    console.warn('[resend-inbound] Signature verification failed — allowing in non-production environment')
+  }
+
   let payload: Record<string, unknown>
   try {
-    payload = await request.json()
+    payload = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }

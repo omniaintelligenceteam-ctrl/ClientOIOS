@@ -3,6 +3,8 @@
 // Returns subject + ready-to-send HTML (no AI generation needed)
 // ============================================================
 
+import { unsubscribeUrl, senderPhysicalAddress } from './compliance'
+
 export interface AutomationContext {
   businessName: string
   customerName: string
@@ -13,13 +15,25 @@ export interface AutomationContext {
 export interface AutomationTemplate {
   subject: string
   html: string
+  unsubscribeUrl: string
 }
 
 // ---------------------------------------------------------------------------
 // Shared email wrapper — clean, inline-styled HTML that works everywhere
 // ---------------------------------------------------------------------------
 
-function emailWrap(businessName: string, body: string): string {
+function emailWrap(businessName: string, body: string, recipientEmail: string): string {
+  const unsubUrl = unsubscribeUrl(recipientEmail)
+  const address = senderPhysicalAddress()
+  const footer = `
+<tr><td style="padding:0 28px 24px;">
+<hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;">
+<p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:#71717a;">
+You received this email from ${businessName}. If you'd rather not receive these, <a href="${unsubUrl}" style="color:#71717a;text-decoration:underline;">unsubscribe here</a>.
+</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#a1a1aa;">${address}</p>
+</td></tr>`
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -30,6 +44,7 @@ function emailWrap(businessName: string, body: string): string {
 <tr><td style="padding:32px 28px 24px;">
 ${body}
 </td></tr>
+${footer}
 </table>
 </td></tr>
 </table>
@@ -59,7 +74,7 @@ function button(text: string, url: string): string {
 
 // ── follow_up_email ──────────────────────────────────────────
 export function follow_up_email(ctx: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = ctx
+  const { businessName, customerName, customerEmail, metadata } = ctx
   const serviceType = (metadata.service_type as string) || 'your recent service'
   const techName = (metadata.tech_name as string) || ''
 
@@ -73,13 +88,14 @@ export function follow_up_email(ctx: AutomationContext): AutomationTemplate {
       p(`If anything needs attention or you have questions about the work, don't hesitate to reach out — we're always happy to help.`),
       p(`We appreciate your business and look forward to serving you again.`),
       signoff(businessName),
-    ].join('')),
+    ].join(''), customerEmail),
+    unsubscribeUrl: unsubscribeUrl(customerEmail),
   }
 }
 
 // ── review_request ───────────────────────────────────────────
 export function review_request(ctx: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = ctx
+  const { businessName, customerName, customerEmail, metadata } = ctx
   const reviewUrl = (metadata.review_url as string) || 'https://g.page/r/review'
 
   return {
@@ -90,13 +106,14 @@ export function review_request(ctx: AutomationContext): AutomationTemplate {
       button('Leave a Review', reviewUrl),
       p(`Thank you so much — it means the world to us.`),
       signoff(businessName),
-    ].join('')),
+    ].join(''), customerEmail),
+    unsubscribeUrl: unsubscribeUrl(customerEmail),
   }
 }
 
 // ── invoice_reminder ─────────────────────────────────────────
 export function invoice_reminder(ctx: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = ctx
+  const { businessName, customerName, customerEmail, metadata } = ctx
   const invoiceNumber = (metadata.invoice_number as string) || ''
   const amount = (metadata.amount as number) ?? null
   const dueDate = (metadata.due_date as string) || ''
@@ -116,16 +133,16 @@ export function invoice_reminder(ctx: AutomationContext): AutomationTemplate {
         ? `If you've already sent payment, please disregard this message. Questions? Just reply to this email.`
         : `Please contact us to arrange payment at your earliest convenience. If you've already sent payment, please disregard this message.`),
       signoff(businessName),
-    ].join('')),
+    ].join(''), customerEmail),
+    unsubscribeUrl: unsubscribeUrl(customerEmail),
   }
 }
 
 // ── lead_nurture ─────────────────────────────────────────────
 export function lead_nurture(ctx: AutomationContext): AutomationTemplate {
-  const { customerName, metadata } = ctx
+  const { customerName, customerEmail, metadata } = ctx
   const company = (metadata.company as string) || ''
 
-  const companyRef = company ? ` at ${company}` : ''
   const name = customerName === 'Valued Customer' ? '' : customerName
   const greetName = name || (company ? company : '')
   const greetLine = greetName ? p(`Hey ${greetName},`) : p(`Hey there,`)
@@ -140,13 +157,14 @@ export function lead_nurture(ctx: AutomationContext): AutomationTemplate {
       p(`Our products are designed to pay for themselves — and give you and your employees time and money back to focus on growing the business. We can answer the phone 24/7, automate back-office operations, help with content, keep finances organized, handle client onboarding and follow-ups, invoicing and payment reminders, and more. We're expanding our portfolio every day.`),
       p(`We offer a risk-free 30-day trial to show you how we can take ${companyMention} to the next level. We build it custom for you. If you like it, it's all yours. If not, no hard feelings.`),
       wesSignoff(),
-    ].join('')),
+    ].join(''), customerEmail),
+    unsubscribeUrl: unsubscribeUrl(customerEmail),
   }
 }
 
 // ── appointment_reminder ─────────────────────────────────────
 export function appointment_reminder(ctx: AutomationContext): AutomationTemplate {
-  const { businessName, customerName, metadata } = ctx
+  const { businessName, customerName, customerEmail, metadata } = ctx
   const serviceType = (metadata.service_type as string) || 'your appointment'
   const appointmentDate = (metadata.appointment_date as string) || 'tomorrow'
   const appointmentTime = (metadata.appointment_time as string) || ''
@@ -169,18 +187,17 @@ export function appointment_reminder(ctx: AutomationContext): AutomationTemplate
       p(`We'll make sure everything goes smoothly. ${rescheduleStr}`),
       p(`See you soon!`),
       signoff(businessName),
-    ].join('')),
+    ].join(''), customerEmail),
+    unsubscribeUrl: unsubscribeUrl(customerEmail),
   }
 }
 
 // ── prospect_outreach ────────────────────────────────────────
 export function prospect_outreach(ctx: AutomationContext): AutomationTemplate {
-  const { customerName, metadata } = ctx
+  const { customerName, customerEmail, metadata } = ctx
   const company = (metadata.company as string) || ''
 
-  const companyRef = company ? ` at ${company}` : ''
   const name = customerName === 'Valued Customer' ? '' : customerName
-  // Prefer name, fall back to company, fall back to generic
   const greetName = name || (company ? company : '')
   const greetLine = greetName ? p(`Hey ${greetName},`) : p(`Hey there,`)
   const companyMention = company || 'your business'
@@ -194,7 +211,8 @@ export function prospect_outreach(ctx: AutomationContext): AutomationTemplate {
       p(`Our products are designed to pay for themselves — and give you and your employees time and money back to focus on growing the business. We can answer the phone 24/7, automate back-office operations, help with content, keep finances organized, handle client onboarding and follow-ups, invoicing and payment reminders, and more. We're expanding our portfolio every day.`),
       p(`We offer a risk-free 30-day trial to show you how we can take ${companyMention} to the next level. We build it custom for you. If you like it, it's all yours. If not, no hard feelings.`),
       wesSignoff(),
-    ].join('')),
+    ].join(''), customerEmail),
+    unsubscribeUrl: unsubscribeUrl(customerEmail),
   }
 }
 
