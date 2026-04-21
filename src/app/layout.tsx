@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { inter, jetbrainsMono } from './fonts'
+import { sora, ibmPlexMono } from './fonts'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -26,8 +26,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-[#0B1120] text-slate-50`}>
-        <div className="bg-grid fixed inset-0 pointer-events-none z-0" />
+      <body className={`${sora.variable} ${ibmPlexMono.variable} font-sans antialiased`}>
+        <div className="app-atmosphere" />
+        <div className="bg-grid fixed inset-0 pointer-events-none z-0 opacity-30" />
         <div className="relative z-10">
           {children}
         </div>

@@ -54,7 +54,7 @@ import { demoMetrics } from '@/lib/demo-data'
 // Constants
 // ---------------------------------------------------------------------------
 
-const cardClass = 'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
+const cardClass = 'premium-card rounded-2xl p-6'
 
 // ---------------------------------------------------------------------------
 // StatCard
@@ -88,9 +88,9 @@ function StatCard({
   return (
     <div className={cardClass}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-slate-400">{label}</p>
-        <div className="p-2 rounded-lg bg-[rgba(45,212,191,0.08)]">
-          <Icon className="h-4 w-4 text-teal-400" />
+        <p className="text-sm text-[#a6b4cf]">{label}</p>
+        <div className="rounded-lg bg-[rgba(23,207,178,0.1)] p-2">
+          <Icon className="h-4 w-4 text-[#17cfb2]" />
         </div>
       </div>
       <p
@@ -101,7 +101,7 @@ function StatCard({
         {value}
       </p>
       {comparison && (
-        <p className="text-sm text-slate-400 mt-1 flex items-center gap-1">
+        <p className="mt-1 flex items-center gap-1 text-sm text-[#a6b4cf]">
           {trend === 'up' && <ArrowUpRight className="h-4 w-4 text-green-400" />}
           {trend === 'down' && <ArrowDownRight className="h-4 w-4 text-red-400" />}
           <span className={trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : ''}>
@@ -109,7 +109,7 @@ function StatCard({
           </span>
         </p>
       )}
-      {subtext && <p className="text-xs text-slate-500 mt-1">{subtext}</p>}
+      {subtext && <p className="mt-1 text-xs text-[#6f7f9d]">{subtext}</p>}
       {insight && visible && (
         <div className="mt-3">
           <InsightBadge text={insight.text} type={insight.type} />
@@ -397,14 +397,16 @@ export default function CommandCenterPage() {
   const leadSourceInsight = insightForConversion(metrics.conversionRate)
 
   return (
-    <div className="space-y-8">
+    <div className="animate-page-enter space-y-8">
       {/* ------------------------------------------------------------------ */}
       {/* Header                                                               */}
       {/* ------------------------------------------------------------------ */}
-      <div className="flex items-start justify-between">
+      <div className="premium-card rounded-2xl p-6 sm:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
-          <p className="text-slate-400 mt-1">
+          <p className="premium-kicker mb-2">Executive Overview</p>
+          <h1 className="premium-title text-3xl font-bold tracking-tight gradient-text">Command Center</h1>
+          <p className="mt-2 text-[#a6b4cf]">
             {greeting}, {firstName}. Here&apos;s what&apos;s happening.
           </p>
         </div>
@@ -412,10 +414,10 @@ export default function CommandCenterPage() {
           {/* Revenue Sparkline */}
           {orgId && <RevenueSparkline organizationId={orgId} />}
           {/* Connection status */}
-          <div className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5 border ${
+          <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
             connected
-              ? 'bg-green-500/10 border-green-500/20 text-green-400'
-              : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+              ? 'border-green-500/30 bg-green-500/10 text-green-300'
+              : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-300'
           }`}>
             {connected ? (
               <><Wifi className="h-3.5 w-3.5" /> Live</>
@@ -424,6 +426,7 @@ export default function CommandCenterPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
 
       {/* ------------------------------------------------------------------ */}
@@ -500,7 +503,7 @@ export default function CommandCenterPage() {
       {/* ------------------------------------------------------------------ */}
       {/* At-Risk Alerts Strip                                                 */}
       {/* ------------------------------------------------------------------ */}
-      <div className="bg-[rgba(148,163,184,0.02)] border border-[rgba(148,163,184,0.07)] rounded-xl px-4 py-3">
+      <div className="premium-card rounded-xl px-4 py-3">
         <AtRiskAlerts organizationId={orgId} />
       </div>
 
@@ -513,7 +516,7 @@ export default function CommandCenterPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <GitFork className="h-5 w-5 text-teal-400" />
-              <h2 className="text-lg font-semibold">Pipeline Funnel</h2>
+              <h2 className="text-lg font-semibold text-[#ecf3ff]">Pipeline Funnel</h2>
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span className="font-medium text-slate-400">Count</span>
@@ -532,7 +535,7 @@ export default function CommandCenterPage() {
         <div className={cardClass}>
           <div className="flex items-center gap-2 mb-4">
             <Users className="h-5 w-5 text-teal-400" />
-            <h2 className="text-lg font-semibold">Lead Sources</h2>
+            <h2 className="text-lg font-semibold text-[#ecf3ff]">Lead Sources</h2>
           </div>
           {/* Lead source insight badge */}
           <div className="mb-4">
@@ -564,16 +567,16 @@ export default function CommandCenterPage() {
           <div className={cardClass}>
             <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => router.push('/dashboard/leads')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/leads')} className="cursor-pointer flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[rgba(23,207,178,0.35)] bg-[rgba(23,207,178,0.16)] py-2 text-sm font-semibold text-[#71ecd8] transition-colors hover:bg-[rgba(23,207,178,0.24)]">
                 <Plus className="h-4 w-4" />Add Lead
               </button>
-              <button onClick={() => router.push('/dashboard/schedule')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/schedule')} className="cursor-pointer flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[rgba(23,207,178,0.35)] bg-[rgba(23,207,178,0.16)] py-2 text-sm font-semibold text-[#71ecd8] transition-colors hover:bg-[rgba(23,207,178,0.24)]">
                 <CalendarPlus className="h-4 w-4" />Schedule
               </button>
-              <button onClick={() => router.push('/dashboard/leads')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/leads')} className="cursor-pointer flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[rgba(23,207,178,0.35)] bg-[rgba(23,207,178,0.16)] py-2 text-sm font-semibold text-[#71ecd8] transition-colors hover:bg-[rgba(23,207,178,0.24)]">
                 <Mail className="h-4 w-4" />Follow-Up
               </button>
-              <button onClick={() => router.push('/dashboard/reports')} className="cursor-pointer flex items-center justify-center gap-2 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 min-h-[44px] py-2 text-sm font-medium hover:bg-teal-600/30 transition-colors">
+              <button onClick={() => router.push('/dashboard/reports')} className="cursor-pointer flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[rgba(23,207,178,0.35)] bg-[rgba(23,207,178,0.16)] py-2 text-sm font-semibold text-[#71ecd8] transition-colors hover:bg-[rgba(23,207,178,0.24)]">
                 <FileBarChart className="h-4 w-4" />Report
               </button>
             </div>

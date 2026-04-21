@@ -28,6 +28,8 @@ import {
   ChevronDown,
   Menu,
   X,
+  Sparkles,
+  ArrowRight,
   Bot,
   GitFork,
   UserPlus,
@@ -52,6 +54,9 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useFieldMode } from '@/components/dashboard/field-mode/field-mode-toggle'
 import { FieldModeView } from '@/components/dashboard/field-mode/field-mode-view'
 import { ToastProvider } from '@/components/ui/toast'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { ShortcutsHelp } from '@/components/dashboard/shortcuts-help'
+import { ThemeProvider } from '@/lib/theme-context'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -537,17 +542,110 @@ function NavSections({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Focus Rail                                                         */
+/* ------------------------------------------------------------------ */
+
+function FocusRail({
+  pathname,
+  currentTier,
+  onNewLead,
+  onLogCall,
+  onBookJob,
+}: {
+  pathname: string
+  currentTier: OrgTier
+  onNewLead: () => void
+  onLogCall: () => void
+  onBookJob: () => void
+}) {
+  const contextLabel = pathname.startsWith('/dashboard/invoicing')
+    ? 'Collections Focus'
+    : pathname.startsWith('/dashboard/schedule')
+      ? 'Today Execution'
+      : pathname.startsWith('/dashboard/leads')
+        ? 'Pipeline Focus'
+        : pathname.startsWith('/dashboard/reports')
+          ? 'Performance Focus'
+          : 'Growth Focus'
+
+  const quickActions = [
+    { label: 'New Lead', onClick: onNewLead },
+    { label: 'Log Call', onClick: onLogCall },
+    { label: 'Book Job', onClick: onBookJob },
+  ]
+
+  const shortcuts = [
+    { keys: 'Ctrl + K', label: 'Command Palette' },
+    { keys: 'N', label: 'New Lead' },
+    { keys: 'L', label: 'Log Call' },
+    { keys: '?', label: 'Shortcuts Help' },
+  ]
+
+  return (
+    <aside className="hidden xl:flex xl:w-72 xl:flex-col xl:gap-4 xl:border-l xl:border-[rgba(147,162,190,0.18)] xl:bg-[rgba(11,18,31,0.56)] xl:p-4 xl:backdrop-blur-xl">
+      <section className="premium-card p-4">
+        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f7b267]">
+          <Sparkles size={13} />
+          Executive Pulse
+        </div>
+        <p className="text-sm font-semibold text-[#ecf3ff]">{contextLabel}</p>
+        <p className="mt-2 text-xs leading-relaxed text-[#a6b4cf]">
+          {TIER_LABELS[currentTier]} workspace is active. Keep operations moving with direct actions and keyboard speed paths.
+        </p>
+      </section>
+
+      <section className="premium-card p-4">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#6f7f9d]">
+          Fast Actions
+        </h3>
+        <div className="space-y-2">
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={action.onClick}
+              className="flex w-full items-center justify-between rounded-xl border border-[rgba(147,162,190,0.2)] bg-[rgba(12,20,35,0.8)] px-3 py-2 text-sm font-medium text-[#d8e4fb] transition-all hover:border-[rgba(23,207,178,0.38)] hover:text-[#ecf3ff]"
+            >
+              {action.label}
+              <ArrowRight size={14} className="text-[#17cfb2]" />
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="premium-card p-4">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#6f7f9d]">
+          Keyboard
+        </h3>
+        <div className="space-y-2">
+          {shortcuts.map((shortcut) => (
+            <div key={shortcut.keys} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-2.5 py-2">
+              <span className="text-xs text-[#a6b4cf]">{shortcut.label}</span>
+              <kbd className="rounded-md border border-[rgba(147,162,190,0.32)] bg-[rgba(8,15,27,0.8)] px-2 py-0.5 font-mono text-[11px] text-[#e9f4ff]">
+                {shortcut.keys}
+              </kbd>
+            </div>
+          ))}
+        </div>
+      </section>
+    </aside>
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /*  Dashboard Layout                                                   */
 /* ------------------------------------------------------------------ */
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <ChatProvider>
-          <DashboardShell>{children}</DashboardShell>
-        </ChatProvider>
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <ChatProvider>
+            <DashboardShell>{children}</DashboardShell>
+          </ChatProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </AuthProvider>
   )
 }
@@ -564,6 +662,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const [newLeadOpen, setNewLeadOpen] = useState(false)
   const [logCallOpen, setLogCallOpen] = useState(false)
   const [bookJobOpen, setBookJobOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [fieldMode, setFieldMode] = useFieldMode()
 
   const mobileMenuRef = useRef<HTMLDivElement>(null)
@@ -580,6 +679,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const badges = useSidebarBadges()
 
+  const openCommandPalette = useCallback(() => {
+    if (typeof window === 'undefined') return
+    window.dispatchEvent(new Event('oios:command-palette-open'))
+  }, [])
+
   const toggleSection = useCallback((id: string) => {
     setCollapsedSections((prev) => {
       const next = new Set(prev)
@@ -592,6 +696,14 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       return next
     })
   }, [])
+
+  useKeyboardShortcuts({
+    onNewLead: () => setNewLeadOpen(true),
+    onLogCall: () => setLogCallOpen(true),
+    onSchedule: () => router.push('/dashboard/schedule'),
+    onFocusSearch: openCommandPalette,
+    onShowHelp: () => setShortcutsOpen(true),
+  })
 
   /* Close mobile menu on route change */
   useEffect(() => { setMobileMenuOpen(false) }, [pathname])
@@ -627,6 +739,27 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, organization, pathname, router])
 
+  /* Route-level guard for tier-locked pages */
+  useEffect(() => {
+    if (isLoading) return
+    if (!pathname.startsWith('/dashboard')) return
+    if (pathname.startsWith('/dashboard/onboarding') || pathname.startsWith('/dashboard/admin')) return
+
+    const matchedItem = NAV_ITEMS
+      .slice()
+      .sort((a, b) => b.href.length - a.href.length)
+      .find((item) => isActiveLink(pathname, item.href))
+
+    if (!matchedItem) return
+
+    const lockedByTier = !isTierUnlocked(matchedItem.minTier, CURRENT_TIER)
+    const lockedByAdmin = Boolean(matchedItem.superAdminOnly && !isSuperAdmin)
+
+    if (lockedByTier || lockedByAdmin) {
+      router.replace('/dashboard/billing')
+    }
+  }, [isLoading, pathname, CURRENT_TIER, isSuperAdmin, router])
+
   const toggleSidebar = useCallback(() => setSidebarCollapsed((c) => !c), [])
   const toggleMobileMenu = useCallback(() => setMobileMenuOpen((o) => !o), [])
 
@@ -648,7 +781,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0B1120]">
+    <div className="premium-shell flex h-screen overflow-hidden">
       {/* Modals */}
       <NewLeadModal open={newLeadOpen} onClose={() => setNewLeadOpen(false)} />
       <LogCallModal open={logCallOpen} onClose={() => setLogCallOpen(false)} />
@@ -658,11 +791,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       {/*  Desktop Sidebar                                              */}
       {/* ============================================================ */}
       <aside
-        className="hidden md:flex flex-col glass-sidebar transition-[width] duration-300 ease-in-out"
+        className="premium-sidebar hidden md:flex flex-col transition-[width] duration-300 ease-in-out"
         style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       >
         {/* Logo area */}
-        <div className="flex h-16 items-center border-b border-[rgba(148,163,184,0.1)] px-4">
+        <div className="flex h-16 items-center border-b border-[rgba(147,162,190,0.18)] px-4">
           <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
             <span className="gradient-text text-2xl font-extrabold tracking-tight">
               {sidebarCollapsed ? 'O' : 'OIOS'}
@@ -679,7 +812,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <AIStatusIndicator collapsed={sidebarCollapsed} organizationId={organization?.id || ''} />
 
         {/* Quick Actions */}
-        <div className="border-t border-[rgba(148,163,184,0.1)]">
+        <div className="border-t border-[rgba(147,162,190,0.18)]">
           <QuickActions
             collapsed={sidebarCollapsed}
             onNewLead={() => setNewLeadOpen(true)}
@@ -689,16 +822,16 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* User section */}
-        <div className="border-t border-[rgba(148,163,184,0.1)] p-3">
+        <div className="border-t border-[rgba(147,162,190,0.18)] p-3">
           <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2DD4BF]/20 text-sm font-bold text-[#2DD4BF]">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#17cfb2]/20 text-sm font-bold text-[#17cfb2]">
               {userInitials}
             </div>
 
             {!sidebarCollapsed && (
               <div className="flex flex-1 flex-col overflow-hidden">
-                <span className="truncate text-sm font-semibold text-[#F8FAFC]">{userName}</span>
-                <span className="truncate text-xs text-[#64748B] capitalize">{userRole}</span>
+                <span className="truncate text-sm font-semibold text-[#ecf3ff]">{userName}</span>
+                <span className="truncate text-xs text-[#6f7f9d] capitalize">{userRole}</span>
               </div>
             )}
 
@@ -706,7 +839,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={signOut}
-                className="flex-shrink-0 rounded-md p-1.5 text-[#64748B] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
+                className="flex-shrink-0 rounded-md p-1.5 text-[#6f7f9d] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff]"
                 title="Log out"
               >
                 <LogOut size={16} />
@@ -716,11 +849,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Collapse toggle */}
-        <div className="border-t border-[rgba(148,163,184,0.1)] p-2">
+        <div className="border-t border-[rgba(147,162,190,0.18)] p-2">
           <button
             type="button"
             onClick={toggleSidebar}
-            className="flex w-full items-center justify-center rounded-md p-2 text-[#64748B] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
+            className="flex w-full items-center justify-center rounded-md p-2 text-[#6f7f9d] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff]"
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronLeft
@@ -740,19 +873,19 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <aside
         ref={mobileMenuRef}
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col glass-sidebar transition-transform duration-300 ease-in-out md:hidden ${
+        className={`premium-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-transform duration-300 ease-in-out md:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Mobile header */}
-        <div className="flex h-16 items-center justify-between border-b border-[rgba(148,163,184,0.1)] px-4">
+        <div className="flex h-16 items-center justify-between border-b border-[rgba(147,162,190,0.18)] px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="gradient-text text-2xl font-extrabold tracking-tight">OIOS</span>
           </Link>
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="rounded-md p-1.5 text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
+            className="rounded-md p-1.5 text-[#a6b4cf] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff]"
           >
             <X size={20} />
           </button>
@@ -767,7 +900,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         <AIStatusIndicator collapsed={false} organizationId={organization?.id || ''} />
 
         {/* Quick Actions */}
-        <div className="border-t border-[rgba(148,163,184,0.1)]">
+        <div className="border-t border-[rgba(147,162,190,0.18)]">
           <QuickActions
             collapsed={false}
             onNewLead={() => { setMobileMenuOpen(false); setNewLeadOpen(true) }}
@@ -777,19 +910,19 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* User section */}
-        <div className="border-t border-[rgba(148,163,184,0.1)] p-3">
+        <div className="border-t border-[rgba(147,162,190,0.18)] p-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2DD4BF]/20 text-sm font-bold text-[#2DD4BF]">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#17cfb2]/20 text-sm font-bold text-[#17cfb2]">
               {userInitials}
             </div>
             <div className="flex flex-1 flex-col overflow-hidden">
-              <span className="truncate text-sm font-semibold text-[#F8FAFC]">{userName}</span>
-              <span className="truncate text-xs text-[#64748B] capitalize">{userRole}</span>
+              <span className="truncate text-sm font-semibold text-[#ecf3ff]">{userName}</span>
+              <span className="truncate text-xs text-[#6f7f9d] capitalize">{userRole}</span>
             </div>
             <button
               type="button"
               onClick={signOut}
-              className="flex-shrink-0 rounded-md p-1.5 text-[#64748B] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
+              className="flex-shrink-0 rounded-md p-1.5 text-[#6f7f9d] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff]"
               title="Log out"
             >
               <LogOut size={16} />
@@ -803,11 +936,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* ============================================================ */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="hidden md:flex flex-shrink-0 items-center gap-3 h-16 glass-header px-4 sm:gap-4 sm:px-6">
+        <header className="premium-header hidden h-16 flex-shrink-0 items-center gap-3 px-4 sm:gap-4 sm:px-6 md:flex">
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="rounded-md p-1.5 text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC] md:hidden"
+            className="rounded-md p-1.5 text-[#a6b4cf] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff] md:hidden"
             aria-label="Open navigation"
           >
             <Menu size={22} />
@@ -817,13 +950,22 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="relative flex-1 max-w-md">
             <Search
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6f7f9d]"
             />
             <input
               type="text"
-              placeholder="Search or press ⌘K..."
-              className="h-9 w-full rounded-lg border border-[rgba(148,163,184,0.1)] bg-[#0B1120] pl-9 pr-3 text-sm text-[#F8FAFC] placeholder-[#64748B] outline-none transition-colors focus:border-[#2DD4BF]/40 focus:ring-1 focus:ring-[#2DD4BF]/20"
+              readOnly
+              onFocus={openCommandPalette}
+              onClick={openCommandPalette}
+              placeholder="Search or press Ctrl+K..."
+              aria-label="Open command palette"
+              className="premium-input h-9 w-full rounded-lg border border-[rgba(147,162,190,0.22)] bg-[rgba(8,15,27,0.82)] pl-9 pr-3 text-sm text-[#ecf3ff] placeholder-[#6f7f9d] outline-none transition-colors focus:border-[rgba(23,207,178,0.45)] focus:ring-1 focus:ring-[rgba(23,207,178,0.28)]"
             />
+          </div>
+
+          <div className="hidden lg:flex items-center gap-2 rounded-full border border-[rgba(147,162,190,0.2)] bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold text-[#f7b267]">
+            <Sparkles size={12} />
+            {pathname.startsWith('/dashboard/leads') ? 'Pipeline Acceleration' : pathname.startsWith('/dashboard/schedule') ? 'Field Execution' : pathname.startsWith('/dashboard/invoicing') ? 'Collections Control' : 'Executive View'}
           </div>
 
           <div className="flex-1" />
@@ -836,7 +978,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => setNewLeadOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2DD4BF] text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all hover:bg-[#5EEAD4] hover:shadow-[#2DD4BF]/30 active:scale-95"
+            className="premium-button flex h-9 w-9 items-center justify-center rounded-lg"
             aria-label="New Lead"
             title="New Lead"
           >
@@ -857,16 +999,31 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <main className={`flex-1 overflow-y-auto p-4 pb-24 sm:pb-0 sm:px-6 ${fieldMode ? 'hidden md:block' : ''}`}>
-          <Breadcrumbs />
-          {children}
-        </main>
+        <div className={`premium-main flex-1 overflow-hidden ${fieldMode ? '' : 'xl:grid xl:grid-cols-[minmax(0,1fr)_18rem]'}`}>
+          <main className={`flex-1 overflow-y-auto p-4 pb-24 sm:px-6 sm:pb-0 ${fieldMode ? 'hidden md:block' : ''}`}>
+            <div className="mb-4 mt-1">
+              <Breadcrumbs />
+            </div>
+            {children}
+          </main>
+          {!fieldMode && (
+            <FocusRail
+              pathname={pathname}
+              currentTier={CURRENT_TIER}
+              onNewLead={() => setNewLeadOpen(true)}
+              onLogCall={() => setLogCallOpen(true)}
+              onBookJob={() => setBookJobOpen(true)}
+            />
+          )}
+        </div>
 
         <BottomNav onFieldModeClick={() => setFieldMode(!fieldMode)} />
         <ChatFAB />
         <AmbientParticles />
         <CommandPalette />
+        {shortcutsOpen && <ShortcutsHelp onClose={() => setShortcutsOpen(false)} />}
       </div>
     </div>
   )
 }
+

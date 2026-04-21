@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createSupabaseServiceClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const svc = supabase as any
 
     // Fetch target subscriptions

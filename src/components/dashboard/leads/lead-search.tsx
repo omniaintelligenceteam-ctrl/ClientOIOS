@@ -119,7 +119,7 @@ export function LeadSearch({
           onFocus={() => { if (results.length > 0) setOpen(true) }}
           onKeyDown={handleKeyDown}
           placeholder="Search leads..."
-          className="h-10 w-full rounded-xl border border-white/[0.06] bg-white/[0.03] pl-9 pr-8 text-sm text-[#F8FAFC] placeholder-slate-500 outline-none transition-colors focus:border-[#2DD4BF]/50"
+          className="premium-input h-10 w-full rounded-xl border border-[rgba(147,162,190,0.22)] bg-[rgba(10,17,30,0.72)] pl-9 pr-8 text-sm text-[#ecf3ff] placeholder-[#6f7f9d] outline-none transition-colors focus:border-[rgba(23,207,178,0.52)]"
         />
         {query && (
           <button onClick={() => { setQuery(''); setResults([]); setOpen(false) }}
@@ -131,12 +131,12 @@ export function LeadSearch({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03] shadow-2xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-[rgba(147,162,190,0.2)] bg-[rgba(11,18,31,0.96)] shadow-2xl backdrop-blur-xl">
           {loading && (
             <div className="px-4 py-3 text-center text-xs text-slate-500">Searching...</div>
           )}
           {!loading && results.length === 0 && query && (
-            <div className="px-4 py-4 text-center text-sm text-slate-500">No results for "{query}"</div>
+            <div className="px-4 py-4 text-center text-sm text-slate-500">No results for &quot;{query}&quot;</div>
           )}
           {!loading && results.map((lead, i) => (
             <button

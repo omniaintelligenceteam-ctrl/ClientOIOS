@@ -1,7 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Phone, User, Clock, FileText } from 'lucide-react'
+import { Phone, User, Clock, FileText } from 'lucide-react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/components/ui/toast'
+import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/ui/modal'
+import type { CallDirection, CallStatus } from '@/lib/types'
 
 interface LogCallModalProps {
   open: boolean
@@ -9,6 +14,8 @@ interface LogCallModalProps {
 }
 
 export function LogCallModal({ open, onClose }: LogCallModalProps) {
+  const { organization } = useAuth()
+  const toast = useToast()
   const [form, setForm] = useState({
     caller_name: '',
     caller_phone: '',
@@ -17,40 +24,85 @@ export function LogCallModal({ open, onClose }: LogCallModalProps) {
     direction: 'inbound',
     status: 'answered',
   })
+  const [saving, setSaving] = useState(false)
 
-  if (!open) return null
+  function resetForm() {
+    setForm({
+      caller_name: '',
+      caller_phone: '',
+      duration_seconds: '',
+      notes: '',
+      direction: 'inbound',
+      status: 'answered',
+    })
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: wire to Supabase insert
+    if (!organization?.id) {
+      toast.error('Organization not found. Please refresh and try again.')
+      return
+    }
+
+    const supabase = createSupabaseBrowserClient()
+    if (!supabase) {
+      toast.error('Could not connect to database.')
+      return
+    }
+
+    const duration = Number.isFinite(Number(form.duration_seconds))
+      ? Math.max(0, Number(form.duration_seconds))
+      : 0
+    const end = new Date()
+    const start = new Date(end.getTime() - duration * 1000)
+
+    setSaving(true)
+    const { error } = await supabase.from('calls').insert({
+      organization_id: organization.id,
+      caller_name: form.caller_name.trim() || null,
+      caller_phone: form.caller_phone.trim(),
+      direction: form.direction as CallDirection,
+      status: form.status as CallStatus,
+      duration_seconds: duration,
+      started_at: start.toISOString(),
+      ended_at: end.toISOString(),
+      transcript_summary: form.notes.trim() || null,
+      sentiment: 'neutral',
+      ai_agent_handled: false,
+      escalated_to_human: false,
+      tags: ['manual_log'],
+      created_at: end.toISOString(),
+    })
+    setSaving(false)
+
+    if (error) {
+      toast.error('Failed to log call. Please try again.')
+      return
+    }
+
+    toast.success('Call logged successfully.')
+    resetForm()
     onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-white/[0.06] bg-white/[0.03] p-6 shadow-2xl">
-        {/* Header */}
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2DD4BF]/10">
-              <Phone size={18} className="text-[#2DD4BF]" />
-            </div>
-            <h2 className="text-lg font-semibold text-[#F8FAFC]">Log Call</h2>
+    <Modal open={open} onClose={onClose} size="md">
+      <ModalHeader
+        onClose={onClose}
+        icon={
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2DD4BF]/10">
+            <Phone size={18} className="text-[#2DD4BF]" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-1.5 text-[#64748B] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        }
+      >
+        Log Call
+      </ModalHeader>
+      <form onSubmit={handleSubmit} className="flex flex-col">
+        <ModalBody className="flex flex-col gap-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-[#94A3B8]">Caller Name</label>
             <div className="relative">
@@ -139,23 +191,24 @@ export function LogCallModal({ open, onClose }: LogCallModalProps) {
             </div>
           </div>
 
-          <div className="mt-1 flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-[rgba(148,163,184,0.1)] py-2 text-sm font-medium text-[#94A3B8] transition-colors hover:bg-white/[0.04] hover:text-[#F8FAFC]"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 rounded-lg bg-[#2DD4BF] py-2 text-sm font-semibold text-[#0B1120] transition-all hover:bg-[#5EEAD4] active:scale-95"
-            >
-              Log Call
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </ModalBody>
+        <ModalFooter className="mt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 rounded-lg border border-[rgba(148,163,184,0.1)] py-2 text-sm font-medium text-[#94A3B8] transition-colors hover:bg-white/[0.04] hover:text-[#F8FAFC]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 rounded-lg bg-[#2DD4BF] py-2 text-sm font-semibold text-[#0B1120] transition-all hover:bg-[#5EEAD4] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? 'Saving...' : 'Log Call'}
+          </button>
+        </ModalFooter>
+      </form>
+    </Modal>
   )
 }

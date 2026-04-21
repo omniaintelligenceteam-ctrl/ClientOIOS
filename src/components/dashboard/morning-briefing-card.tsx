@@ -158,7 +158,7 @@ export function MorningBriefingCard({ organizationId }: MorningBriefingCardProps
 
       try {
         const today = getTodayString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { data, error } = await (supabase as any)
           .from('daily_reports')
           .select('*')

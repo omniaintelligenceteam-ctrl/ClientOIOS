@@ -87,7 +87,7 @@ function computeSuggestion(
   let mid = base * zipMod
 
   let sampleCount = 12
-  let basisParts: string[] = [`${sampleCount} similar jobs`]
+  const basisParts: string[] = [`${sampleCount} similar jobs`]
 
   // Blend in customer history if available
   if (customerHistory && customerHistory.jobCount > 0) {

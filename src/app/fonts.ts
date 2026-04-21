@@ -1,16 +1,16 @@
-// Phase Alpha: Design System Foundation — Font Configuration
-import { Inter, JetBrains_Mono } from 'next/font/google'
+// Phase Omega: Premium Typography System
+import { Sora, IBM_Plex_Mono } from 'next/font/google'
 
-export const inter = Inter({
+export const sora = Sora({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-display',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700', '800'],
 })
 
-export const jetbrainsMono = JetBrains_Mono({
+export const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
-  weight: ['400', '700'],
+  weight: ['400', '500', '700'],
 })

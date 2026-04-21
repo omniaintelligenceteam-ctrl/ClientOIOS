@@ -166,7 +166,7 @@ export async function GET(request: Request) {
   // ---------------------------------------------------------------------------
   // Fetch from business_metrics_daily
   // ---------------------------------------------------------------------------
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = supabase as any
 
   const { data: rawRows, error } = await svc

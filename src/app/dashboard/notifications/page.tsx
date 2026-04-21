@@ -159,7 +159,7 @@ export default function NotificationsPage() {
     setOffset(0)
     setHasMore(true)
     fetchNotifications(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [organizationId, userId, activeTab])
 
   async function markAsRead(ids: string[]) {

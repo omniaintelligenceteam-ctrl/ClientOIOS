@@ -95,7 +95,7 @@ export function IntentClassifier({ transcriptSummary, onIntentDetected }: Intent
     if (result) {
       onIntentDetected?.(result.intent, result.actions)
     }
-  }, [transcriptSummary]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [transcriptSummary])  
 
   if (!transcriptSummary || !result) {
     return (

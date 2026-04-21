@@ -82,7 +82,7 @@ export function useRealtimeFeed(
     return () => {
       supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [organizationId])
 
   return { activities, connected }

@@ -157,10 +157,10 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
   // While loading auth, show nothing
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0B1120]">
+      <div className="premium-shell flex h-screen items-center justify-center">
         <div className="flex items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#2DD4BF] border-t-transparent" />
-          <span className="text-[#94A3B8] text-sm">Loading...</span>
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#17cfb2] border-t-transparent" />
+          <span className="text-[#a6b4cf] text-sm">Loading...</span>
         </div>
       </div>
     )
@@ -169,16 +169,16 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
   // Super admin gate
   if (!isSuperAdmin) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0B1120]">
-        <div className="bg-[rgba(15,23,42,0.6)] border border-[rgba(148,163,184,0.1)] rounded-xl p-8 max-w-md text-center">
+      <div className="premium-shell flex h-screen items-center justify-center">
+        <div className="premium-card max-w-md rounded-xl p-8 text-center">
           <ShieldAlert size={48} className="mx-auto mb-4 text-red-400" />
-          <h1 className="text-xl font-bold text-[#F8FAFC] mb-2">Access Denied</h1>
-          <p className="text-[#94A3B8] mb-6">
+          <h1 className="mb-2 text-xl font-bold text-[#ecf3ff]">Access Denied</h1>
+          <p className="mb-6 text-[#a6b4cf]">
             The Command Center is restricted to super administrators. Contact your system administrator if you believe this is an error.
           </p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-lg bg-[#2DD4BF] px-4 py-2 text-sm font-semibold text-[#0B1120] transition-colors hover:bg-[#5EEAD4]"
+            className="premium-button inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold"
           >
             Return to Dashboard
           </Link>
@@ -406,12 +406,12 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0B1120]">
+    <div className="premium-shell flex h-screen overflow-hidden">
       {/* ============================================================ */}
       {/*  Desktop Sidebar                                              */}
       {/* ============================================================ */}
       <aside
-        className="hidden md:flex flex-col border-r border-white/[0.06] bg-white/[0.03] transition-[width] duration-300 ease-in-out"
+        className="premium-sidebar hidden md:flex flex-col transition-[width] duration-300 ease-in-out"
         style={{ width: sidebarWidth, minWidth: sidebarWidth }}
       >
         {renderSidebarContent(sidebarCollapsed)}
@@ -426,7 +426,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
 
       <aside
         ref={mobileMenuRef}
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.06] bg-white/[0.03] transition-transform duration-300 ease-in-out md:hidden ${
+        className={`premium-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col transition-transform duration-300 ease-in-out md:hidden ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -435,7 +435,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="rounded-md p-1.5 text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC]"
+            className="rounded-md p-1.5 text-[#a6b4cf] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff]"
           >
             <X size={18} />
           </button>
@@ -448,12 +448,12 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
       {/* ============================================================ */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-[rgba(148,163,184,0.1)] bg-black/[0.6] px-4 backdrop-blur-sm sm:px-6">
+        <header className="premium-header flex h-14 flex-shrink-0 items-center gap-3 px-4 sm:px-6">
           {/* Mobile hamburger */}
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="rounded-md p-1.5 text-[#94A3B8] transition-colors hover:bg-white/[0.06] hover:text-[#F8FAFC] md:hidden"
+            className="rounded-md p-1.5 text-[#a6b4cf] transition-colors hover:bg-white/[0.08] hover:text-[#ecf3ff] md:hidden"
             aria-label="Open navigation"
           >
             <Menu size={20} />
@@ -461,13 +461,13 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
 
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 text-sm">
-            <Link href="/command-center" className="text-[#94A3B8] hover:text-[#F8FAFC] transition-colors">
+            <Link href="/command-center" className="text-[#a6b4cf] transition-colors hover:text-[#ecf3ff]">
               Command Center
             </Link>
             {currentOrgId && (
               <>
-                <span className="text-[#64748B]">/</span>
-                <span className="text-[#F8FAFC] font-medium truncate max-w-[200px]">
+                <span className="text-[#6f7f9d]">/</span>
+                <span className="max-w-[200px] truncate font-medium text-[#ecf3ff]">
                   {orgs.find((o) => o.id === currentOrgId)?.name || 'Organization'}
                 </span>
               </>
@@ -478,13 +478,13 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
 
           {/* Connection status */}
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-[10px] text-[#64748B] hidden sm:inline">Live</span>
+            <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+            <span className="hidden text-[10px] text-[#6f7f9d] sm:inline">Live</span>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <main className="premium-main flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>
   )

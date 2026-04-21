@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const statusFilter = searchParams.get('status')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let query = (supabase as any)
       .from('automation_queue')
       .select('*')
@@ -98,7 +98,7 @@ export async function PATCH(request: Request) {
             status: 'rejected',
           }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: item, error } = await (supabase as any)
       .from('automation_queue')
       .update(updates)

@@ -8,12 +8,14 @@ import {
   BarChart3, Settings, Phone, FileText, Star, TrendingUp, Home,
   UserPlus, PhoneCall, BookOpen, Clock, Hash,
 } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
 type CommandSection = 'navigation' | 'actions' | 'recent'
+type OrgTier = 'answering_service' | 'receptionist' | 'office_manager' | 'coo' | 'ai_coo' | 'growth_engine'
 
 interface Command {
   id: string
@@ -24,30 +26,45 @@ interface Command {
   path?: string
   action?: () => void
   keywords?: string[]
+  minTier?: OrgTier
 }
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
+const TIER_RANK: Record<OrgTier, number> = {
+  answering_service: 1,
+  receptionist: 1,
+  office_manager: 2,
+  coo: 3,
+  ai_coo: 3,
+  growth_engine: 3,
+}
+
+function isTierUnlocked(requiredTier: OrgTier | undefined, currentTier: OrgTier): boolean {
+  if (!requiredTier) return true
+  return TIER_RANK[currentTier] >= TIER_RANK[requiredTier]
+}
+
 const NAV_COMMANDS: Omit<Command, 'section'>[] = [
   { id: 'nav-dashboard', label: 'Dashboard', description: 'Overview & KPIs', icon: Home, path: '/dashboard', keywords: ['home', 'overview'] },
-  { id: 'nav-leads', label: 'Lead Pipeline', description: 'Manage your leads', icon: TrendingUp, path: '/dashboard/leads', keywords: ['pipeline', 'prospects'] },
+  { id: 'nav-leads', label: 'Lead Pipeline', description: 'Manage your leads', icon: TrendingUp, path: '/dashboard/leads', keywords: ['pipeline', 'prospects'], minTier: 'office_manager' },
   { id: 'nav-calls', label: 'Calls', description: 'Call log & analytics', icon: Phone, path: '/dashboard/calls', keywords: ['phone', 'voicemail'] },
-  { id: 'nav-schedule', label: 'Schedule', description: 'Appointments & bookings', icon: Calendar, path: '/dashboard/schedule', keywords: ['calendar', 'appointments', 'booking'] },
-  { id: 'nav-customers', label: 'Customers', description: 'Customer database', icon: Users, path: '/dashboard/customers', keywords: ['clients', 'contacts'] },
-  { id: 'nav-invoicing', label: 'Invoicing', description: 'Invoices & payments', icon: FileText, path: '/dashboard/invoicing', keywords: ['billing', 'payments', 'invoice'] },
-  { id: 'nav-reviews', label: 'Reviews', description: 'Customer reviews', icon: Star, path: '/dashboard/reviews', keywords: ['ratings', 'feedback'] },
-  { id: 'nav-analytics', label: 'Analytics', description: 'Business insights', icon: BarChart3, path: '/dashboard/analytics', keywords: ['reports', 'metrics'] },
-  { id: 'nav-marketing', label: 'Marketing', description: 'Campaigns & outreach', icon: Zap, path: '/dashboard/marketing', keywords: ['campaigns', 'email'] },
-  { id: 'nav-ai', label: 'AI Assistant', description: 'AI business copilot', icon: MessageSquare, path: '/dashboard/ai', keywords: ['ai', 'assistant', 'bot', 'chat'] },
+  { id: 'nav-schedule', label: 'Schedule', description: 'Appointments & bookings', icon: Calendar, path: '/dashboard/schedule', keywords: ['calendar', 'appointments', 'booking'], minTier: 'office_manager' },
+  { id: 'nav-customers', label: 'Customers', description: 'Customer database', icon: Users, path: '/dashboard/customers', keywords: ['clients', 'contacts'], minTier: 'office_manager' },
+  { id: 'nav-invoicing', label: 'Invoicing', description: 'Invoices & payments', icon: FileText, path: '/dashboard/invoicing', keywords: ['billing', 'payments', 'invoice'], minTier: 'growth_engine' },
+  { id: 'nav-reviews', label: 'Reviews', description: 'Customer reviews', icon: Star, path: '/dashboard/reviews', keywords: ['ratings', 'feedback'], minTier: 'office_manager' },
+  { id: 'nav-analytics', label: 'Analytics', description: 'Business insights', icon: BarChart3, path: '/dashboard/analytics', keywords: ['reports', 'metrics'], minTier: 'office_manager' },
+  { id: 'nav-marketing', label: 'Marketing', description: 'Campaigns & outreach', icon: Zap, path: '/dashboard/marketing', keywords: ['campaigns', 'email'], minTier: 'growth_engine' },
+  { id: 'nav-ai', label: 'AI Assistant', description: 'AI business copilot', icon: MessageSquare, path: '/dashboard/ai', keywords: ['ai', 'assistant', 'bot', 'chat'], minTier: 'office_manager' },
   { id: 'nav-settings', label: 'Settings', description: 'Account & configuration', icon: Settings, path: '/dashboard/settings', keywords: ['config', 'preferences', 'account'] },
 ]
 
 const ACTION_COMMANDS: Omit<Command, 'section'>[] = [
-  { id: 'action-new-lead', label: 'New Lead', description: 'Add a new lead to pipeline', icon: UserPlus, path: '/dashboard/leads', keywords: ['add', 'create', 'prospect'] },
+  { id: 'action-new-lead', label: 'New Lead', description: 'Add a new lead to pipeline', icon: UserPlus, path: '/dashboard/leads', keywords: ['add', 'create', 'prospect'], minTier: 'office_manager' },
   { id: 'action-log-call', label: 'Log Call', description: 'Record a call manually', icon: PhoneCall, path: '/dashboard/calls', keywords: ['add call', 'record'] },
-  { id: 'action-book-job', label: 'Book Job', description: 'Schedule a new appointment', icon: BookOpen, path: '/dashboard/schedule', keywords: ['appointment', 'schedule', 'book'] },
+  { id: 'action-book-job', label: 'Book Job', description: 'Schedule a new appointment', icon: BookOpen, path: '/dashboard/schedule', keywords: ['appointment', 'schedule', 'book'], minTier: 'office_manager' },
 ]
 
 const SECTION_LABELS: Record<CommandSection, string> = {
@@ -113,6 +130,7 @@ function pushRecent(id: string) {
 /* ------------------------------------------------------------------ */
 
 export function CommandPalette() {
+  const { organization, isDemoMode } = useAuth()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState(0)
@@ -121,10 +139,20 @@ export function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  const allCommands: Command[] = useMemo(() => [
-    ...NAV_COMMANDS.map(c => ({ ...c, section: 'navigation' as CommandSection })),
-    ...ACTION_COMMANDS.map(c => ({ ...c, section: 'actions' as CommandSection })),
-  ], [])
+  const currentTier: OrgTier = isDemoMode
+    ? 'growth_engine'
+    : ((organization?.tier as OrgTier) || 'office_manager')
+
+  const allCommands: Command[] = useMemo(() => {
+    const nav = NAV_COMMANDS
+      .filter((cmd) => isTierUnlocked(cmd.minTier, currentTier))
+      .map((c) => ({ ...c, section: 'navigation' as CommandSection }))
+    const actions = ACTION_COMMANDS
+      .filter((cmd) => isTierUnlocked(cmd.minTier, currentTier))
+      .map((c) => ({ ...c, section: 'actions' as CommandSection }))
+
+    return [...nav, ...actions]
+  }, [currentTier])
 
   const close = useCallback(() => {
     setOpen(false)
@@ -151,6 +179,14 @@ export function CommandPalette() {
   }, [open, close, openPalette])
 
   useEffect(() => {
+    function openFromEvent() {
+      openPalette()
+    }
+    window.addEventListener('oios:command-palette-open', openFromEvent)
+    return () => window.removeEventListener('oios:command-palette-open', openFromEvent)
+  }, [openPalette])
+
+  useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 10)
     }
@@ -167,8 +203,13 @@ export function CommandPalette() {
         .filter(Boolean) as Command[]
       const recentWithSection = recentCmds.map(c => ({ ...c, section: 'recent' as CommandSection }))
 
-      const actionCmds = ACTION_COMMANDS.map(c => ({ ...c, section: 'actions' as CommandSection }))
-      const navCmds = NAV_COMMANDS.slice(0, 6).map(c => ({ ...c, section: 'navigation' as CommandSection }))
+      const actionCmds = allCommands
+        .filter((cmd) => cmd.section === 'actions')
+        .map((c) => ({ ...c, section: 'actions' as CommandSection }))
+      const navCmds = allCommands
+        .filter((cmd) => cmd.section === 'navigation')
+        .slice(0, 6)
+        .map((c) => ({ ...c, section: 'navigation' as CommandSection }))
 
       return [...recentWithSection, ...actionCmds, ...navCmds]
     }
@@ -224,13 +265,24 @@ export function CommandPalette() {
   }, [selected])
 
   useEffect(() => { setSelected(0) }, [query])
+  useEffect(() => {
+    if (selected >= flatList.length) {
+      setSelected(Math.max(0, flatList.length - 1))
+    }
+  }, [flatList.length, selected])
 
   if (!open) return null
 
   const sectionOrder: CommandSection[] = ['recent', 'actions', 'navigation']
 
   return (
-    <div className="fixed inset-0 z-[200]" onClick={close}>
+    <div
+      className="fixed inset-0 z-[200]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+      onClick={close}
+    >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
         className="absolute top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl px-4"
@@ -246,6 +298,7 @@ export function CommandPalette() {
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKey}
               placeholder="Search pages, actions..."
+              aria-label="Search commands"
               className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 outline-none"
             />
             <div className="flex items-center gap-2">
@@ -325,13 +378,14 @@ export function CommandPalette() {
 
           {/* Footer hints */}
           <div className="flex items-center gap-4 border-t border-[rgba(148,163,184,0.08)] px-4 py-2">
-            <span className="text-[10px] text-slate-600">↑↓ navigate</span>
-            <span className="text-[10px] text-slate-600">↵ open</span>
+            <span className="text-[10px] text-slate-600">up/down navigate</span>
+            <span className="text-[10px] text-slate-600">enter open</span>
             <span className="text-[10px] text-slate-600">esc close</span>
-            <span className="ml-auto text-[10px] text-slate-600">⌘K to toggle</span>
+            <span className="ml-auto text-[10px] text-slate-600">Ctrl+K to toggle</span>
           </div>
         </div>
       </div>
     </div>
   )
 }
+

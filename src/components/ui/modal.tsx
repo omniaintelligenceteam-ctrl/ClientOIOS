@@ -106,7 +106,7 @@ export function Modal({ open, onClose, size = 'md', children, className }: Modal
   return createPortal(
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/72 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose()
       }}
@@ -116,7 +116,7 @@ export function Modal({ open, onClose, size = 'md', children, className }: Modal
         role="dialog"
         aria-modal="true"
         className={cn(
-          'relative w-full rounded-2xl border border-white/[0.06] bg-[#111827]/95 backdrop-blur-xl shadow-2xl',
+          'relative w-full rounded-2xl border border-[rgba(147,162,190,0.22)] bg-[linear-gradient(180deg,rgba(17,27,44,0.95)_0%,rgba(11,18,31,0.95)_100%)] backdrop-blur-xl shadow-[0_32px_80px_rgba(0,0,0,0.58)]',
           'animate-[slideInTop_0.2s_ease-out]',
           'max-h-[85vh] flex flex-col',
           sizeMap[size],
@@ -138,7 +138,7 @@ export function ModalHeader({ children, icon, onClose, className }: ModalHeaderP
   return (
     <div
       className={cn(
-        'flex items-center gap-3 border-b border-white/[0.06] px-6 py-4',
+        'flex items-center gap-3 border-b border-[rgba(147,162,190,0.18)] px-6 py-4',
         className
       )}
     >
@@ -148,7 +148,7 @@ export function ModalHeader({ children, icon, onClose, className }: ModalHeaderP
         <button
           onClick={onClose}
           aria-label="Close dialog"
-          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-slate-200"
+          className="rounded-lg p-1.5 text-[#9fb0cf] transition-colors hover:bg-white/[0.08] hover:text-[#ebf5ff]"
         >
           <X size={18} />
         </button>
@@ -175,7 +175,7 @@ export function ModalFooter({ children, className }: ModalSectionProps) {
   return (
     <div
       className={cn(
-        'flex items-center justify-end gap-3 border-t border-white/[0.06] px-6 py-4',
+        'flex items-center justify-end gap-3 border-t border-[rgba(147,162,190,0.18)] px-6 py-4',
         className
       )}
     >

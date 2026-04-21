@@ -19,7 +19,7 @@ export function FieldModeToggle({ onToggle }: FieldModeToggleProps) {
       setActive(val)
       onToggle?.(val)
     } catch {}
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])  
 
   function toggle() {
     const next = !active

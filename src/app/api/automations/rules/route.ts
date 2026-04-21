@@ -20,7 +20,7 @@ export async function GET() {
 
     const orgId = profile.organization_id
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: rules, error } = await (supabase as any)
       .from('automation_rules')
       .select('*')
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       ...(mode ? { mode } : {}),
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: rule, error } = await (supabase as any)
       .from('automation_rules')
       .insert({
@@ -158,7 +158,7 @@ export async function PATCH(request: Request) {
     if (active !== undefined) updates.active = active
 
     if (mode !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: current } = await (supabase as any)
         .from('automation_rules')
         .select('trigger_config')
@@ -172,7 +172,7 @@ export async function PATCH(request: Request) {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: rule, error } = await (supabase as any)
       .from('automation_rules')
       .update(updates)

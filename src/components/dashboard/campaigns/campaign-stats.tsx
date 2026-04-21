@@ -36,7 +36,7 @@ export function CampaignStats({ campaignId, organizationId }: Props) {
 
     const fetchStats = async () => {
       // Pull from automation_logs grouped by status
-      let query = supabase
+      const query = supabase
         .from('automation_logs')
         .select('status, action_type')
         .eq('organization_id', organizationId)

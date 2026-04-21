@@ -1,7 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+type CookieSetOptions = Parameters<NextResponse['cookies']['set']>[2]
+
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -12,7 +14,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieSetOptions }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -47,14 +49,14 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // Not logged in + trying to access protected routes → redirect to login
+  // Not logged in + protected dashboard routes -> login
   if (!user && pathname.startsWith('/dashboard')) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Logged in + on auth pages → redirect to dashboard
+  // Logged in users on auth routes -> dashboard
   if (user && (pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password')) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
@@ -63,6 +65,8 @@ export async function middleware(request: NextRequest) {
 
   return supabaseResponse
 }
+
+export const middleware = proxy
 
 export const config = {
   matcher: ['/dashboard/:path*', '/command-center/:path*', '/login', '/signup', '/forgot-password'],

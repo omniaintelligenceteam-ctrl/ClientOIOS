@@ -489,7 +489,11 @@ export default function LeadsPipelinePage() {
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
       return next
     })
   }
@@ -559,14 +563,15 @@ export default function LeadsPipelinePage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="animate-page-enter flex h-full flex-col gap-6">
 
       {/* Header */}
-      <div className="flex flex-col gap-4">
+      <div className="premium-card flex flex-col gap-4 rounded-2xl p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#F8FAFC]">Lead Pipeline</h1>
-            <p className="mt-1 text-sm text-slate-400">{leads.length} total leads</p>
+            <p className="premium-kicker mb-1">Pipeline Intelligence</p>
+            <h1 className="premium-title text-2xl font-bold text-[#ecf3ff]">Lead Pipeline</h1>
+            <p className="mt-1 text-sm text-[#a6b4cf]">{leads.length} total leads</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Search */}
@@ -574,13 +579,13 @@ export default function LeadsPipelinePage() {
               <LeadSearch organizationId={orgId} onSelect={lead => setActiveLead(lead)} />
             )}
             {/* View toggle */}
-            <div className="flex items-center rounded-lg border border-white/[0.06] bg-white/[0.03] p-0.5">
+            <div className="flex items-center rounded-lg border border-[rgba(147,162,190,0.2)] bg-white/[0.03] p-0.5">
               <button type="button" onClick={() => setViewMode('board')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${viewMode === 'board' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'text-slate-400 hover:text-slate-200'}`}>
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${viewMode === 'board' ? 'bg-[#17cfb2]/14 text-[#71ecd8]' : 'text-[#a6b4cf] hover:text-[#ecf3ff]'}`}>
                 <LayoutGrid size={14} /> Board
               </button>
               <button type="button" onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${viewMode === 'list' ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : 'text-slate-400 hover:text-slate-200'}`}>
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${viewMode === 'list' ? 'bg-[#17cfb2]/14 text-[#71ecd8]' : 'text-[#a6b4cf] hover:text-[#ecf3ff]'}`}>
                 <List size={14} /> List
               </button>
             </div>
@@ -602,7 +607,7 @@ export default function LeadsPipelinePage() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-[#2DD4BF]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#17cfb2]" />
         </div>
       )}
 
@@ -636,7 +641,7 @@ export default function LeadsPipelinePage() {
 
       {/* List View */}
       {!loading && viewMode === 'list' && leads.length > 0 && (
-        <div className="flex-1 overflow-x-auto">
+        <div className="premium-card flex-1 overflow-x-auto rounded-2xl p-2 sm:p-3">
           <table className="w-full min-w-[800px] text-left">
             <thead>
               <tr className="border-b border-[rgba(148,163,184,0.1)]">

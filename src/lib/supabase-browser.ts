@@ -6,7 +6,7 @@ import type { Database } from '@/lib/types'
  * required environment variables are missing. All consumers must be
  * 'use client' components.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export function createSupabaseBrowserClient(): any {
   if (typeof window === 'undefined') {
     return null as any

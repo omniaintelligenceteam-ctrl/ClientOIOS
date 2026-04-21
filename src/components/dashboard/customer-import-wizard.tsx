@@ -148,7 +148,7 @@ function UploadStep({ onParsed }: UploadStepProps) {
     setDragging(false)
     const file = e.dataTransfer.files[0]
     if (file) handleFile(file)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [])
 
   return (
@@ -412,7 +412,7 @@ function ImportStep({ organizationId, headers, rows, mapping, onComplete }: Impo
   // Auto-start import on mount
   useEffect(() => {
     runImport()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [])
 
   return (

@@ -19,14 +19,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       {Icon && (
         <Icon
           size={16}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6f7f9d]"
         />
       )}
       <input
         ref={ref}
         className={cn(
-          'h-9 w-full rounded-lg border bg-[#0B1120] px-3 text-sm text-[#F8FAFC] placeholder-[#64748B] outline-none transition-colors',
-          'border-[rgba(148,163,184,0.1)] focus:border-[#2DD4BF]/40 focus:ring-1 focus:ring-[#2DD4BF]/20',
+          'premium-input h-9 w-full rounded-lg px-3 text-sm outline-none',
+          'border-[rgba(147,162,190,0.2)] focus:border-[rgba(23,207,178,0.5)] focus:ring-1 focus:ring-[rgba(23,207,178,0.3)]',
           Icon && 'pl-9',
           error && 'border-red-500/60 focus:border-red-400 focus:ring-red-400/20',
           'disabled:cursor-not-allowed disabled:opacity-50',
@@ -53,8 +53,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     <textarea
       ref={ref}
       className={cn(
-        'min-h-[80px] w-full resize-y rounded-lg border bg-[#0B1120] px-3 py-2 text-sm text-[#F8FAFC] placeholder-[#64748B] outline-none transition-colors',
-        'border-[rgba(148,163,184,0.1)] focus:border-[#2DD4BF]/40 focus:ring-1 focus:ring-[#2DD4BF]/20',
+        'premium-textarea min-h-[80px] w-full resize-y rounded-lg px-3 py-2 text-sm outline-none',
+        'border-[rgba(147,162,190,0.2)] focus:border-[rgba(23,207,178,0.5)] focus:ring-1 focus:ring-[rgba(23,207,178,0.3)]',
         error && 'border-red-500/60 focus:border-red-400 focus:ring-red-400/20',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className
@@ -78,7 +78,7 @@ export const Label = forwardRef<HTMLLabelElement, LabelProps>(
   ({ required, children, className, ...props }, ref) => (
     <label
       ref={ref}
-      className={cn('mb-1.5 block text-xs font-medium text-[#94A3B8]', className)}
+      className={cn('mb-1.5 block text-xs font-medium text-[#a6b4cf]', className)}
       {...props}
     >
       {children}

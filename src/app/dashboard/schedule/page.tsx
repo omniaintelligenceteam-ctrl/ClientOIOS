@@ -201,10 +201,10 @@ function TodaySummary({ appointments }: { appointments: Appointment[] }) {
   ]
 
   return (
-    <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
+    <div className="premium-card rounded-2xl p-5">
       <div className="mb-4 flex items-center gap-2">
-        <AlertCircle size={16} className="text-[#2DD4BF]" />
-        <h2 className="text-sm font-semibold text-[#F8FAFC]">
+        <AlertCircle size={16} className="text-[#17cfb2]" />
+        <h2 className="text-sm font-semibold text-[#ecf3ff]">
           Today&apos;s Summary
         </h2>
       </div>
@@ -337,8 +337,8 @@ function AppointmentCard({ appointment, customers, users }: { appointment: Appoi
 
   return (
     <div
-      className={`backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 transition-all hover:border-[#2DD4BF]/20 ${
-        today ? 'border-l-2 border-l-[#2DD4BF]' : ''
+      className={`premium-card rounded-xl p-4 transition-all hover:border-[#17cfb2]/30 ${
+        today ? 'border-l-2 border-l-[#17cfb2]' : ''
       }`}
     >
       {/* Top row */}
@@ -455,25 +455,26 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="animate-page-enter flex h-full flex-col gap-6">
       {/* ---- Header ---- */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="premium-card flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Schedule</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="premium-kicker mb-1">Field Operations</p>
+          <h1 className="premium-title text-2xl font-bold text-[#ecf3ff]">Schedule</h1>
+          <p className="mt-1 text-sm text-[#a6b4cf]">
             {appointments.length} appointments
           </p>
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg p-0.5">
+        <div className="flex items-center rounded-lg border border-[rgba(147,162,190,0.2)] bg-white/[0.03] p-0.5">
           <button
             type="button"
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
               viewMode === 'list'
-                ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#17cfb2]/14 text-[#71ecd8]'
+                : 'text-[#a6b4cf] hover:text-[#ecf3ff]'
             }`}
           >
             <List size={14} />
@@ -484,8 +485,8 @@ export default function SchedulePage() {
             onClick={() => setViewMode('calendar')}
             className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
               viewMode === 'calendar'
-                ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#17cfb2]/14 text-[#71ecd8]'
+                : 'text-[#a6b4cf] hover:text-[#ecf3ff]'
             }`}
           >
             <Calendar size={14} />
@@ -511,7 +512,7 @@ export default function SchedulePage() {
 
           {/* Desktop table */}
           {appointments.length > 0 && (<>
-          <div className="hidden overflow-x-auto backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl md:block">
+          <div className="premium-card hidden overflow-x-auto rounded-2xl md:block">
             <table className="w-full min-w-[900px] text-left">
               <thead>
                 <tr className="border-b border-[rgba(148,163,184,0.1)]">

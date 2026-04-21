@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     // Use service client for persistence (bypasses RLS for assistant messages)
     const serviceClient = await createSupabaseServiceClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const svc = serviceClient as any
 
     // 5. Conversation management

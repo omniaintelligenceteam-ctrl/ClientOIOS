@@ -15,7 +15,7 @@ export const SHORTCUTS: KeyboardShortcut[] = [
   { key: 'S', label: 'S', description: 'Schedule' },
   { key: '/', label: '/', description: 'Focus Search' },
   { key: '?', label: '?', description: 'Show Shortcuts' },
-  { key: '⌘K', label: '⌘K / Ctrl+K', description: 'Command Palette' },
+  { key: 'Cmd+K', label: 'Cmd+K / Ctrl+K', description: 'Command Palette' },
 ]
 
 interface UseKeyboardShortcutsOptions {
@@ -79,3 +79,4 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 }
+

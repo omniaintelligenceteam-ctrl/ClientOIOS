@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = getSupabase() as any
 
   let queueItemId: string | undefined
@@ -284,7 +284,7 @@ export async function POST(request: Request) {
     // Best-effort: mark queue item as failed if we have its id
     if (queueItemId) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         await (getSupabase() as any)
           .from('automation_queue')
           .update({ status: 'failed', error: message, executed_at: new Date().toISOString() })

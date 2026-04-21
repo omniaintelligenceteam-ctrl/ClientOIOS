@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     let existingPhones = new Set<string>()
 
     if (phoneIdx !== null) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: existing } = await (supabase as any)
         .from('customers')
         .select('phone')
@@ -166,7 +166,7 @@ export async function POST(request: Request) {
     for (let offset = 0; offset < toInsert.length; offset += CHUNK_SIZE) {
       const chunk = toInsert.slice(offset, offset + CHUNK_SIZE)
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { error: insertError, count } = await (supabase as any)
         .from('customers')
         .upsert(chunk, {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import {
   Receipt,
@@ -12,12 +12,12 @@ import {
   Send,
   Eye,
   FileText,
-  XCircle,
   Bell,
   Copy,
   Trash2,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/components/ui/toast'
 import { EmptyState } from '@/components/dashboard/empty-state'
 import { InlineEdit } from '@/components/ui/inline-edit'
 import { ContextMenu, type ContextMenuItem } from '@/components/ui/context-menu'
@@ -28,7 +28,7 @@ import type { Invoice, Customer, InvoiceStatus } from '@/lib/types'
 // ---------------------------------------------------------------------------
 
 const cardClass =
-  'backdrop-blur-xl bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6'
+  'premium-card rounded-2xl p-6'
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -62,6 +62,24 @@ function customerName(customerId: string, customers: Customer[]): string {
   const c = customers.find((cust) => cust.id === customerId)
   if (!c) return 'Unknown'
   return `${c.first_name} ${c.last_name}`
+}
+
+function getNextInvoiceNumber(invoices: Invoice[]): string {
+  const year = new Date().getFullYear()
+  const pattern = /^INV-(\d{4})-(\d+)$/
+  let maxForYear = 0
+
+  for (const invoice of invoices) {
+    const match = pattern.exec(invoice.invoice_number ?? '')
+    if (!match) continue
+    const invoiceYear = Number(match[1])
+    const invoiceNumber = Number(match[2])
+    if (invoiceYear === year && Number.isFinite(invoiceNumber)) {
+      maxForYear = Math.max(maxForYear, invoiceNumber)
+    }
+  }
+
+  return `INV-${year}-${String(maxForYear + 1).padStart(4, '0')}`
 }
 
 // ---------------------------------------------------------------------------
@@ -153,6 +171,7 @@ function SummaryIcon({
 
 export default function InvoicingPage() {
   const { profile, organization } = useAuth()
+  const toast = useToast()
   const orgId = organization?.id || profile?.organization_id || ''
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -226,6 +245,111 @@ export default function InvoicingPage() {
       ? invoices
       : invoices.filter((inv) => inv.status === filter)
 
+  async function handleCreateInvoice() {
+    if (!orgId) {
+      toast.error('Organization not found. Please refresh and try again.')
+      return
+    }
+
+    if (customers.length === 0) {
+      toast.error('Add a customer first before creating an invoice.')
+      return
+    }
+
+    const customer = customers[0]
+    const now = new Date()
+    const dueDate = new Date(now)
+    dueDate.setDate(now.getDate() + 14)
+    const invoiceNumber = getNextInvoiceNumber(invoices)
+    const nowIso = now.toISOString()
+
+    const { data, error: insertError } = await supabase
+      .from('invoices')
+      .insert({
+        organization_id: orgId,
+        customer_id: customer.id,
+        appointment_id: null,
+        invoice_number: invoiceNumber,
+        status: 'draft',
+        amount: 0,
+        amount_paid: 0,
+        tax_amount: 0,
+        line_items: [],
+        due_date: dueDate.toISOString().slice(0, 10),
+        sent_at: null,
+        paid_at: null,
+        payment_method: null,
+        reminder_count: 0,
+        last_reminder_at: null,
+        notes: 'Created from dashboard quick action.',
+        created_at: nowIso,
+        updated_at: nowIso,
+      })
+      .select('*')
+      .single()
+
+    if (insertError || !data) {
+      toast.error('Could not create invoice. Please try again.')
+      return
+    }
+
+    setInvoices((prev) => [data as unknown as Invoice, ...prev])
+    setFilter('all')
+    toast.success(`Draft invoice ${invoiceNumber} created.`)
+  }
+
+  function handleViewInvoice(inv: Invoice) {
+    const estimateUrl = `/portal/estimate?estimate_id=${inv.id}`
+    window.open(estimateUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  async function handleCopyInvoiceNumber(invoiceNumber: string | null) {
+    if (!invoiceNumber) return
+    try {
+      await navigator.clipboard.writeText(invoiceNumber)
+      toast.success('Invoice number copied.')
+    } catch {
+      toast.error('Could not copy invoice number.')
+    }
+  }
+
+  async function handleSendReminder(inv: Invoice) {
+    if (inv.status === 'paid' || inv.status === 'cancelled') {
+      toast.error('Reminder is not available for paid or cancelled invoices.')
+      return
+    }
+
+    const nowIso = new Date().toISOString()
+    const nextReminderCount = (inv.reminder_count ?? 0) + 1
+    const updates: Partial<Invoice> = {
+      reminder_count: nextReminderCount,
+      last_reminder_at: nowIso,
+      updated_at: nowIso,
+    }
+
+    if (!inv.sent_at) {
+      updates.sent_at = nowIso
+      if (inv.status === 'draft') {
+        updates.status = 'sent'
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('invoices')
+      .update(updates)
+      .eq('id', inv.id)
+
+    if (updateError) {
+      toast.error('Failed to log reminder. Please try again.')
+      return
+    }
+
+    setInvoices((prev) =>
+      prev.map((invoice) => (invoice.id === inv.id ? { ...invoice, ...updates } : invoice))
+    )
+    toast.success(`Reminder ${nextReminderCount} logged for ${inv.invoice_number}.`)
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -243,18 +367,19 @@ export default function InvoicingPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="animate-page-enter space-y-8">
       {/* ── Header ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="premium-card flex flex-col gap-4 rounded-2xl p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoicing</h1>
-          <p className="mt-1 text-slate-400">
+          <p className="premium-kicker mb-1">Revenue Operations</p>
+          <h1 className="premium-title text-3xl font-bold tracking-tight gradient-text">Invoicing</h1>
+          <p className="mt-2 text-[#a6b4cf]">
             Track payments, send reminders, and manage your accounts receivable.
           </p>
         </div>
         <button
-          onClick={() => alert('Invoice creation coming soon.')}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#2DD4BF] px-5 py-2.5 text-sm font-semibold text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all hover:bg-[#5EEAD4] hover:shadow-[#2DD4BF]/30 active:scale-[0.97]"
+          onClick={handleCreateInvoice}
+          className="premium-button inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold active:scale-[0.97]"
         >
           <Plus className="h-4 w-4" />
           Create Invoice
@@ -359,14 +484,14 @@ export default function InvoicingPage() {
               onClick={() => setFilter(s)}
               className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors min-h-[44px] ${
                 isActive
-                  ? 'border-[#2DD4BF]/40 bg-[#2DD4BF]/10 text-[#2DD4BF]'
-                  : 'border-[rgba(148,163,184,0.1)] bg-white/[0.03] text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                  ? 'border-[rgba(23,207,178,0.4)] bg-[rgba(23,207,178,0.12)] text-[#71ecd8]'
+                  : 'border-[rgba(147,162,190,0.2)] bg-white/[0.03] text-[#a6b4cf] hover:border-[rgba(147,162,190,0.36)] hover:text-[#ecf3ff]'
               }`}
             >
               {label}
               {count > 0 && (
                 <span
-                  className={`ml-1.5 ${isActive ? 'text-[#2DD4BF]/70' : 'text-slate-600'}`}
+                  className={`ml-1.5 ${isActive ? 'text-[#71ecd8]/75' : 'text-[#6f7f9d]'}`}
                 >
                   {count}
                 </span>
@@ -424,13 +549,25 @@ export default function InvoicingPage() {
               {filteredInvoices.map((inv) => {
                 const isOverdue = inv.status === 'overdue'
                 const invoiceContextItems: ContextMenuItem[] = [
-                  { id: 'view', label: 'View Invoice', icon: Eye, onClick: () => alert('Invoice detail view coming soon.') },
-                  { id: 'copy', label: 'Copy Invoice #', icon: Copy, onClick: () => navigator.clipboard?.writeText(inv.invoice_number ?? '') },
-                  { id: 'send', label: 'Send Reminder', icon: Send, onClick: () => alert('Reminder sending coming soon.') },
+                  { id: 'view', label: 'View Invoice', icon: Eye, onClick: () => handleViewInvoice(inv) },
+                  { id: 'copy', label: 'Copy Invoice #', icon: Copy, onClick: () => { void handleCopyInvoiceNumber(inv.invoice_number) } },
+                  {
+                    id: 'send',
+                    label: 'Send Reminder',
+                    icon: Send,
+                    disabled: inv.status === 'paid' || inv.status === 'cancelled',
+                    onClick: () => { void handleSendReminder(inv) },
+                  },
                   { id: 'div', label: '', onClick: () => {}, divider: true },
                   { id: 'delete', label: 'Delete Invoice', icon: Trash2, danger: true, onClick: async () => {
                     setInvoices(prev => prev.filter(i => i.id !== inv.id))
-                    await supabase.from('invoices').delete().eq('id', inv.id)
+                    const { error: deleteError } = await supabase.from('invoices').delete().eq('id', inv.id)
+                    if (deleteError) {
+                      toast.error('Failed to delete invoice.')
+                      setInvoices(prev => [inv, ...prev])
+                      return
+                    }
+                    toast.success('Invoice deleted.')
                   }},
                 ]
                 return (

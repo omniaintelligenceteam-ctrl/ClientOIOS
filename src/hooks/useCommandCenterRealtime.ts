@@ -133,7 +133,7 @@ export function useCommandCenterRealtime(
     return () => {
       supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [organizationId, fetchTasks])
 
   const taskCounts = computeCounts(tasks)

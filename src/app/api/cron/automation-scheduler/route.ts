@@ -111,7 +111,7 @@ function scheduledFor(rule: AutomationRule): string {
 // ---------------------------------------------------------------------------
 
 async function triggerFollowUpEmail(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -136,7 +136,7 @@ async function triggerFollowUpEmail(
   const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
   const sf = scheduledFor(rule)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return leads.filter((l: any) => !existingIds.has(l.id)).map((lead: any) => ({
     organization_id: rule.organization_id,
     rule_id: rule.id,
@@ -164,7 +164,7 @@ async function triggerFollowUpEmail(
 // ---------------------------------------------------------------------------
 
 async function triggerReviewRequest(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -187,7 +187,7 @@ async function triggerReviewRequest(
   const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
   const sf = scheduledFor(rule)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return appointments.filter((a: any) => !existingIds.has(a.id)).map((appt: any) => {
     const c = appt.customers
     return {
@@ -215,7 +215,7 @@ async function triggerReviewRequest(
 // ---------------------------------------------------------------------------
 
 async function triggerInvoiceReminder(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -248,7 +248,7 @@ async function triggerInvoiceReminder(
   const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
   const sf = scheduledFor(rule)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return allInvoices.filter((i: any) => !existingIds.has(i.id)).map((inv: any) => {
     const c = inv.customers
     return {
@@ -276,7 +276,7 @@ async function triggerInvoiceReminder(
 // ---------------------------------------------------------------------------
 
 async function triggerLeadNurture(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -299,7 +299,7 @@ async function triggerLeadNurture(
   const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
   const sf = scheduledFor(rule)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return leads.filter((l: any) => !existingIds.has(l.id)).map((lead: any) => ({
     organization_id: rule.organization_id,
     rule_id: rule.id,
@@ -326,7 +326,7 @@ async function triggerLeadNurture(
 // ---------------------------------------------------------------------------
 
 async function triggerAppointmentReminder(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -352,7 +352,7 @@ async function triggerAppointmentReminder(
   const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
   const sf = scheduledFor(rule)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return appointments.filter((a: any) => !existingIds.has(a.id)).map((appt: any) => {
     const c = appt.customers
     return {
@@ -381,7 +381,7 @@ async function triggerAppointmentReminder(
 // ---------------------------------------------------------------------------
 
 async function triggerProspectOutreach(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -405,7 +405,7 @@ async function triggerProspectOutreach(
   const existingIds = new Set<string>((existing ?? []).map((e: { target_entity_id: string }) => e.target_entity_id))
   const sf = scheduledFor(rule)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   return leads.filter((l: any) => !existingIds.has(l.id)).map((lead: any) => ({
     organization_id: rule.organization_id,
     rule_id: rule.id,
@@ -429,7 +429,7 @@ async function triggerProspectOutreach(
 // ---------------------------------------------------------------------------
 
 async function getTriggeredItems(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   rule: AutomationRule,
 ): Promise<QueueInsert[]> {
@@ -498,7 +498,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createSupabaseServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = supabase as any
 
   // 1. Fetch all active automation rules across all orgs

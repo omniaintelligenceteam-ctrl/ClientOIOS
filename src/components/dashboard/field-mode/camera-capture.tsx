@@ -27,7 +27,7 @@ export function CameraCapture({ appointmentId, onCapture, onClose }: CameraCaptu
   useEffect(() => {
     startCamera()
     return () => stopCamera()
-  }, [facingMode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [facingMode])  
 
   async function startCamera() {
     stopCamera()

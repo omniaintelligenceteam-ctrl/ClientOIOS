@@ -117,7 +117,7 @@ export function JobMap() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <MapPin className="w-5 h-5 text-[#2DD4BF]" />
-          <h2 className="text-lg font-semibold text-[#F8FAFC]">Today's Job Map</h2>
+          <h2 className="text-lg font-semibold text-[#F8FAFC]">Today&apos;s Job Map</h2>
         </div>
         <span className="text-sm text-[#94A3B8]">{jobs.length} jobs today</span>
       </div>

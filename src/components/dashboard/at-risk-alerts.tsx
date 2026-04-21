@@ -121,7 +121,7 @@ export function AtRiskAlerts({ organizationId }: AtRiskAlertsProps) {
 
       {tomorrowUnconfirmed > 0 && (
         <Link
-          href="/dashboard/appointments?filter=tomorrow-unconfirmed"
+          href="/dashboard/schedule?filter=tomorrow-unconfirmed"
           className="flex-shrink-0 flex items-center gap-1.5 rounded-full bg-red-500/15 border border-red-500/25 px-3 py-2 min-h-[44px] hover:bg-red-500/25 transition-colors"
         >
           <CalendarX className="h-3.5 w-3.5 text-red-400" />
@@ -133,7 +133,7 @@ export function AtRiskAlerts({ organizationId }: AtRiskAlertsProps) {
 
       {overdueInvoices > 0 && (
         <Link
-          href="/dashboard/invoices?filter=overdue"
+          href="/dashboard/invoicing?filter=overdue"
           className="flex-shrink-0 flex items-center gap-1.5 rounded-full bg-red-500/15 border border-red-500/25 px-3 py-2 min-h-[44px] hover:bg-red-500/25 transition-colors"
         >
           <Receipt className="h-3.5 w-3.5 text-red-400" />

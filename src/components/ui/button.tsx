@@ -22,13 +22,13 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
   primary:
-    'rounded-xl bg-[#2DD4BF] hover:bg-[#5EEAD4] font-semibold text-[#0B1120] shadow-lg shadow-[#2DD4BF]/20 transition-all active:scale-95',
+    'premium-button border border-[rgba(23,207,178,0.34)] bg-[linear-gradient(180deg,rgba(23,207,178,0.94)_0%,rgba(18,179,154,0.92)_100%)] text-[#05111f] shadow-[0_14px_30px_rgba(23,207,178,0.28)] hover:shadow-[0_18px_38px_rgba(23,207,178,0.34)]',
   secondary:
-    'rounded-xl border border-[rgba(148,163,184,0.1)] bg-[#0B1120] font-medium text-slate-300 hover:border-[#2DD4BF]/40 hover:text-[#2DD4BF] transition-colors',
+    'rounded-xl border border-[rgba(147,162,190,0.24)] bg-[rgba(12,19,33,0.82)] font-medium text-[#c7d4ef] hover:border-[rgba(23,207,178,0.4)] hover:text-[#ebf5ff] transition-colors',
   ghost:
-    'rounded-lg font-medium text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] transition-colors',
+    'rounded-lg font-medium text-[#9fb0cf] hover:text-[#ebf5ff] hover:bg-white/[0.08] transition-colors',
   danger:
-    'rounded-xl bg-red-500/90 hover:bg-red-400 font-semibold text-white transition-colors active:scale-95',
+    'rounded-xl border border-red-500/50 bg-[linear-gradient(180deg,rgba(239,68,68,0.95)_0%,rgba(220,38,38,0.92)_100%)] font-semibold text-white transition-all active:scale-95',
 }
 
 const sizeStyles: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -70,7 +70,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={isDisabled}
         className={cn(
-          'inline-flex items-center justify-center whitespace-nowrap',
+          'inline-flex items-center justify-center whitespace-nowrap outline-none transition-[transform,filter,box-shadow] duration-200 focus-visible:ring-2 focus-visible:ring-[rgba(23,207,178,0.34)] focus-visible:ring-offset-0',
           variantStyles[variant],
           sizeStyles[size],
           isDisabled && 'pointer-events-none opacity-50',

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useToast } from '@/components/ui/toast'
 import {
   Check,
   Building2,
@@ -479,23 +480,58 @@ function Step3Content({
 function Step4Content({
   agentName,
   onConfirm,
+  organizationId,
 }: {
   agentName: string
   onConfirm: () => void
+  organizationId: string
 }) {
+  const toast = useToast()
   const [changeRequest, setChangeRequest] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [requestError, setRequestError] = useState<string | null>(null)
 
   const defaultGreeting = `Thank you for calling! This is ${agentName}, how can I help you today?`
 
-  const handleSubmitRequest = () => {
+  const handleSubmitRequest = async () => {
     if (!changeRequest.trim()) return
-    // In the future, this would POST to an API
-    setSubmitted(true)
-    setTimeout(() => {
-      setSubmitted(false)
-      setChangeRequest('')
-    }, 3000)
+    if (!organizationId) {
+      setRequestError('Organization not found.')
+      return
+    }
+
+    setSubmitting(true)
+    setRequestError(null)
+
+    try {
+      const res = await fetch('/api/dashboard/onboarding/greeting-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          request: changeRequest.trim(),
+          agentName,
+        }),
+      })
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}))
+        const message = payload?.error || 'Failed to submit request.'
+        setRequestError(message)
+        toast.error(message)
+      } else {
+        setSubmitted(true)
+        setChangeRequest('')
+        toast.success('Greeting request submitted.')
+        setTimeout(() => setSubmitted(false), 3000)
+      }
+    } catch {
+      setRequestError('Network error while submitting request.')
+      toast.error('Network error while submitting request.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -537,7 +573,7 @@ function Step4Content({
           <button
             type="button"
             onClick={handleSubmitRequest}
-            disabled={!changeRequest.trim() || submitted}
+            disabled={!changeRequest.trim() || submitted || submitting}
             className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
               submitted
                 ? 'border-[#2DD4BF]/30 bg-[#2DD4BF]/10 text-[#2DD4BF]'
@@ -551,6 +587,11 @@ function Step4Content({
                 <Check size={14} />
                 Request Sent
               </>
+            ) : submitting ? (
+              <>
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-500/30 border-t-slate-300" />
+                Sending...
+              </>
             ) : (
               <>
                 <Send size={14} />
@@ -559,6 +600,9 @@ function Step4Content({
             )}
           </button>
         </div>
+        {requestError && (
+          <p className="mt-2 text-xs text-red-400">{requestError}</p>
+        )}
       </div>
 
       <button
@@ -574,13 +618,13 @@ function Step4Content({
 }
 
 function Step5Content({
-  orgId,
   onGoLive,
   isSubmitting,
+  error,
 }: {
-  orgId: string
   onGoLive: () => void
   isSubmitting: boolean
+  error?: string | null
 }) {
   return (
     <div className="space-y-5">
@@ -636,6 +680,7 @@ function Step5Content({
           </>
         )}
       </button>
+      {error && <p className="text-sm text-red-400">{error}</p>}
     </div>
   )
 }
@@ -800,9 +845,11 @@ function StepCard({
 
 export default function OnboardingPage() {
   const { organization } = useAuth()
+  const toast = useToast()
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
   const [expandedStep, setExpandedStep] = useState<number | null>(null)
   const [isGoingLive, setIsGoingLive] = useState(false)
+  const [goLiveError, setGoLiveError] = useState<string | null>(null)
   const [isLive, setIsLive] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [agentPhone, setAgentPhone] = useState<string | null>(null)
@@ -896,33 +943,34 @@ export default function OnboardingPage() {
 
   const handleGoLive = useCallback(async () => {
     if (!organization?.id) return
+    setGoLiveError(null)
     setIsGoingLive(true)
 
     try {
       const res = await fetch(`/api/admin/onboard/${organization.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ onboarding_status: 'live' }),
+        body: JSON.stringify({ status: 'live' }),
       })
 
       if (res.ok) {
-        // Mark step 5 complete
         completeStep(5)
         setIsLive(true)
+        toast.success('Your organization is now live.')
       } else {
-        // Still mark as live in the UI even if API fails —
-        // the user can retry from settings
-        completeStep(5)
-        setIsLive(true)
+        const payload = await res.json().catch(() => ({}))
+        const message = payload?.error || 'Could not activate live status. Please retry.'
+        setGoLiveError(message)
+        toast.error(message)
       }
     } catch {
-      // Graceful degradation — mark as live in UI
-      completeStep(5)
-      setIsLive(true)
+      const message = 'Network error while going live. Please retry.'
+      setGoLiveError(message)
+      toast.error(message)
     } finally {
       setIsGoingLive(false)
     }
-  }, [organization?.id, completeStep])
+  }, [organization?.id, completeStep, toast])
 
   // Determine current step (first incomplete)
   let currentStep = TOTAL_STEPS
@@ -1018,13 +1066,14 @@ export default function OnboardingPage() {
                 <Step4Content
                   agentName={agentName}
                   onConfirm={() => completeStep(4)}
+                  organizationId={organization?.id || ''}
                 />
               )}
               {step.number === 5 && (
                 <Step5Content
-                  orgId={organization?.id || ''}
                   onGoLive={handleGoLive}
                   isSubmitting={isGoingLive}
+                  error={goLiveError}
                 />
               )}
             </StepCard>
@@ -1034,3 +1083,4 @@ export default function OnboardingPage() {
     </div>
   )
 }
+

@@ -237,7 +237,7 @@ export function ActivityFeedList({ organizationId, filters = {}, pageSize = 50 }
     setOffset(0)
     setHasMore(true)
     fetchItems(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [organizationId, filters.entityType, filters.dateRange, filters.search])
 
   if (loading) {

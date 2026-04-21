@@ -62,7 +62,7 @@ interface BriefingMetrics {
 }
 
 async function aggregateMetrics(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   supabase: any,
   orgId: string,
   yesterday: { start: string; end: string; date: string }
@@ -300,7 +300,7 @@ export async function POST(req: Request) {
   }
 
   const supabase = getSupabase()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = supabase as any
 
   const yesterday = getYesterdayRange()

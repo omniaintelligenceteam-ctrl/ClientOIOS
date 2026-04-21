@@ -21,7 +21,7 @@ export async function GET() {
 
     const orgId = profile.organization_id
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: notifications, error } = await (supabase as any)
       .from('notifications')
       .select('*')
@@ -67,7 +67,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'ids must be a non-empty array' }, { status: 400 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await (supabase as any)
       .from('notifications')
       .update({ read: true })

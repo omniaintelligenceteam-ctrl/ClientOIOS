@@ -35,7 +35,7 @@ function getTemplate(actionType: string, context: AutomationContext) {
 }
 
 export async function POST(request: Request) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = getSupabase() as any
 
   const body = await request.json() as { queue_item_id: string }

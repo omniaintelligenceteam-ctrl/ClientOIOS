@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
 import { Trophy, Medal, Star, Clock, Briefcase } from 'lucide-react'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
@@ -212,7 +213,14 @@ export function TeamLeaderboard({ organizationId }: TeamLeaderboardProps) {
           {/* Member */}
           <div className="flex items-center gap-2.5 min-w-0">
             {m.avatarUrl ? (
-              <img src={m.avatarUrl} alt={m.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+              <Image
+                src={m.avatarUrl}
+                alt={m.name}
+                width={32}
+                height={32}
+                unoptimized
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
             ) : (
               <div className="w-8 h-8 rounded-full bg-[rgba(45,212,191,0.15)] flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-bold text-teal-400">{initials(m.name)}</span>

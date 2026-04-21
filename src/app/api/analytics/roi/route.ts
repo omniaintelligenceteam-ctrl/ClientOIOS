@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   startDate.setDate(now.getDate() - periodDays)
   const startDateStr = startDate.toISOString().slice(0, 10)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = supabase as any
 
   // ---------------------------------------------------------------------------

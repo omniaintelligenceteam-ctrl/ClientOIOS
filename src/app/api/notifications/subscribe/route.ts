@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'endpoint and keys are required' }, { status: 400 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await (supabase as any)
       .from('push_subscriptions')
       .upsert(
@@ -75,7 +75,7 @@ export async function DELETE(request: Request) {
       return Response.json({ error: 'endpoint is required' }, { status: 400 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await (supabase as any)
       .from('push_subscriptions')
       .delete()

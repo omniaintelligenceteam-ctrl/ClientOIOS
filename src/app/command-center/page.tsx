@@ -20,7 +20,7 @@ import { useCommandCenterRealtime, type CommandCenterTask } from '@/hooks/useCom
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const cardClass = 'bg-[rgba(15,23,42,0.6)] border border-[rgba(148,163,184,0.1)] rounded-xl p-6'
+const cardClass = 'premium-card rounded-xl p-6'
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-slate-500/20', text: 'text-slate-300', label: 'Pending' },
@@ -241,14 +241,15 @@ export default function CommandCenterDashboardPage() {
   const recentTasks = tasks.slice(0, 20)
 
   return (
-    <div className="space-y-6">
+    <div className="animate-page-enter space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="premium-card flex items-center justify-between rounded-xl p-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#F8FAFC]">
+          <p className="premium-kicker mb-1">Network Operations</p>
+          <h1 className="gradient-text text-2xl font-bold tracking-tight">
             Command Center Overview
           </h1>
-          <p className="text-sm text-[#94A3B8] mt-1">
+          <p className="mt-1 text-sm text-[#a6b4cf]">
             Real-time task management across all platforms
           </p>
         </div>
@@ -258,10 +259,10 @@ export default function CommandCenterDashboardPage() {
               connected ? 'bg-green-400 animate-pulse' : 'bg-red-400'
             }`}
           />
-          <span className="text-xs text-[#64748B]">
-            {connected ? 'Connected' : 'Connecting...'}
-          </span>
-        </div>
+            <span className="text-xs text-[#6f7f9d]">
+              {connected ? 'Connected' : 'Connecting...'}
+            </span>
+          </div>
       </div>
 
       {/* Stats Row */}

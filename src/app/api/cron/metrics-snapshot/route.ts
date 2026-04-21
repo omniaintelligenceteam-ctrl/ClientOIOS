@@ -30,7 +30,7 @@ function getYesterdayRange(): { start: string; end: string; date: string } {
 // ---------------------------------------------------------------------------
 
 async function snapshotOrg(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   svc: any,
   orgId: string,
   yesterday: { start: string; end: string; date: string }
@@ -253,7 +253,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createSupabaseServiceClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const svc = supabase as any
 
   const yesterday = getYesterdayRange()

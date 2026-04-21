@@ -11,6 +11,7 @@ import {
   HardHat,
 } from 'lucide-react'
 import { useFieldMode } from './field-mode/field-mode-toggle'
+import { useAuth } from '@/lib/auth-context'
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -36,11 +37,27 @@ function BadgeDot({ count, color = 'bg-red-500' }: BadgeDotProps) {
 /* Nav config                                                          */
 /* ------------------------------------------------------------------ */
 
+type OrgTier = 'answering_service' | 'receptionist' | 'office_manager' | 'coo' | 'ai_coo' | 'growth_engine'
+
+const TIER_RANK: Record<OrgTier, number> = {
+  answering_service: 1,
+  receptionist: 1,
+  office_manager: 2,
+  coo: 3,
+  ai_coo: 3,
+  growth_engine: 3,
+}
+
+function isTierUnlocked(requiredTier: OrgTier | undefined, currentTier: OrgTier): boolean {
+  if (!requiredTier) return true
+  return TIER_RANK[currentTier] >= TIER_RANK[requiredTier]
+}
+
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Leads', href: '/dashboard/leads', icon: Target },
-  { label: 'Calendar', href: '/dashboard/schedule', icon: Calendar },
-  { label: 'AI', href: '/dashboard/ai', icon: Bot },
+  { label: 'Leads', href: '/dashboard/leads', icon: Target, minTier: 'office_manager' as OrgTier },
+  { label: 'Calendar', href: '/dashboard/schedule', icon: Calendar, minTier: 'office_manager' as OrgTier },
+  { label: 'AI', href: '/dashboard/ai', icon: Bot, minTier: 'office_manager' as OrgTier },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
@@ -71,19 +88,24 @@ interface BottomNavProps {
 export function BottomNav({ badges = {}, onFieldModeClick }: BottomNavProps) {
   const pathname = usePathname()
   const [fieldMode] = useFieldMode()
+  const { organization, isDemoMode } = useAuth()
+  const currentTier: OrgTier = isDemoMode
+    ? 'growth_engine'
+    : ((organization?.tier as OrgTier) || 'office_manager')
 
   const badgeMap: Record<string, number | undefined> = {
     '/dashboard/leads': badges.leads,
     '/dashboard/calls': badges.calls,
     '/dashboard/schedule': badges.schedule,
   }
+  const visibleNavItems = NAV_ITEMS.filter((item) => isTierUnlocked(item.minTier, currentTier))
 
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden items-stretch border-t border-[rgba(148,163,184,0.1)] bg-[#0B1120]/95 backdrop-blur-md pb-safe"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {NAV_ITEMS.map((item) => {
+      {visibleNavItems.map((item) => {
         const Icon = item.icon
         const active = isActive(pathname, item.href)
         const badgeCount = badgeMap[item.href]

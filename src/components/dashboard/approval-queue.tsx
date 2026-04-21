@@ -354,7 +354,7 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
   useEffect(() => {
     const supabase = createSupabaseBrowserClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const channel = (supabase as any)
       .channel(`approval-queue-${organizationId}`)
       .on(
@@ -375,7 +375,7 @@ export function ApprovalQueue({ organizationId }: ApprovalQueueProps) {
       .subscribe()
 
     return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       ;(supabase as any).removeChannel(channel)
     }
   }, [organizationId])

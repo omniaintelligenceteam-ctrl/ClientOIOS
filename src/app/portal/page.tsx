@@ -20,6 +20,7 @@ function PortalContent() {
   const [data, setData] = useState<PortalData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [copiedShare, setCopiedShare] = useState(false)
 
   useEffect(() => {
     if (!jobId) {
@@ -175,7 +176,7 @@ function PortalContent() {
                   month: 'long',
                   day: 'numeric',
                 })}{' '}
-                · {appointment.scheduled_time_start} – {appointment.scheduled_time_end}
+                - {appointment.scheduled_time_start} to {appointment.scheduled_time_end}
               </span>
             </span>
           </div>
@@ -207,18 +208,21 @@ function PortalContent() {
           className="rounded-xl p-4 text-center text-sm font-medium transition-opacity hover:opacity-80"
           style={{ background: 'rgba(45,212,191,0.1)', color: '#2DD4BF', border: '1px solid rgba(45,212,191,0.2)' }}
         >
-          ⭐ Leave a Review
+          Leave a Review
         </a>
         <button
           onClick={() => {
             const url = `${window.location.origin}/portal?job=${appointment.id}`
-            navigator.clipboard.writeText(url).then(() => alert('Link copied!'))
+            navigator.clipboard.writeText(url).then(() => {
+              setCopiedShare(true)
+              window.setTimeout(() => setCopiedShare(false), 2000)
+            })
           }}
           className="rounded-xl p-4 text-center text-sm font-medium transition-opacity hover:opacity-80 flex items-center justify-center gap-2"
           style={{ background: 'rgba(148,163,184,0.05)', color: '#94A3B8', border: '1px solid rgba(148,163,184,0.1)' }}
         >
           <Share2 size={14} />
-          Share
+          {copiedShare ? 'Copied' : 'Share'}
         </button>
       </div>
     </div>
