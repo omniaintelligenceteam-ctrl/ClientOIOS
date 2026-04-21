@@ -157,7 +157,7 @@ export default function PipelinePage() {
   const sel = 'rounded-lg border border-[rgba(148,163,184,0.12)] bg-[#0B1120] px-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/40'
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-shrink-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pipeline</h1>

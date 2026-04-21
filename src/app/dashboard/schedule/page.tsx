@@ -455,7 +455,7 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="animate-page-enter flex h-full flex-col gap-6">
+    <div className="animate-page-enter flex flex-col gap-6">
       {/* ---- Header ---- */}
       <div className="premium-card flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
