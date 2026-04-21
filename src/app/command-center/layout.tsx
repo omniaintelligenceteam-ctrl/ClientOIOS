@@ -446,7 +446,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
       {/* ============================================================ */}
       {/*  Main column                                                  */}
       {/* ============================================================ */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Top bar */}
         <header className="premium-header flex h-14 flex-shrink-0 items-center gap-3 px-4 sm:px-6">
           {/* Mobile hamburger */}
@@ -484,7 +484,7 @@ function CommandCenterShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="premium-main flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <main className="premium-main min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
       </div>
     </div>
   )

@@ -582,7 +582,7 @@ function FocusRail({
   ]
 
   return (
-    <aside className="hidden xl:flex xl:w-72 xl:flex-col xl:gap-4 xl:border-l xl:border-[rgba(147,162,190,0.18)] xl:bg-[rgba(11,18,31,0.56)] xl:p-4 xl:backdrop-blur-xl">
+    <aside className="hidden xl:flex xl:min-h-0 xl:w-72 xl:flex-col xl:gap-4 xl:overflow-y-auto xl:border-l xl:border-[rgba(147,162,190,0.18)] xl:bg-[rgba(11,18,31,0.56)] xl:p-4 xl:backdrop-blur-xl">
       <section className="premium-card p-4">
         <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f7b267]">
           <Sparkles size={13} />
@@ -934,7 +934,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       {/* ============================================================ */}
       {/*  Main column (top bar + content)                              */}
       {/* ============================================================ */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Top bar */}
         <header className="premium-header hidden h-16 flex-shrink-0 items-center gap-3 px-4 sm:gap-4 sm:px-6 md:flex">
           <button
@@ -999,8 +999,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        <div className={`premium-main flex-1 overflow-hidden ${fieldMode ? '' : 'xl:grid xl:grid-cols-[minmax(0,1fr)_18rem]'}`}>
-          <main className={`flex-1 overflow-y-auto p-4 pb-24 sm:px-6 sm:pb-0 ${fieldMode ? 'hidden md:block' : ''}`}>
+        <div className={`premium-main min-h-0 flex-1 overflow-hidden ${fieldMode ? '' : 'xl:grid xl:grid-cols-[minmax(0,1fr)_18rem] xl:grid-rows-[minmax(0,1fr)]'}`}>
+          <main className={`min-h-0 flex-1 overflow-y-auto p-4 pb-24 sm:px-6 sm:pb-0 ${fieldMode ? 'hidden md:block' : ''}`}>
             <div className="mb-4 mt-1">
               <Breadcrumbs />
             </div>
